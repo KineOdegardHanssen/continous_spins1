@@ -9,7 +9,7 @@ class Bond
 public:
 
     Bond();
-    Bond(double J, double Dx, double Dy, double Dz, std::vector site1index, std::vector site2index);
+    Bond(double J, double Dx, double Dy, double Dz, std::vector site1indexvec, std::vector site2indexvec);
 
     // Bond quantities
     double J, Dx, Dy, Dz;

@@ -10,7 +10,7 @@ public:
 
     int L,N;
 
-    std::vector<Bond> bonds;
+    //std::vector<Bond> bonds;
     std::vector<Site> sites;
 
     //Initialization functions
