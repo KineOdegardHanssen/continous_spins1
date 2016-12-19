@@ -1,12 +1,18 @@
 #include "lattice.h"
 
-Lattice::Lattice(int L)
-{
+Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm)
+{   // Ta inn chars eller bools og bestemme hvilken funksjon som skal kalles?
     this->L = L;
+    // Do these really need to be a part of Lattice?
+    // Quite neat, though not neccessary. No, I guess these come in handy.
+    this->isotropic = isotropic;
+    this->sianisotropy = sianisotropy;
+    this->magfield = magfield;
+    this->dm = dm;
 }
 
 Lattice::fcc_helical_initialize()
-{
+{   // Should include something saying how the parameters are set.
     N = L*(L+1)*(L+1); // Look this up!
     // Setting up the sites
     // We set up the matrix by having all spins in the same direction. Or maybe draw at random?
@@ -18,17 +24,30 @@ Lattice::fcc_helical_initialize()
     // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
     // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
     // unneccessary calculations.
+    // have some function for doing this:
+    // Setting lensiteint
+    int lensiteint; // this should be given by the bools. Or is this neccessary at all? Yes, it is.
+    if()
     double hx = 1;
     double hy = 1;
     double hz = 1;
     double Dix = 1;
     double Diy = 1;
     double Diz = 1;
+    std::vector<double> siteint = std::vector<double>(6);
+    siteint[0] = 1;
+    siteint[1] = 1;
+    siteint[2] = 1;
+    siteint[3] = 1;
+    siteint[4] = 1;
+    siteint[5] = 1;
+    // And, in the future, have it in the loop.
 
     double J = 1;
     double Dx = 1;
     double Dy = 1;
     double Dz = 1;
+    std::vector<double> bondints = std::vector<double>(3);
     // Could have these inside the loop and add randomness.
 
     for(int n=0; n<N; n++)
@@ -56,23 +75,31 @@ Lattice::fcc_helical_initialize()
 
         std::vector<Bond> bonds;
 
+
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, np1));  // Do I really need to send in n?
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, nm1));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, npL));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, nmL));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, npL2));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, nmL2));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, npLm1));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, nmLm1));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, npL2m1));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, nmL2m1));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, npL2mL));
-        bonds.push_back(Bond(J, Dx, Dy, Dz, n, nmL2mL));
+        bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npLm1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmLm1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2m1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2m1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2mL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2mL, isotropic, dm, bondints));
+
+        // or
+        //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
-        sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+        // Send in bools
+        sites.push_back(Site(n, lenint, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        // or
+        //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
     }
+
 
 
     // Setting up the bonds

@@ -8,9 +8,10 @@
 class Site
 {
 public:
-    Site();
+
     int index; // is this neccessary?
-    double hx, hy, hz, Dix, Diy, Diz;
+    int lenint; // Length of interaction array
+    double hx, hy, hz, Dix, Diy, Diz; // This would lead to a lot of zero elements, possibly
     double spinx, spiny, spinz;
 
     // Should I have neighbours here?
@@ -19,8 +20,13 @@ public:
     //std::vector<int> bondtype3;
     //std::vector<double> spin;   // maybe store in each direction instead
     //std::vector<int> bondindexes; // Or some sort of pointer...
+    std::vector<double> siteint; // Array for site interaction
     std::vector<Bond> bonds; // I guess I do have to add a pointer to Bond. But then both classes inherit each other. Weird.
 
+    // Initializers
+    Site();
+    Site(int n, int lenint, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds, std::vector<bool> boolvec);
+    Site(int n, int lenint, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
 };
 
 #endif // SITE_H

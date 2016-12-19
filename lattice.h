@@ -7,6 +7,8 @@ class Lattice
 {
 public:
     Lattice(int L);
+    bool isotropic,  dm;         // Bools for n.n. terms
+    bool sianisotropy, magfield; // Bools for site terms
 
     int L,N;
 

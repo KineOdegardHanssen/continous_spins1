@@ -9,7 +9,8 @@ class Bond
 public:
 
     Bond();
-    Bond(double J, double Dx, double Dy, double Dz, std::vector site1indexvec, std::vector site2indexvec);
+    Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<double> bondints);
+    Bond(double J, double Dx, double Dy, double Dz, std::vector<int> site1indexvec, std::vector<int> site2indexvec);
 
     // Bond quantities
     double J, Dx, Dy, Dz;
@@ -17,6 +18,7 @@ public:
     // Bond type
     char bondtype; // Or something
     double bondstrength; // feed this in by Lattice.
+    std::vector<double> bondints; // use this
 
     // The sites which the bond connects
     int siteindex1, siteindex2;
