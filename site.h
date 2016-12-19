@@ -25,8 +25,8 @@ public:
 
     // Initializers
     Site();
-    Site(int n, int lenint, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds, std::vector<bool> boolvec);
-    Site(int n, int lenint, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    //Site(int n,  bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds, std::vector<bool> boolvec);
+    Site(int n,  bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
 };
 
 #endif // SITE_H

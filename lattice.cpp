@@ -25,29 +25,24 @@ Lattice::fcc_helical_initialize()
     // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
     // unneccessary calculations.
     // have some function for doing this:
-    // Setting lensiteint
-    int lensiteint; // this should be given by the bools. Or is this neccessary at all? Yes, it is.
-    if()
     double hx = 1;
     double hy = 1;
     double hz = 1;
     double Dix = 1;
     double Diy = 1;
     double Diz = 1;
-    std::vector<double> siteint = std::vector<double>(6);
-    siteint[0] = 1;
-    siteint[1] = 1;
-    siteint[2] = 1;
-    siteint[3] = 1;
-    siteint[4] = 1;
-    siteint[5] = 1;
+
     // And, in the future, have it in the loop.
 
     double J = 1;
     double Dx = 1;
     double Dy = 1;
     double Dz = 1;
-    std::vector<double> bondints = std::vector<double>(3);
+
+    // Move these when neccessary
+    siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
+    bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+
     // Could have these inside the loop and add randomness.
 
     for(int n=0; n<N; n++)
@@ -95,14 +90,74 @@ Lattice::fcc_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, lenint, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
     }
 
+}
 
+std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)
+{
+    if(sianisotropy && magfield)
+    {
+        std::vector<double> siteint = std::vector<double>(6);
+        siteint[0] = Dix;
+        siteint[1] = Diy;
+        siteint[2] = Diz;
+        siteint[3] = hx;
+        siteint[4] = hy;
+        siteint[5] = hz;
 
-    // Setting up the bonds
-    // Setting up the sites
-    // Should I use helical boundary conditions or periodic?
+    }
+    else if(sianisotropy && (!magfield))
+    {
+        std::vector<double> siteint = std::vector<double>(3);
+        siteint[0] = Dix;
+        siteint[1] = Diy;
+        siteint[2] = Diz;
+    }
+    else if((!sianisotropy) && magfield)
+    {
+        std::vector<double> siteint = std::vector<double>(3);
+        siteint[0] = hx;
+        siteint[1] = hy;
+        siteint[2] = hz;
+    }
+    else
+    {
+        std::vector<double> siteint = std::vector<double>(1);
+        siteint[0] = 0;
+    }
+    return siteint;
+}
+
+std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm)
+{
+    if(isotropic && dm)
+    {
+        std::vector<double> bondints = std::vector<double>(4);
+        bondints[0] = J;
+        bondints[1] = Dx;
+        bondints[2] = Dy;
+        bondints[2] = Dz;
+    }
+    else if(isotropic && (!dm))
+    {
+        std::vector<double> bondints = std::vector<double>(1);
+        bondints[0] = J;
+    }
+    else if((!isotropic) && dm)
+    {
+        std::vector<double> bondints = std::vector<double>(3);
+        bondints[0] = Dx;
+        bondints[1] = Dy;
+        bondints[2] = Dz;
+    }
+    else
+    {
+        std::vector<double> bondints = std::vector<double>(1);
+        bondints[0] = 0;
+    }
+    return bondints;
 }

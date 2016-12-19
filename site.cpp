@@ -5,10 +5,9 @@ Site::Site()
 }
 
 
-Site::Site(int n, int lenint, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds)
+Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds)
 {
     index = n;
-    this->lenint = lenint; // lenint is probably not neccessary anymore, with all the bools.
     this->spinx = spinx;   // Have spinx in a new class, State?s
     this->spiny = spiny;
     this->spinz = spinz;
