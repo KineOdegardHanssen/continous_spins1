@@ -31,7 +31,10 @@ int main()   // main. Monte Carlo steps here?
     bool dm = false;
     double beta = 0.1; // Just setting a beta.
 
+    // Run parameters
     int eqsteps = 1000; // Number of steps in the equilibration procedure
+    int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
+    int no_of_bins = 100;     // The number of bins.
 
     if(DEBUG)    cout << "Parameters set" << endl;
 
@@ -157,9 +160,23 @@ int main()   // main. Monte Carlo steps here?
     }
 
     // Monte Carlo steps and measurements
+    for(int i=0; i<no_of_bins; i++)
+    {   // For each bin
+        double energy_av = 0;
+        for(int j=0; j<mcsteps_inbin; j++)
+        {    // For each mcstep
+            energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
 
+            // Measurements
+            // energy
+            energy_av +=energy_old;
+
+            // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
+        }
+        energy_av = energy_av/mcsteps_inbin;
+        // Print to file
+    }
     // Printing to file in some way
-
 }
 
 // Functions which determine the Hamiltonian, feeding in the right interactions.
@@ -170,9 +187,6 @@ double sianisotropy_energy(int i, double sx, double sy, double sz, Lattice mylat
     double Dix = mylattice.sites[i].Dix;
     double Diy = mylattice.sites[i].Diy;
     double Diz = mylattice.sites[i].Diz;
-    //double sx = mylattice.sites[i].spinx; // Send these in instead to improve applicability.
-    //double sy = mylattice.sites[i].spiny;
-    //double sz = mylattice.sites[i].spinz;
     double sia_energy_contr = Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz;
     return sia_energy_contr;
 
@@ -198,10 +212,11 @@ double isotropic_energy(int i, double sx, double sy, double sz, Lattice mylattic
     double partnerspinz = 0;
     for(int j=0; j<no_of_neighbours; j++)
     {
-        int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-        //                                          // I could, alternatively, just store the index
-        //                                          // of bonds. But then I need to organize the bonds
-        //                                          // and that is such a hassle.
+        int k = mylattice.sites[i].bonds[j].siteindex2;
+        // I could, alternatively, just store the index
+        // of bonds. But then I need to organize the bonds
+        // and coordinate them with the sites. List of
+        //sites that points to the bonds and vice versa.
         double J = mylattice.sites[i].bonds[j].J;
         double sx = mylattice.sites[k].spinx;
         double sy = mylattice.sites[k].spiny;
@@ -237,6 +252,7 @@ double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice)
 
 
 // Monte Carlo function
+// Or, rather a Simulation class
 /*
 void MonteCarlo()
 {
@@ -248,16 +264,11 @@ void MonteCarlo()
 // But have to make sure that mylattice is changed.
 // make it double to return the energy?
 double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
-{
+{   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
     for(int n=0; n<N; n++)
     {
         double energy_new = energy_old;
         double energy_diff = 0;
-        // Are these really neccessary?
-        //double sia_diff = 0;
-        //double mf_diff  = 0;
-        //double iso_diff = 0;
-        //double dm_diff  = 0;
 
         int k = distribution_n(generator_n);
 
@@ -267,81 +278,10 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
 
         //Energy of relevant spin before flip
         // Should I have the random generator here? Or send it in?
-        if(sianisotropy)
-        {   // I should probably just send these into functions
-            /*
-            double Dix = mylattice.sites[k].Dix;
-            double Diy = mylattice.sites[k].Diy;
-            double Diz = mylattice.sites[k].Diz;
-
-            energy_diff -= Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz; // This will be changed
-            */
-            energy_diff -= sianisotropy_energy(k, sx, sy, sz, mylattice);
-            // Or just subtract from energy_old? No, have to test against that...
-        }
-        if(magfield)
-        {
-            /*
-            double hx = mylattice.sites[k].hx;
-            double hy = mylattice.sites[k].hy;
-            double hz = mylattice.sites[k].hz;
-            double sx = mylattice.sites[k].spinx;
-            double sy = mylattice.sites[k].spiny;
-            double sz = mylattice.sites[k].spinz;
-            energy_diff -= hx*sx + hy*sy + hz*sz;
-            */
-            energy_diff -= magfield_energy(k, sx, sy, sz, mylattice);
-        }
-        if(isotropic)
-        {   // Should really make a function for these, I guess.
-            // Declare no_of_neighbours here in case
-            /*
-            double partnerspinx = 0;
-            double partnerspiny = 0;
-            double partnerspinz = 0;
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
-                //                                          // I could, alternatively, just store the index
-                //                                          // of bonds. But then I need to organize the bonds
-                //                                          // and that is such a hassle.
-                double J = mylattice.sites[k].bonds[j].J;
-                double sx = mylattice.sites[l].spinx;
-                double sy = mylattice.sites[l].spiny;
-                double sz = mylattice.sites[l].spinz;
-                partnerspinx += J*sx;
-                partnerspiny += J*sy;
-                partnerspinz += J*sz;
-            }
-            double sx = mylattice.sites[k].spinx;
-            double sy = mylattice.sites[k].spiny;
-            double sz = mylattice.sites[k].spinz;
-            energy_diff -= partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
-            */
-            energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
-        }
-        if(dm)
-        {   // Or send in to functions
-            /*
-            double sxi = mylattice.sites[k].spinx;
-            double syi = mylattice.sites[k].spiny;
-            double szi = mylattice.sites[k].spinz;
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int i = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
-                double Dx = mylattice.sites[k].bonds[j].Dx;
-                double Dy = mylattice.sites[k].bonds[j].Dy;
-                double Dz = mylattice.sites[k].bonds[j].Dz;
-
-                double sxk = mylattice.sites[i].spinx;
-                double syk = mylattice.sites[i].spiny;
-                double szk = mylattice.sites[i].spinz;
-
-                energy_diff -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
-            }
-            */
-            energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
-        }
+        if(sianisotropy)         energy_diff -= sianisotropy_energy(k, sx, sy, sz, mylattice);
+        if(magfield)             energy_diff -= magfield_energy(k, sx, sy, sz, mylattice);
+        if(isotropic)            energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
+        if(dm)                   energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
 
         // Changing the spin (tentatively):
         double u = distribution_u(generator_u);
@@ -354,72 +294,10 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         double sy_t = sin(theta)*sin(phi);
         double sz_t = cos(theta);
 
-        if(sianisotropy)
-        {   // I should probably just send these into functions
-            /*
-            double Dix = mylattice.sites[k].Dix;
-            double Diy = mylattice.sites[k].Diy;
-            double Diz = mylattice.sites[k].Diz;
-            energy_diff -= Dix*sx_t*sx_t + Diy*sy_t*sy_t+ Diz*sz_t*sz_t; // This will be changed
-            */
-            energy_diff += sianisotropy_energy(k, sx_t, sy_t, sz_t, mylattice);
-        }
-        if(magfield)
-        {
-            /*
-            double hx = mylattice.sites[k].hx;
-            double hy = mylattice.sites[k].hy;
-            double hz = mylattice.sites[k].hz;
-            energy_diff -= hx*sx_t + hy*sy_t + hz*sz_t;
-            */
-            energy_diff += magfield_energy(k, sx_t, sy_t, sz_t, mylattice);
-        }
-        if(isotropic)
-        {   // Should really make a function for these, I guess.
-            // Declare no_of_neighbours here in case
-            /*
-            double partnerspinx = 0;
-            double partnerspiny = 0;
-            double partnerspinz = 0;
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
-                //                                          // I could, alternatively, just store the index
-                //                                          // of bonds. But then I need to organize the bonds
-                //                                          // and that is such a hassle.
-                double J = mylattice.sites[k].bonds[j].J;
-                double sx = mylattice.sites[l].spinx;
-                double sy = mylattice.sites[l].spiny;
-                double sz = mylattice.sites[l].spinz;
-                partnerspinx += J*sx;
-                partnerspiny += J*sy;
-                partnerspinz += J*sz;
-            }
-            energy_diff -= partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t;
-            */
-            energy_diff += isotropic_energy(k, sx_t, sy_t, sz_t, mylattice);
-
-        }
-        if(dm)
-        {   // Or send in to functions. Maybe I should send in the spin instead? Probably.
-            /*for(int j=0; j<no_of_neighbours; j++)
-            {
-
-                int i = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
-                double Dx = mylattice.sites[k].bonds[j].Dx;
-                double Dy = mylattice.sites[k].bonds[j].Dy;
-                double Dz = mylattice.sites[k].bonds[j].Dz;
-
-                double sxk = mylattice.sites[i].spinx;
-                double syk = mylattice.sites[i].spiny;
-                double szk = mylattice.sites[i].spinz;
-
-                energy_diff -= Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
-
-            }
-            */
-            energy_diff +=dm_energy(k, sx_t, sy_t, sz_t, mylattice);
-        }
+        if(sianisotropy)         energy_diff += sianisotropy_energy(k, sx_t, sy_t, sz_t, mylattice);
+        if(magfield)             energy_diff += magfield_energy(k, sx_t, sy_t, sz_t, mylattice);
+        if(isotropic)            energy_diff += isotropic_energy(k, sx_t, sy_t, sz_t, mylattice);
+        if(dm)                   energy_diff += dm_energy(k, sx_t, sy_t, sz_t, mylattice);
 
         // This should work, but there is probably some error here...
         energy_new = energy_old + energy_diff;
