@@ -28,7 +28,7 @@ void Lattice::fcc_helical_initialize()
     double hx = 1;
     double hy = 1;
     double hz = 1;
-    double Dix = 2;
+    double Dix = 1;
     double Diy = 1;
     double Diz = 1;
 
