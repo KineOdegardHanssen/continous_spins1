@@ -4,7 +4,7 @@ Bond::Bond()
 {
 }
 
-Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector bondints)
+Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<double> bondints)
 {
     this->bondints = bondints; // Do I really need this
     // Or function feed bondints

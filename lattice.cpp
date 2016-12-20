@@ -11,7 +11,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     this->dm = dm;
 }
 
-Lattice::fcc_helical_initialize()
+void Lattice::fcc_helical_initialize()
 {   // Should include something saying how the parameters are set.
     N = L*(L+1)*(L+1); // Look this up!
     // Setting up the sites
@@ -28,7 +28,7 @@ Lattice::fcc_helical_initialize()
     double hx = 1;
     double hy = 1;
     double hz = 1;
-    double Dix = 1;
+    double Dix = 2;
     double Diy = 1;
     double Diz = 1;
 
@@ -40,8 +40,8 @@ Lattice::fcc_helical_initialize()
     double Dz = 1;
 
     // Move these when neccessary
-    siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
+    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     // Could have these inside the loop and add randomness.
 
@@ -53,20 +53,20 @@ Lattice::fcc_helical_initialize()
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
         // Should probably verify this bit
-        np1 = (n+1)%N;
-        npL = (n+L)%N;
-        npL2 = (n+L*L)%N;
-        npLm1 = (n+L-1)%N;
-        npL2m1 = (n+L*L-1)%N;
-        npL2mL = (n+L*L-L)%N;
+        int np1 = (n+1)%N;
+        int npL = (n+L)%N;
+        int npL2 = (n+L*L)%N;
+        int npLm1 = (n+L-1)%N;
+        int npL2m1 = (n+L*L-1)%N;
+        int npL2mL = (n+L*L-L)%N;
 
         // And should DEFINITELY verify this:
-        nm1 = (n+N-1)%N;
-        nmL = (n+N-L)%N;
-        nmL2 = (n+N-L*L)%N;
-        nmLm1 = (n+N-L+1)%N;
-        nmL2m1 = (n+N-L*L+1)%N;
-        nmL2mL = (n+N-L*L+L)%N;
+        int nm1 = (n+N-1)%N;
+        int nmL = (n+N-L)%N;
+        int nmL2 = (n+N-L*L)%N;
+        int nmLm1 = (n+N-L+1)%N;
+        int nmL2m1 = (n+N-L*L+1)%N;
+        int nmL2mL = (n+N-L*L+L)%N;
 
         std::vector<Bond> bonds;
 
@@ -108,7 +108,7 @@ std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz,
         siteint[3] = hx;
         siteint[4] = hy;
         siteint[5] = hz;
-
+        return siteint;
     }
     else if(sianisotropy && (!magfield))
     {
@@ -116,6 +116,7 @@ std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz,
         siteint[0] = Dix;
         siteint[1] = Diy;
         siteint[2] = Diz;
+        return siteint;
     }
     else if((!sianisotropy) && magfield)
     {
@@ -123,13 +124,14 @@ std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz,
         siteint[0] = hx;
         siteint[1] = hy;
         siteint[2] = hz;
+        return siteint;
     }
     else
     {
         std::vector<double> siteint = std::vector<double>(1);
         siteint[0] = 0;
+        return siteint;
     }
-    return siteint;
 }
 
 std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm)
@@ -140,12 +142,14 @@ std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, dou
         bondints[0] = J;
         bondints[1] = Dx;
         bondints[2] = Dy;
-        bondints[2] = Dz;
+        bondints[3] = Dz;
+        return bondints;
     }
     else if(isotropic && (!dm))
     {
         std::vector<double> bondints = std::vector<double>(1);
         bondints[0] = J;
+        return bondints;
     }
     else if((!isotropic) && dm)
     {
@@ -153,11 +157,12 @@ std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, dou
         bondints[0] = Dx;
         bondints[1] = Dy;
         bondints[2] = Dz;
+        return bondints;
     }
     else
     {
         std::vector<double> bondints = std::vector<double>(1);
         bondints[0] = 0;
+        return bondints;
     }
-    return bondints;
 }
