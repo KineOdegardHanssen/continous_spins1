@@ -1,10 +1,5 @@
 #include "site.h"
 
-Site::Site()
-{
-}
-
-
 Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds)
 {
     index = n;

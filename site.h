@@ -10,7 +10,7 @@ class Site
 public:
 
     int index; // is this neccessary?
-    int lenint; // Length of interaction array
+    int lenint; // Length of interaction array.
     double hx, hy, hz, Dix, Diy, Diz; // This would lead to a lot of zero elements, possibly
     double spinx, spiny, spinz;
 
@@ -23,8 +23,7 @@ public:
     std::vector<double> siteint; // Array for site interaction
     std::vector<Bond> bonds; // I guess I do have to add a pointer to Bond. But then both classes inherit each other. Weird.
 
-    // Initializers
-    Site();
+    // Initializer
     //Site(int n,  bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds, std::vector<bool> boolvec);
     Site(int n,  bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
 };

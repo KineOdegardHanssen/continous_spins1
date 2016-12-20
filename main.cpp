@@ -1,4 +1,5 @@
 #include <iostream>
+#include <random>
 #include <bond.h>
 #include <site.h>
 #include <lattice.h>
@@ -13,7 +14,7 @@ double dm_energy(int i, Lattice mylattice);
 
 
 void MonteCarlo();
-double mcstepf(double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice mylattice, std::default_random_engine generator_x, std::default_random_engine generator_y, std::default_random_engine generator_z, std::default_random_engine generator_n, std::uniform_real_distribution<double> distribution_x, std::uniform_real_distribution<double> distribution_y, , std::uniform_real_distribution<double> distribution_z, std::uniform_real_distribution<int> distribution_n);
+double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice mylattice, std::default_random_engine generator_x, std::default_random_engine generator_y, std::default_random_engine generator_z, std::default_random_engine generator_n,std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_x, std::uniform_real_distribution<double> distribution_y, std::uniform_real_distribution<double> distribution_z, std::uniform_int_distribution<int> distribution_n);
 // Is the next one neccessary?
 double energy(bool isotropic, bool sianisotropy, bool magfield, bool dm, Lattice mylattice);
 
@@ -28,6 +29,7 @@ int main()   // main. Monte Carlo steps here?
     bool sianisotropy = true;
     bool magfield = false;
     bool dm = false;
+    double beta = 0.1; // Just setting a beta.
 
     int eqsteps = 1000; // Number of steps in the equilibration procedure
 
@@ -143,6 +145,9 @@ int main()   // main. Monte Carlo steps here?
     std::default_random_engine generator_z;                       // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_z(0,1);
 
+    std::default_random_engine generator_prob;                       // I asked the internet, and it replied
+    std::uniform_real_distribution<double> distribution_prob(0,1);
+
     // For index. This is given helical boundary conditions, then I only need one index
     std::default_random_engine generator_n;
     std::uniform_int_distribution<int> distribution_n(0,N-1);
@@ -151,7 +156,7 @@ int main()   // main. Monte Carlo steps here?
     // Equilibration steps
     for(int i=0; i<eqsteps; i++)
     {
-        energy_old = mcstepf(energy_old, sianisotropy, magfield, isotropic, dm, mylattice);
+        energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_x, generator_y, generator_z, generator_n, generator_prob, distribution_prob, distribution_x, distribution_y, distribution_z, distribution_n);
     }
 
     // Monte Carlo steps and measurements
@@ -192,6 +197,7 @@ double magfield_energy(int i, Lattice mylattice)
 double isotropic_energy(int i, Lattice mylattice)
 {
     // Declare no_of_neighbours here in case
+    int no_of_neighbours = 12;
     double iso_energy_contr;
     double partnerspinx = 0;
     double partnerspiny = 0;
@@ -221,6 +227,7 @@ double dm_energy(int i, Lattice mylattice)
 {
     // Double loops and stuff. Could maybe make this more efficient
     double dm_energy_contr = 0;
+    int no_of_neighbours = 12;
     double sxi = mylattice.sites[i].spinx;
     double syi = mylattice.sites[i].spiny;
     double szi = mylattice.sites[i].spinz;
@@ -236,35 +243,39 @@ double dm_energy(int i, Lattice mylattice)
         double szk = mylattice.sites[k].spinz;
 
         dm_energy_contr -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
+        return dm_energy_contr;
+    }
 }
 
 
 // Monte Carlo function
+/*
 void MonteCarlo()
 {
 
 }
+*/
 
 // Should rather call Metropolis
 // But have to make sure that mylattice is changed.
 // make it double to return the energy?
-double mcstepf(double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice mylattice, std::default_random_engine generator_x, std::default_random_engine generator_y, std::default_random_engine generator_z, std::default_random_engine generator_n, std::uniform_real_distribution<double> distribution_x, std::uniform_real_distribution<double> distribution_y, std::uniform_real_distribution<double> distribution_z, std::uniform_real_distribution<int> distribution_n)
+double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice mylattice, std::default_random_engine generator_x, std::default_random_engine generator_y, std::default_random_engine generator_z, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_x, std::uniform_real_distribution<double> distribution_y, std::uniform_real_distribution<double> distribution_z, std::uniform_int_distribution<int> distribution_n)
 {
     for(int n=0; n<N; n++)
     {
         double energy_new = energy_old;
         double energy_diff = 0;
         // Are these really neccessary?
-        double sia_diff = 0;
-        double mf_diff  = 0;
-        double iso_diff = 0;
-        double dm_diff  = 0;
+        //double sia_diff = 0;
+        //double mf_diff  = 0;
+        //double iso_diff = 0;
+        //double dm_diff  = 0;
 
         int k = distribution_n(generator_n);
         //Energy of relevant spin before flip
         // Should I have the random generator here? Or send it in?
         if(sianisotropy)
-        {
+        {   // I should probably just send these into functions
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
@@ -276,12 +287,12 @@ double mcstepf(double energy_old, bool sianisotropy, bool magfield, bool isotrop
         }
         if(magfield)
         {
-            double hx = mylattice.sites[i].hx;
-            double hy = mylattice.sites[i].hy;
-            double hz = mylattice.sites[i].hz;
-            double sx = mylattice.sites[i].spinx;
-            double sy = mylattice.sites[i].spiny;
-            double sz = mylattice.sites[i].spinz;
+            double hx = mylattice.sites[k].hx;
+            double hy = mylattice.sites[k].hy;
+            double hz = mylattice.sites[k].hz;
+            double sx = mylattice.sites[k].spinx;
+            double sy = mylattice.sites[k].spiny;
+            double sz = mylattice.sites[k].spinz;
             energy_diff -= hx*sx + hy*sy + hz*sz;
         }
         if(isotropic)
@@ -292,7 +303,7 @@ double mcstepf(double energy_old, bool sianisotropy, bool magfield, bool isotrop
             double partnerspinz = 0;
             for(int j=0; j<no_of_neighbours; j++)
             {
-                int l = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
+                int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
                 //                                          // I could, alternatively, just store the index
                 //                                          // of bonds. But then I need to organize the bonds
                 //                                          // and that is such a hassle.
@@ -309,22 +320,41 @@ double mcstepf(double energy_old, bool sianisotropy, bool magfield, bool isotrop
             double sz = mylattice.sites[k].spinz;
             energy_diff -= partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
         }
+        if(dm)
+        {   // Or send in to functions
+            double sxi = mylattice.sites[k].spinx;
+            double syi = mylattice.sites[k].spiny;
+            double szi = mylattice.sites[k].spinz;
+            for(int j=0; j<no_of_neighbours; j++)
+            {
+                int i = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
+                double Dx = mylattice.sites[k].bonds[j].Dx;
+                double Dy = mylattice.sites[k].bonds[j].Dy;
+                double Dz = mylattice.sites[k].bonds[j].Dz;
+
+                double sxk = mylattice.sites[i].spinx;
+                double syk = mylattice.sites[i].spiny;
+                double szk = mylattice.sites[i].spinz;
+
+                energy_diff -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
+            }
+        }
 
 
         // Updating the energy and the state according to Metropolis
         if(energy_new <= energy_old)
         {
-            state(x,y) = -state(x,y); // This line has to be changed
+            //state(x,y) = -state(x,y); // This line has to be changed
             energy_old = energy_new; // Update energy
         }
         else
         {
-            prob = exp(-beta*(energy_new-energy_old));
-            drawn = distribution(generator);
+            double prob = exp(-beta*(energy_new-energy_old));
+            double drawn = distribution_prob(generator_prob);
             if(drawn<prob)
             {
 
-                state(x,y) = -state(x,y);  // This line has to be changed
+                //state(x,y) = -state(x,y);  // This line has to be changed
                 energy_old = energy_new;  // Update energy
             }
         }
