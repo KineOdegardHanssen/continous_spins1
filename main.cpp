@@ -27,6 +27,8 @@ double energy(bool isotropic, bool sianisotropy, bool magfield, bool dm, Lattice
 int main()   // main. Monte Carlo steps here?
 {
     bool DEBUG = true;
+    bool BEDBUG = false; // The bedbug is defeated
+    bool HUMBUG = false; // The humbug is defeated
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
@@ -47,7 +49,7 @@ int main()   // main. Monte Carlo steps here?
 
     // Opening file to print to
     ofstream printFile;
-    string filenamePrefix = "test";
+    string filenamePrefix = "somethingwrong_testingnow2";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
@@ -63,12 +65,12 @@ int main()   // main. Monte Carlo steps here?
     Lattice mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
     if(DEBUG)    cout << "Instance of class Lattice initialized" << endl;
     // Choosing type of lattice
-    mylattice.fcc_helical_initialize();
+    mylattice.cubic_helical_initialize();
     // Should I be storing the number of neighbours in Lattice or Site? Probably a good idea. But for know:
     end_clock = clock();
     double total_time_initialize_lattice = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
     cout << "Time to initialize Lattice: " << total_time_initialize_lattice  << endl;
-    int no_of_neighbours = 12; // For fcc
+    int no_of_neighbours = mylattice.no_of_neighbours;
 
    if(DEBUG)     cout << "Lattice set up" << endl;
 
@@ -83,9 +85,11 @@ int main()   // main. Monte Carlo steps here?
     start_clock = clock();
     for(int i=0; i<N; i++)
     {
+        if(BEDBUG) cout << "In loop to set initial energy" << endl;
         // Contribution from sites
         if(sianisotropy)
         {
+            if(BEDBUG)    cout << "In sianisotropy" << endl;
             double Dix = mylattice.sites[i].Dix;
             double Diy = mylattice.sites[i].Diy;
             double Diz = mylattice.sites[i].Diz;
@@ -97,6 +101,7 @@ int main()   // main. Monte Carlo steps here?
         }
         if(magfield)
         {
+            if(BEDBUG)    cout << "In magfield" << endl;
             double hx = mylattice.sites[i].hx;
             double hy = mylattice.sites[i].hy;
             double hz = mylattice.sites[i].hz;
@@ -108,32 +113,41 @@ int main()   // main. Monte Carlo steps here?
         // Contribution from bonds
         if(isotropic)
         {
+            if(BEDBUG)   cout << "In isotropic" << endl;
             // Declare no_of_neighbours here in case
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
             for(int j=0; j<no_of_neighbours; j++)
             {
+                if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
                 int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
                 //                                          // I could, alternatively, just store the index
                 //                                          // of bonds. But then I need to organize the bonds
                 //                                          // and that is such a hassle.
+                if(BEDBUG)    cout << "Have set k in loop, k = " << k << "; N = " << N << endl;
                 double J = mylattice.sites[i].bonds[j].J;
+                if(BEDBUG)    cout << "Have accessed J in bond between spins" << endl;
                 double sx = mylattice.sites[k].spinx;
                 double sy = mylattice.sites[k].spiny;
                 double sz = mylattice.sites[k].spinz;
+                if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
                 partnerspinx += J*sx;
                 partnerspiny += J*sy;
                 partnerspinz += J*sz;
+                if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
             }
+            if(BEDBUG)   cout << "Done with the loop in isotropic" << endl;
             double sx = mylattice.sites[i].spinx;
             double sy = mylattice.sites[i].spiny;
             double sz = mylattice.sites[i].spinz;
             energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             // half this thing. Or find a reasonable way to not double count.
+            if(BEDBUG)     cout << "Done with isotropic" << endl;
         }
         if(dm)
         {
+            if(BEDBUG)    cout << "In dm" << endl;
             // Double loops and stuff. Could maybe make this more efficient
             double sxi = mylattice.sites[i].spinx;
             double syi = mylattice.sites[i].spiny;
@@ -153,7 +167,11 @@ int main()   // main. Monte Carlo steps here?
                 energy_contribution_bonds -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
             }
         }
+        if(BEDBUG) cout << "Done with one, onto the others" << endl;
     }
+
+    if(BEDBUG)   cout << "Done with all" << endl;
+
     end_clock = clock();
     double total_time_firstenergy = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
     cout << "Time to initialize energy: " << total_time_firstenergy  << endl;
@@ -178,6 +196,7 @@ int main()   // main. Monte Carlo steps here?
     // For index. This is given helical boundary conditions, then I only need one index
     std::default_random_engine generator_n;
     std::uniform_int_distribution<int> distribution_n(0,N-1);
+    // This should work... Have defined N from the relevant function in instance of class Lattice
 
     if(DEBUG)    cout << "Done creating random generators" << endl;
 
@@ -186,12 +205,14 @@ int main()   // main. Monte Carlo steps here?
     start_clock = clock();
     for(int i=0; i<eqsteps; i++)
     {
+        if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
         //cout << "In equilibration loop" << endl;
         //double start_clock_i  = clock();
         energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
         //double end_clock_i = clock();
         //double equilibration_comptime_i = (end_clock_i - start_clock_i)/(double) CLOCKS_PER_SEC;
         //cout << "i: " << i << "; time to compute mcstep i: " << equilibration_comptime_i << endl;
+        if(HUMBUG)    cout << "Done with the equilibration step" << endl;
     }
     end_clock = clock();
     double equilibration_comptime = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
@@ -228,9 +249,48 @@ int main()   // main. Monte Carlo steps here?
     }
     end_clock = clock();
     double mc_comptime = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
-    cout << "Time to equilibrate: " << mc_comptime   << endl;
+    cout << "Time spent on MC-procedure: " << mc_comptime   << endl;
+
+    if(DEBUG)
+    {
+        ofstream bondsatsiteFile;
+        string filenamePrefix1 = "somethingwrong_testingnow2";
+        char *filename1 = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
+        bondsatsiteFile.open(filename1);
+        delete filename1;
+
+        // Opening file to print to
+        ofstream sitesatbondFile;
+        string filenamePrefix2 = "somethingwrong_testingnow2";
+        char *filename2 = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename2, "%s_sitesofbond.txt", filenamePrefix2.c_str() );   // Create filename with prefix and ending
+        sitesatbondFile.open(filename2);
+        delete filename2;
+
+        int N = mylattice.N;
+
+        for(int i=0; i<N; i++)
+        {
+            bondsatsiteFile << i << " ";
+            vector<int> linkstobond = mylattice.bondsofsites[i];
+            for(int j=0; j<12; j++) bondsatsiteFile << linkstobond[j] << " ";
+            bondsatsiteFile << endl;
+        }
+
+        for(int i=0; i<6*N; i++)
+        {
+            vector<int> linkstosites = mylattice.sitesofbonds[i];
+            sitesatbondFile << i << " " << linkstosites[0] << " " << linkstosites[1] << endl;
+        }
+        bondsatsiteFile.close();
+        sitesatbondFile.close();
+        printFile.close();
+    }
     // Printing to file in some way
+    cout << "closing printfile" << endl;
     printFile.close();
+
 }
 
 // Functions which determine the Hamiltonian, feeding in the right interactions.
@@ -300,8 +360,9 @@ double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice)
         double szk = mylattice.sites[k].spinz;
 
         dm_energy_contr -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
-        return dm_energy_contr;
+
     }
+    return dm_energy_contr;
 }
 
 
@@ -319,21 +380,30 @@ void MonteCarlo()
 // make it double to return the energy?
 double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
+    bool HUMBUG = false;  // The humbug is defeated. I think...
+    if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
     for(int n=0; n<N; n++)
     {
+        if(HUMBUG)    cout << "Inside loop in mcstepf. n = " << n << endl;
         double energy_new = energy_old;
         double energy_diff = 0;
 
         int k = distribution_n(generator_n);
+        if(HUMBUG)    cout << "Random spin k drawn. k = " << k << endl;
 
         double sx = mylattice.sites[k].spinx;
         double sy = mylattice.sites[k].spiny;
         double sz = mylattice.sites[k].spinz;
 
+        if(HUMBUG)    cout << "Components of spin " << k << " accessed" << endl;
+
+
+
         //Energy of relevant spin before flip
         // Should I have the random generator here? Or send it in?
         if(sianisotropy)
         {
+            if(HUMBUG)    cout << "In sianisotropy in mcstepf" << endl;
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
@@ -342,6 +412,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(magfield)
         {
+            if(HUMBUG)    cout << "In magfield in mcstepf" << endl;
             double hx = mylattice.sites[k].hx;
             double hy = mylattice.sites[k].hy;
             double hz = mylattice.sites[k].hz;
@@ -350,14 +421,15 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(isotropic)
         {
-            // Declare no_of_neighbours here in case
-            int no_of_neighbours = 12;
+            if(HUMBUG)    cout << "In isotropic in mcstepf" << endl;
+            if(HUMBUG)    cout << "no_of_neighbours = " << no_of_neighbours << endl;
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
             for(int j=0; j<no_of_neighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2;
+                if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
                 // I could, alternatively, just store the index
                 // of bonds. But then I need to organize the bonds
                 // and coordinate them with the sites. List of
@@ -369,32 +441,42 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 partnerspinx += J*sx;
                 partnerspiny += J*sy;
                 partnerspinz += J*sz;
+                if(HUMBUG)    cout << "Why it no work?!" << endl;
             }
+            if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
             energy_diff -= partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             //energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
         }
-
         if(dm)
         {
+            if(HUMBUG)    cout << "In dm in mcstepf" << endl;
             for(int j=0; j<no_of_neighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
+                if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
+
+
                 double Dx = mylattice.sites[k].bonds[j].Dx;
                 double Dy = mylattice.sites[k].bonds[j].Dy;
                 double Dz = mylattice.sites[k].bonds[j].Dz;
+                if(HUMBUG)    cout << "Bonds accessed" << endl;
 
                 double sxk = mylattice.sites[l].spinx;
                 double syk = mylattice.sites[l].spiny;
                 double szk = mylattice.sites[l].spinz;
+                if(HUMBUG)    cout << "Components of spin no. " << l << " accessed." << endl;
 
                 energy_diff += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
             }
+            if(HUMBUG)    cout << "Done with the loop in dm in mcstepf" << endl;
             //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
         }
+        if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
 
         // Changing the spin (tentatively):
         double u = distribution_u(generator_u);
         double v = distribution_v(generator_v);
+        if(HUMBUG)    cout << "Have drawn random numbers in mcstepf" << endl;
 
         double theta = acos(1.0-2.0*u);
         double phi = 2.0*M_PI*v;
@@ -402,6 +484,8 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         double sx_t = sin(theta)*cos(phi);
         double sy_t = sin(theta)*sin(phi);
         double sz_t = cos(theta);
+
+        if(HUMBUG)    cout << "Have made a uniform spherical distribution using them" << endl;
 
         /*
         if(sianisotropy)         energy_diff += sianisotropy_energy(k, sx_t, sy_t, sz_t, mylattice);
@@ -412,6 +496,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
 
         if(sianisotropy)
         {
+            if(HUMBUG)    cout << "Finging the energy difference from sianisotropy" << endl;
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
@@ -420,6 +505,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(magfield)
         {
+            if(HUMBUG)    cout << "Finging the energy difference from magfield" << endl;
             double hx = mylattice.sites[k].hx;
             double hy = mylattice.sites[k].hy;
             double hz = mylattice.sites[k].hz;
@@ -428,8 +514,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(isotropic)
         {
-            // Declare no_of_neighbours here in case
-            int no_of_neighbours = 12;
+            if(HUMBUG)    cout << "Finging the energy difference from isotropic" << endl;
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
@@ -454,6 +539,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
 
         if(dm)
         {
+            if(HUMBUG)    cout << "Finging the energy difference from dm" << endl;
             for(int j=0; j<no_of_neighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.

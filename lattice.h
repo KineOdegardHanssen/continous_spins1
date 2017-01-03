@@ -4,6 +4,7 @@
 #include <math.h>
 #include <bond.h>
 #include <site.h>
+//#include <armadillo>  // in this case, enter LIBS += -larmadillo -llapack -lblas in .pro-file
 
 using namespace std; // Now, I can remove all std's.
 
@@ -14,12 +15,23 @@ public:
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
 
-    int L,N;
+    int L,N, no_of_neighbours;
+
+    // Typedefs
+    typedef vector<int> vecint;
+    typedef vector<vecint> intmatrix;
 
     //std::vector<Bond> bonds;
     std::vector<Site> sites;
 
+    // Lists of how bonds and sites are related
+    intmatrix bondsofsites;
+    intmatrix sitesofbonds;
+
+
     //Lattice grid functions
+    void quadratic_helical_initialize();
+    void cubic_helical_initialize();
     void fcc_helical_initialize();
 
     // Feed interaction functions
