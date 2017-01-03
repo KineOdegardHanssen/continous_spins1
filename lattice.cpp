@@ -86,7 +86,7 @@ void Lattice::quadratic_helical_initialize()
         neighbours.push_back(npL);
         neighbours.push_back(nm1);
         neighbours.push_back(nmL);
-        for(int i = 0; i<4; i++)                // Traversing over all the neighbours
+        for(int i = 0; i<no_of_neighbours; i++)                // Traversing over all the neighbours
         {
             //cout << "in loop over neighbours" << endl;
             //cout << "n = " << n << endl;
@@ -202,7 +202,7 @@ void Lattice::cubic_helical_initialize()
         neighbours.push_back(nm1);
         neighbours.push_back(nmL);
         neighbours.push_back(nmL2);
-        for(int i = 0; i<6; i++)                // Traversing over all the neighbours
+        for(int i = 0; i<no_of_neighbours; i++)                // Traversing over all the neighbours
         {
             //cout << "in loop over neighbours" << endl;
             //cout << "n = " << n << endl;
@@ -337,7 +337,7 @@ void Lattice::fcc_helical_initialize()
         neighbours.push_back(nmLm1);
         neighbours.push_back(nmL2m1);
         neighbours.push_back(nmL2mL);
-        for(int i = 0; i<12; i++)                // Traversing over all the neighbours
+        for(int i = 0; i<no_of_neighbours; i++)                // Traversing over all the neighbours
         {
             //cout << "in loop over neighbours" << endl;
             //cout << "n = " << n << endl;

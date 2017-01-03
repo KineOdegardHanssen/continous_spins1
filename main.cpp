@@ -29,6 +29,7 @@ int main()   // main. Monte Carlo steps here?
     bool DEBUG = true;
     bool BEDBUG = false; // The bedbug is defeated
     bool HUMBUG = false; // The humbug is defeated
+    bool LADYBUG = false; // The ladybug is always cute and dandy
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
@@ -40,7 +41,7 @@ int main()   // main. Monte Carlo steps here?
     double beta = 0.1; // Just setting a beta.
 
     // Run parameters
-    int eqsteps = 1000; // Number of steps in the equilibration procedure
+    int eqsteps = 10000; // Number of steps in the equilibration procedure
     int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
     int no_of_bins = 100;     // The number of bins.
 
@@ -49,12 +50,20 @@ int main()   // main. Monte Carlo steps here?
 
     // Opening file to print to
     ofstream printFile;
-    string filenamePrefix = "somethingwrong_testingnow2";
+    //string filenamePrefix = "test10x10x10_cubic";
+    string filenamePrefix = "alejandro";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
     delete filename;
 
+    ofstream bigFile;
+    //string filenamePrefix = "test10x10x10_cubic";
+    string filenamePrefixb = "alicia";
+    char *filenameb = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefixb.c_str() );   // Create filename with prefix and ending
+    bigFile.open(filenameb);
+    delete filenameb;
 
     if(DEBUG)    cout << "Parameters set" << endl;
 
@@ -218,12 +227,12 @@ int main()   // main. Monte Carlo steps here?
     double equilibration_comptime = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
     cout << "Time to equilibrate: " << equilibration_comptime   << endl;
 
-
     start_clock = clock();
     // Monte Carlo steps and measurements
     for(int i=0; i<no_of_bins; i++)
     {   // For each bin
         double energy_av = 0;
+        if(LADYBUG)    cout << "i = " << i << "; energy_av before loop: " << energy_av << endl;
         std::vector<double> energies = std::vector<double>(mcsteps_inbin);
         for(int j=0; j<mcsteps_inbin; j++)
         {    // For each mcstep
@@ -233,6 +242,7 @@ int main()   // main. Monte Carlo steps here?
             // energy
             energies[j] = energy_old;    // Storing to get the standard deviation
             energy_av +=energy_old;
+            bigFile << i << " " << energy_av/(j+1) << endl;
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }
@@ -254,7 +264,7 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)
     {
         ofstream bondsatsiteFile;
-        string filenamePrefix1 = "somethingwrong_testingnow2";
+        string filenamePrefix1 = "test10x10x10_cubic";
         char *filename1 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         bondsatsiteFile.open(filename1);
@@ -262,7 +272,7 @@ int main()   // main. Monte Carlo steps here?
 
         // Opening file to print to
         ofstream sitesatbondFile;
-        string filenamePrefix2 = "somethingwrong_testingnow2";
+        string filenamePrefix2 = "test10x10x10_cubic";
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename2, "%s_sitesofbond.txt", filenamePrefix2.c_str() );   // Create filename with prefix and ending
         sitesatbondFile.open(filename2);
@@ -274,11 +284,11 @@ int main()   // main. Monte Carlo steps here?
         {
             bondsatsiteFile << i << " ";
             vector<int> linkstobond = mylattice.bondsofsites[i];
-            for(int j=0; j<12; j++) bondsatsiteFile << linkstobond[j] << " ";
+            for(int j=0; j<no_of_neighbours; j++) bondsatsiteFile << linkstobond[j] << " ";
             bondsatsiteFile << endl;
         }
 
-        for(int i=0; i<6*N; i++)
+        for(int i=0; i<0.5*no_of_neighbours*N; i++)
         {
             vector<int> linkstosites = mylattice.sitesofbonds[i];
             sitesatbondFile << i << " " << linkstosites[0] << " " << linkstosites[1] << endl;
@@ -286,11 +296,13 @@ int main()   // main. Monte Carlo steps here?
         bondsatsiteFile.close();
         sitesatbondFile.close();
         printFile.close();
+        bigFile.close();
     }
-    // Printing to file in some way
-    cout << "closing printfile" << endl;
-    printFile.close();
-
+    else
+    {
+        printFile.close();
+        bigFile.close();
+    }
 }
 
 // Functions which determine the Hamiltonian, feeding in the right interactions.
@@ -494,13 +506,14 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         if(dm)                   energy_diff += dm_energy(k, sx_t, sy_t, sz_t, mylattice);
         */
 
+        // Energy contribution after spin change
         if(sianisotropy)
         {
-            if(HUMBUG)    cout << "Finging the energy difference from sianisotropy" << endl;
+            if(HUMBUG)    cout << "Finding the energy difference from sianisotropy" << endl;
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
-            energy_diff += Dix*sx_t*sx_t + Diy*sy_t*sy_t+ Diz*sz_t*sz_t; // This is - originally
+            energy_diff -= Dix*sx_t*sx_t + Diy*sy_t*sy_t+ Diz*sz_t*sz_t; // This is - originally
             //energy_diff -= sianisotropy_energy(k, sx, sy, sz, mylattice);
         }
         if(magfield)
@@ -509,7 +522,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
             double hx = mylattice.sites[k].hx;
             double hy = mylattice.sites[k].hy;
             double hz = mylattice.sites[k].hz;
-            energy_diff += hx*sx_t + hy*sy_t + hz*sz_t;
+            energy_diff -= hx*sx_t + hy*sy_t + hz*sz_t;
             //energy_diff -= magfield_energy(k, sx, sy, sz, mylattice);
         }
         if(isotropic)
@@ -533,10 +546,9 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 partnerspiny += J*sy;
                 partnerspinz += J*sz;
             }
-            energy_diff -= partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t;
+            energy_diff += partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t;
             //energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
         }
-
         if(dm)
         {
             if(HUMBUG)    cout << "Finging the energy difference from dm" << endl;
@@ -551,7 +563,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 double syk = mylattice.sites[l].spiny;
                 double szk = mylattice.sites[l].spinz;
 
-                energy_diff += Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
+                energy_diff -= Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
             }
             //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
         }
