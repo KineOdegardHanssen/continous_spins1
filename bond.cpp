@@ -4,20 +4,7 @@ Bond::Bond()
 {
 }
 
-Bond::Bond(bool isotropic, bool dm, std::vector<double> tJs, std::vector<double> tDxes, std::vector<double> tDys, std::vector<double> tDzs)
-{
-    if(isotropic)    Js = tJs;
-    if(dm)
-    {
-        Dxes = tDxes;
-        Dys = tDys;
-        Dzs = tDzs;
-    }
-}
-
-
-/*
-Bond::Bond(bool isotropic, bool dm, std::vector bondints)
+Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<double> bondints)
 {
     this->bondints = bondints; // Do I really need this
     // Or function feed bondints
@@ -45,7 +32,6 @@ Bond::Bond(bool isotropic, bool dm, std::vector bondints)
         }
     }
 }
-*/
 
 /*
 Bond::Bond(int siteindex1, int siteindex2, double J, double Dx, double Dy, double Dz)

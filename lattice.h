@@ -22,7 +22,6 @@ public:
     typedef vector<vecint> intmatrix;
 
     //std::vector<Bond> bonds;
-    Bond bonds;
     std::vector<Site> sites;
 
     // Lists of how bonds and sites are related
@@ -38,7 +37,6 @@ public:
     // Feed interaction functions
     std::vector<double> givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield);
     std::vector<double> givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm);
-    void setbondinteractions_test();
 
 };
 
