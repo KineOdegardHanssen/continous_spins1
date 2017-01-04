@@ -1,13 +1,13 @@
 #include "site.h"
 
-Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds)
+Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint)
 {
     index = n;
     this->spinx = spinx;   // Have spinx in a new class, State?s
     this->spiny = spiny;
     this->spinz = spinz;
     this->siteint = siteint;
-    this->bonds = bonds;
+    //this->bonds = bonds;
 
     // Only including the relevant terms.
     if(sianisotropy==true)

@@ -34,14 +34,14 @@ void Lattice::quadratic_helical_initialize()
 
     // And, in the future, have it in the loop.
 
-    double J = 1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    //double J = 1;
+    //double Dx = 1;
+    //double Dy = 1;
+    //double Dz = 1;
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+    //std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     // Alternative implementation: Have Lattice tell which bond belongs to which sites. Initialization
     int bondcounter = 0;
@@ -64,19 +64,19 @@ void Lattice::quadratic_helical_initialize()
         int nm1 = (n+N-1)%N;
         int nmL = (n+N-L)%N;
 
-        std::vector<Bond> bonds;
+        //std::vector<Bond> bonds;
 
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
-        bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
-        bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
-        bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
+        //bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
         // or
         //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -113,6 +113,7 @@ void Lattice::quadratic_helical_initialize()
         }
         bondsofsites.push_back(bondsatsite);
     }
+    setbondinteractions_test();
 }
 
 void Lattice::cubic_helical_initialize()
@@ -139,14 +140,14 @@ void Lattice::cubic_helical_initialize()
 
     // And, in the future, have it in the loop.
 
-    double J = 1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    //double J = 1;
+    //double Dx = 1;
+    //double Dy = 1;
+    //double Dz = 1;
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+    //std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     // Alternative implementation: Have Lattice tell which bond belongs to which sites. Initialization
     int bondcounter = 0;
@@ -171,22 +172,22 @@ void Lattice::cubic_helical_initialize()
         int nmL = (n+N-L)%N;
         int nmL2 = (n+N-L*L)%N;
 
-        std::vector<Bond> bonds;
+        //std::vector<Bond> bonds;
 
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
-        bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
-        bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
-        bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
-        bonds.push_back(Bond(n, npL2, isotropic, dm, bondints));
-        bonds.push_back(Bond(n, nmL2, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
+        //bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, npL2, isotropic, dm, bondints));
+        //bonds.push_back(Bond(n, nmL2, isotropic, dm, bondints));
 
         // or
         //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint)); //, bonds)
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -225,7 +226,7 @@ void Lattice::cubic_helical_initialize()
         }
         bondsofsites.push_back(bondsatsite);
     }
-
+    setbondinteractions_test();
 }
 
 void Lattice::fcc_helical_initialize()
@@ -254,14 +255,14 @@ void Lattice::fcc_helical_initialize()
 
     // And, in the future, have it in the loop.
 
-    double J = 1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    //double J = 1;
+    //double Dx = 1;
+    //double Dy = 1;
+    //double Dz = 1;
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+    //std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     // Alternative implementation: Have Lattice tell which bond belongs to which sites. Initialization
     int bondcounter = 0;
@@ -292,9 +293,10 @@ void Lattice::fcc_helical_initialize()
         int nmL2m1 = (n+N-L*L+1)%N;
         int nmL2mL = (n+N-L*L+L)%N;
 
-        std::vector<Bond> bonds;
+        //std::vector<Bond> bonds;
 
         // Making a lot of bond classes to be added to bonds.
+        /*
         bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
         bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
         bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
@@ -307,13 +309,13 @@ void Lattice::fcc_helical_initialize()
         bonds.push_back(Bond(n, nmL2m1, isotropic, dm, bondints));
         bonds.push_back(Bond(n, npL2mL, isotropic, dm, bondints));
         bonds.push_back(Bond(n, nmL2mL, isotropic, dm, bondints));
-
+        */
         // or
         //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint)); // , bonds))
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -358,7 +360,26 @@ void Lattice::fcc_helical_initialize()
         }
         bondsofsites.push_back(bondsatsite);
     }
+    setbondinteractions_test();
+}
 
+void Lattice::setbondinteractions_test()
+{   // Should make this more flexible. Feeding in some chars or something.
+    // Alternatively, have that as class variables set by the constructor.
+    int limit = 0.5*no_of_neighbours*N; // Floor or something?
+    vector<double> Js = vector<double>(limit);
+    vector<double> Dxes = vector<double>(limit);
+    vector<double> Dys = vector<double>(limit);
+    vector<double> Dzs = vector<double>(limit);
+
+    for(int i=0; i<limit; i++)
+    {
+        Js[i]   = 1;
+        Dxes[i] = 1;
+        Dys[i]  = 1;
+        Dzs[i]  = 1;
+    }
+    bonds = Bond(isotropic, dm, Js, Dxes, Dys, Dzs);
 }
 
 std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)
