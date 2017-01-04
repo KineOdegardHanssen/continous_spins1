@@ -50,16 +50,16 @@ int main()   // main. Monte Carlo steps here?
 
     // Opening file to print to
     ofstream printFile;
-    //string filenamePrefix = "test10x10x10_cubic";
-    string filenamePrefix = "alejandro";
+    string filenamePrefix = "test10x10x10_cubic";
+    //string filenamePrefix = "alejandro";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
     delete filename;
 
     ofstream bigFile;
-    //string filenamePrefix = "test10x10x10_cubic";
-    string filenamePrefixb = "alicia";
+    string filenamePrefixb = "test10x10x10_cubic";
+    //string filenamePrefixb = "alicia";
     char *filenameb = new char[1000];                                // File name can have max 1000 characters
     sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefixb.c_str() );   // Create filename with prefix and ending
     bigFile.open(filenameb);
@@ -330,8 +330,7 @@ double magfield_energy(int i, double sx, double sy, double sz, Lattice mylattice
 
 double isotropic_energy(int i, double sx, double sy, double sz, Lattice mylattice)
 {
-    // Declare no_of_neighbours here in case
-    int no_of_neighbours = 12;
+    int no_of_neighbours = mylattice.no_of_neighbours;
     double iso_energy_contr;
     double partnerspinx = 0;
     double partnerspiny = 0;
@@ -359,7 +358,7 @@ double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice)
 {
     // Double loops and stuff. Could maybe make this more efficient
     double dm_energy_contr = 0;
-    int no_of_neighbours = 12;
+    int no_of_neighbours = mylattice.no_of_neighbours;
     for(int j=0; j<no_of_neighbours; j++)
     {
         int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.

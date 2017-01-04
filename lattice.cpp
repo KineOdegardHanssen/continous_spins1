@@ -58,11 +58,9 @@ void Lattice::quadratic_helical_initialize()
         // So no linking two cell corner atoms together as of now.
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
-        // Should probably verify this bit
+        // These neighbours are consistent with the sketch in Newman & Barkema
         int np1 = (n+1)%N;
         int npL = (n+L)%N;
-
-        // And should DEFINITELY verify this:
         int nm1 = (n+N-1)%N;
         int nmL = (n+N-L)%N;
 
@@ -115,8 +113,6 @@ void Lattice::quadratic_helical_initialize()
         }
         bondsofsites.push_back(bondsatsite);
     }
-
-
 }
 
 void Lattice::cubic_helical_initialize()
@@ -167,12 +163,10 @@ void Lattice::cubic_helical_initialize()
         // So no linking two cell corner atoms together as of now.
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
-        // Should probably verify this bit
+        // These seems correct. However, I should probably find a second source to support this.
         int np1 = (n+1)%N;                   // Or should I call a function neighbours_xxxtype()?
         int npL = (n+L)%N;                   // Need to change these here, at least.
         int npL2 = (n+L*L)%N;
-
-        // And should DEFINITELY verify this:
         int nm1 = (n+N-1)%N;
         int nmL = (n+N-L)%N;
         int nmL2 = (n+N-L*L)%N;
@@ -291,9 +285,7 @@ void Lattice::fcc_helical_initialize()
         int npLm1 = (n+L-1)%N;
         int npL2m1 = (n+L*L-1)%N;
         int npL2mL = (n+L*L-L)%N;
-
-        // And should DEFINITELY verify this:
-        int nm1 = (n+N-1)%N;
+        int nm1 = (n+N-1)%N; // Seems to work for the 5x5 case, at least
         int nmL = (n+N-L)%N;
         int nmL2 = (n+N-L*L)%N;
         int nmLm1 = (n+N-L+1)%N;
