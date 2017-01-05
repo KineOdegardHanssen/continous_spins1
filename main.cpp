@@ -82,6 +82,7 @@ int main()   // main. Monte Carlo steps here?
     int no_of_neighbours = mylattice.no_of_neighbours;
 
    if(DEBUG)     cout << "Lattice set up" << endl;
+   if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
 
     // Setting the initial energy    // Should we have an own function for calculating the energy?...Probably not
     int N = mylattice.N;
@@ -122,43 +123,7 @@ int main()   // main. Monte Carlo steps here?
         // Contribution from bonds
         if(isotropic)
         {
-            /*
-            // Only need half of these. See which is contained in what we did before. Sum over bonds instead?
-            double partnerspinx = 0;
-            double partnerspiny = 0;
-            double partnerspinz = 0;
-            vector<int> spinbonds = mylattice.bondsofsites[i];
-            for(int j=0; j<no_of_neighbours; j++)
-            {   // Looking at bond j
-                // Can implement this as
-                if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
-                int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==i)    neighbour = bondj[1];
-                else               neighbour = bondj[0];
-                if(BEDBUG)    cout << "Have set neighbour, no. is: " << neighbour << "; Our spin: " << i << endl;
-                double J = mylattice.bonds.Js[jbond]; // Have to change this implementation.
-                if(BEDBUG)    cout << "Have accessed J in bond between spins" << endl;
-                double sxk = mylattice.sites[neighbour].spinx;
-                double syk = mylattice.sites[neighbour].spiny;
-                double szk = mylattice.sites[neighbour].spinz;
-                if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
-                partnerspinx += J*sxk;
-                partnerspiny += J*syk;
-                partnerspinz += J*szk;
-                if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
-            }
-            if(BEDBUG)   cout << "Done with the loop in isotropic" << endl;
-            double sx = mylattice.sites[i].spinx;
-            double sy = mylattice.sites[i].spiny;
-            double sz = mylattice.sites[i].spinz;
-            energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
-            // half this thing. Or find a reasonable way to not double count.
-            if(BEDBUG)     cout << "Done with isotropic" << endl;
-            */
-            // If the energy from the bonds is not to be manually halved:
-
+            // Only count every contribution once
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
@@ -200,31 +165,6 @@ int main()   // main. Monte Carlo steps here?
         if(dm)
         {
             if(BEDBUG)    cout << "In dm" << endl;
-            // Using the new class hierarchy
-            /*
-            double sxi = mylattice.sites[i].spinx;
-            double syi = mylattice.sites[i].spiny;
-            double szi = mylattice.sites[i].spinz;
-            vector<int> spinbonds = mylattice.bondsofsites[i];
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==i)    neighbour = bondj[1];
-                else               neighbour = bondj[0];
-                double Dx = mylattice.bonds.Dxes[jbond];  // must change the implementation here. Not quite sure how
-                double Dy = mylattice.bonds.Dys[jbond];  // to arrange it.
-                double Dz = mylattice.bonds.Dzs[jbond];
-
-                double sxk = mylattice.sites[neighbour].spinx;
-                double syk = mylattice.sites[neighbour].spiny;
-                double szk = mylattice.sites[neighbour].spinz;
-
-                energy_contribution_bonds -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
-            }
-            */
-
             // Using the new class hierarchy and avoiding double-counting
             double sxi = mylattice.sites[i].spinx;
             double syi = mylattice.sites[i].spiny;
@@ -310,7 +250,7 @@ int main()   // main. Monte Carlo steps here?
         for(int j=0; j<mcsteps_inbin; j++)
         {    // For each mcstep
             energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
-
+            //cout << "The energy we have inside the loop: " << energy_old << endl;
             // Measurements
             // energy
             energies[j] = energy_old;    // Storing to get the standard deviation
@@ -383,6 +323,7 @@ int main()   // main. Monte Carlo steps here?
 // Functions which determine the Hamiltonian, feeding in the right interactions.
 
 // Send in all neccessary quantities instead...
+/*
 double sianisotropy_energy(int i, double sx, double sy, double sz, Lattice mylattice)   // This seemed to be quite slow, unfortunately
 {
     double Dix = mylattice.sites[i].Dix;
@@ -405,57 +346,7 @@ double magfield_energy(int i, double sx, double sy, double sz, Lattice mylattice
 
 double isotropic_energy(int i, double sx, double sy, double sz, Lattice mylattice)
 {
-    /*
-    int no_of_neighbours = mylattice.no_of_neighbours;
-    double iso_energy_contr;
-    double partnerspinx = 0;
-    double partnerspiny = 0;
-    double partnerspinz = 0;
-    for(int j=0; j<no_of_neighbours; j++)
-    {
-        int k = mylattice.sites[i].bonds[j].siteindex2;
-        // I could, alternatively, just store the index
-        // of bonds. But then I need to organize the bonds
-        // and coordinate them with the sites. List of
-        //sites that points to the bonds and vice versa.
-        double J = mylattice.sites[i].bonds[j].J;
-        double sxk = mylattice.sites[k].spinx;
-        double syk = mylattice.sites[k].spiny;
-        double szk = mylattice.sites[k].spinz;
-        partnerspinx += J*sxk;
-        partnerspiny += J*syk;
-        partnerspinz += J*szk;
-    }
-    iso_energy_contr = partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
-    return iso_energy_contr;
-    */
-    // New implementation
-    /*
-    int no_of_neighbours = mylattice.no_of_neighbours;
-    double iso_energy_contr;
-    double partnerspinx = 0;
-    double partnerspiny = 0;
-    double partnerspinz = 0;
-    vector<int> spinbonds = mylattice.bondsofsites[k];
-    for(int j=0; j<no_of_neighbours; j++)
-    {
-        int neighbour;
-        int jbond = spinbonds[j];
-        vector<int> bondj = mylattice.sitesofbonds[jbond];
-        if(bondj[0]==i)    neighbour = bondj[1];
-        else               neighbour = bondj[0];
-        double J = mylattice.bonds.Js[jbond];
-        double sxk = mylattice.sites[neighbour].spinx;
-        double syk = mylattice.sites[k].spiny;
-        double szk = mylattice.sites[k].spinz;
-        partnerspinx += J*sxk;
-        partnerspiny += J*syk;
-        partnerspinz += J*szk;
-    }
-    iso_energy_contr = partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
-    return iso_energy_contr;
-    */
-    // New implementation
+    // New implementation, avoiding double-counting
 
     int no_of_neighbours = mylattice.no_of_neighbours;
     double iso_energy_contr;
@@ -487,47 +378,6 @@ double isotropic_energy(int i, double sx, double sy, double sz, Lattice mylattic
 double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice)
 {
     // Double loops and stuff. Could maybe make this more efficient
-    /*
-    double dm_energy_contr = 0;
-    int no_of_neighbours = mylattice.no_of_neighbours;
-    for(int j=0; j<no_of_neighbours; j++)
-    {
-        int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-        double Dx = mylattice.sites[i].bonds[j].Dx;
-        double Dy = mylattice.sites[i].bonds[j].Dy;
-        double Dz = mylattice.sites[i].bonds[j].Dz;
-
-        double sxk = mylattice.sites[k].spinx;
-        double syk = mylattice.sites[k].spiny;
-        double szk = mylattice.sites[k].spinz;
-
-        dm_energy_contr -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
-
-    }
-    */
-    // New implementation
-    /*
-    double dm_energy_contr = 0;
-    int no_of_neighbours = mylattice.no_of_neighbours;
-    vector<int> spinbonds = mylattice.bondsofsites[k];
-    for(int j=0; j<no_of_neighbours; j++)
-    {
-        int neighbour;
-        int jbond = spinbonds[j];
-        vector<int> bondj = mylattice.sitesofbonds[jbond];
-        if(bondj[0]==i)    neighbour = bondj[1];
-        else               neighbour = bondj[0];
-        double Dx = mylattice.bonds.Dxes[jbond];
-        double Dy = mylattice.bonds.Dys[jbond];
-        double Dz = mylattice.bonds.Dzs[jbond];
-
-        double sxk = mylattice.sites[k].spinx;
-        double syk = mylattice.sites[k].spiny;
-        double szk = mylattice.sites[k].spinz;
-
-        dm_energy_contr -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
-
-    } */
     // New implementation, no double counting
 
     double dm_energy_contr = 0;
@@ -554,6 +404,7 @@ double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice)
     }
     return dm_energy_contr;
 }
+*/
 
 
 // Monte Carlo function
@@ -610,8 +461,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(isotropic)
         {
-            // New implementation
-            /*
+            // Considering ONE spin flip, so double counting is not an issue here
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
@@ -621,49 +471,25 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 int neighbour;
                 int jbond = spinbonds[j];
                 vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==n)    neighbour = bondj[1];
+                if(bondj[0]==k)    neighbour = bondj[1];
                 else               neighbour = bondj[0];
-                if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
+                //cout << "our spin : " << k << " its neighbour: " << neighbour << endl;
+                if(HUMBUG)    cout << "Spin no. " << neighbour << " chosen." << endl;
                 double J = mylattice.bonds.Js[jbond];
-                double sxk = mylattice.sites[l].spinx;
-                double syk = mylattice.sites[l].spiny;
-                double szk = mylattice.sites[l].spinz;
+                double sxk = mylattice.sites[neighbour].spinx;
+                double syk = mylattice.sites[neighbour].spiny;
+                double szk = mylattice.sites[neighbour].spinz;
                 partnerspinx += J*sxk;
                 partnerspiny += J*syk;
                 partnerspinz += J*szk;
-            }
-            energy_diff -= 0.5*(partnerspinx*sx + partnerspiny*sy + partnerspinz*sz);*/
-            // New implementation, no halving the energy
-
-            double partnerspinx = 0;
-            double partnerspiny = 0;
-            double partnerspinz = 0;
-            vector<int> spinbonds = mylattice.bondsofsites[k];
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==n)
-                {
-                    neighbour = bondj[1];
-                    if(HUMBUG)    cout << "Spin no. " << neighbour << " chosen." << endl;
-                    double J = mylattice.bonds.Js[jbond];
-                    double sxk = mylattice.sites[neighbour].spinx;
-                    double syk = mylattice.sites[neighbour].spiny;
-                    double szk = mylattice.sites[neighbour].spinz;
-                    partnerspinx += J*sxk;
-                    partnerspiny += J*syk;
-                    partnerspinz += J*szk;
-                }
             }
             energy_diff -= partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             //energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
         }
         if(dm)
         {
-            // New implementation
-            /*
+            // Considering ONE spin flip, so double counting is not an issue here
+
             if(HUMBUG)    cout << "In dm in mcstepf" << endl;
             vector<int> spinbonds = mylattice.bondsofsites[k];
             for(int j=0; j<no_of_neighbours; j++)
@@ -671,53 +497,26 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 int neighbour;
                 int jbond = spinbonds[j];
                 vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==n)    neighbour = bondj[1];
+                if(bondj[0]==k)    neighbour = bondj[1];
                 else               neighbour = bondj[0];
-                if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
-
-
+                if(HUMBUG)    cout << "Spin no. " << neighbour << " chosen." << endl;
                 double Dx = mylattice.bonds.Dxes[jbond];
                 double Dy = mylattice.bonds.Dys[jbond];
                 double Dz = mylattice.bonds.Dzs[jbond];
                 if(HUMBUG)    cout << "Bonds accessed" << endl;
 
-                double sxk = mylattice.sites[l].spinx;
-                double syk = mylattice.sites[l].spiny;
-                double szk = mylattice.sites[l].spinz;
-                if(HUMBUG)    cout << "Components of spin no. " << l << " accessed." << endl;
-
-                energy_diff +=0.5*(Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk));
-            } */
-            // New implementation, no couble counting
-
-            if(HUMBUG)    cout << "In dm in mcstepf" << endl;
-            vector<int> spinbonds = mylattice.bondsofsites[k];
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==n)
-                {
-                    neighbour = bondj[1];
-                    if(HUMBUG)    cout << "Spin no. " << neighbour << " chosen." << endl;
-                    double Dx = mylattice.bonds.Dxes[jbond];
-                    double Dy = mylattice.bonds.Dys[jbond];
-                    double Dz = mylattice.bonds.Dzs[jbond];
-                    if(HUMBUG)    cout << "Bonds accessed" << endl;
-
-                    double sxk = mylattice.sites[neighbour].spinx;
-                    double syk = mylattice.sites[neighbour].spiny;
-                    double szk = mylattice.sites[neighbour].spinz;
-                    if(HUMBUG)    cout << "Components of spin no. " << neighbour << " accessed." << endl;
-                    energy_diff += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
-                }
+                double sxk = mylattice.sites[neighbour].spinx;
+                double syk = mylattice.sites[neighbour].spiny;
+                double szk = mylattice.sites[neighbour].spinz;
+                if(HUMBUG)    cout << "Components of spin no. " << neighbour << " accessed." << endl;
+                energy_diff += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
             }
 
             if(HUMBUG)    cout << "Done with the loop in dm in mcstepf" << endl;
             //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
         }
         if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
+        //cout << "Contribution from energy before: " << energy_diff << endl;
 
         // Changing the spin (tentatively):
         double u = distribution_u(generator_u);
@@ -761,8 +560,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(isotropic)
         {
-            // New implementation
-            /*
+            // Considering ONE spin flip, so double counting is not an issue here
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
@@ -772,47 +570,25 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 int neighbour;
                 int jbond = spinbonds[j];
                 vector<int> bondj = mylattice.sitesofbonds[jbond];
+                //cout << "j = " << j << endl;
                 if(bondj[0]==k)    neighbour = bondj[1];
                 else               neighbour = bondj[0];
                 double J = mylattice.bonds.Js[jbond];
+                //cout << "J = " << J << endl;
                 double sxk = mylattice.sites[neighbour].spinx;
                 double syk = mylattice.sites[neighbour].spiny;
                 double szk = mylattice.sites[neighbour].spinz;
                 partnerspinx += J*sxk;
                 partnerspiny += J*syk;
                 partnerspinz += J*szk;
-            } */
-            // New implementation, no double counting
-
-            double partnerspinx = 0;
-            double partnerspiny = 0;
-            double partnerspinz = 0;
-            vector<int> spinbonds = mylattice.bondsofsites[k];
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==k)
-                {
-                    neighbour = bondj[1];
-                    double J = mylattice.bonds.Js[jbond];
-                    double sxk = mylattice.sites[neighbour].spinx;
-                    double syk = mylattice.sites[neighbour].spiny;
-                    double szk = mylattice.sites[neighbour].spinz;
-                    partnerspinx += J*sxk;
-                    partnerspiny += J*syk;
-                    partnerspinz += J*szk;
-                }
             }
             energy_diff += partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t;
             //energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
         }
         if(dm)
         {
-            // New implementation
-            /*
-            if(HUMBUG)    cout << "Finging the energy difference from dm" << endl;
+            // Considering ONE spin flip, so double counting is not an issue here
+            if(HUMBUG)    cout << "Finding the energy difference from dm" << endl;
             vector<int> spinbonds = mylattice.bondsofsites[k];
             for(int j=0; j<no_of_neighbours; j++)
             {
@@ -830,33 +606,10 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 double szk = mylattice.sites[neighbour].spinz;
 
                 energy_diff -= Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
-            } */
-            // New implementation, without double counting
-
-            if(HUMBUG)    cout << "Finging the energy difference from dm" << endl;
-            vector<int> spinbonds = mylattice.bondsofsites[k];
-            for(int j=0; j<no_of_neighbours; j++)
-            {
-                int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==k)
-                {
-                    neighbour = bondj[1];
-                    double Dx = mylattice.bonds.Dxes[jbond];
-                    double Dy = mylattice.bonds.Dys[jbond];
-                    double Dz = mylattice.bonds.Dzs[jbond];
-
-                    double sxk = mylattice.sites[neighbour].spinx;
-                    double syk = mylattice.sites[neighbour].spiny;
-                    double szk = mylattice.sites[neighbour].spinz;
-
-                    energy_diff -= Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
-                }
             }
             //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
         }
-
+        //cout << "energy_diff = " << energy_diff << endl;
         // This should work, but there is probably some error here...
         energy_new = energy_old + energy_diff;
         // Or should I just test if energy_new < 0? ... May have to find energy_new anyways...
@@ -870,8 +623,9 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
             mylattice.sites[k].spinz = sz_t;
             //cout << ";    Spin after: [" << mylattice.sites[k].spinx << "," << mylattice.sites[k].spiny << "," << mylattice.sites[k].spinz << "]" << endl;
             //cout << "Energy decreased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]. deltaE = " << energy_diff << endl;
+            //cout << "ENERGY DECREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
             changes+=1;
-            cout << "Percentage of hits: " << changes/(n+1)  << endl;
+            //cout << "Percentage of hits: " << changes/(n+1)  << endl;
             energy_old = energy_new; // Update energy
             //cout << "Energy decreased. Energy difference = " << energy_diff << endl;
         }
@@ -888,12 +642,14 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 //cout << ";    Spin after: [" << mylattice.sites[k].spinx << "," << mylattice.sites[k].spiny << "," << mylattice.sites[k].spinz << "]" << endl;
                 //cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]. deltaE = " << energy_diff << endl;
                 changes+=1;
-                cout << "Percentage of hits: " << changes/(n+1)  << endl;
+                //cout << "Percentage of hits: " << changes/(n+1)  << endl;
+                //cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
                 energy_old = energy_new;  // Update energy
                 //cout << "NB! Energy increased! Energy difference = " << energy_diff << endl;
             }
         }
     }
+    //cout << "The energy mcstepf sends to the loop:" << energy_old << endl;
     return energy_old;
 
 }
