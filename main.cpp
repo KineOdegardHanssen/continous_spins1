@@ -8,7 +8,6 @@
 #include <site.h>
 #include <lattice.h>
 
-
 using namespace std;
 using std::ofstream; using std::string;
 
@@ -20,7 +19,7 @@ double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice);
 
 
 void MonteCarlo();
-double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n);
+vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n);
 // Is the next one neccessary?
 double energy(bool isotropic, bool sianisotropy, bool magfield, bool dm, Lattice mylattice);
 
@@ -34,11 +33,12 @@ int main()   // main. Monte Carlo steps here?
 
     // Input parameters
     int L = 10; // The program is going to be slower than before as we have a 3D lattice
-    bool isotropic = true;
-    bool sianisotropy = true;
-    bool magfield = false;
-    bool dm = false;
-    double beta = 0.1; // Just setting a beta.
+    bool isotropic    = true;
+    bool sianisotropy = false;
+    bool magfield     = false;
+    bool dm           = false;
+    //char latticetype = 'FH'; // FH: face-centered cubic,helical; C: cubic, helical; Q:quadratic, helical
+    double beta = 2.5; // Just setting a beta.
 
     // Run parameters
     int eqsteps = 1000; // Number of steps in the equilibration procedure
@@ -51,21 +51,27 @@ int main()   // main. Monte Carlo steps here?
     // Opening file to print to
     ofstream printFile;
     //string filenamePrefix = "test10x10x10_cubic";
-    string filenamePrefix = "macbeth";
+    string filenamePrefix = "ising_quadratic10t10t10beta2p5";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
     delete filename;
 
     ofstream bigFile;
-    //string filenamePrefixb = "test10x10x10_cubic";
-    string filenamePrefixb = "regan";
     char *filenameb = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefixb.c_str() );   // Create filename with prefix and ending
+    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     bigFile.open(filenameb);
     delete filenameb;
 
+    // File for storing the acceptance rates for each MC-step
+    ofstream arFile;
+    char *filenamea = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamea, "%s_acceptancerate.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    arFile.open(filenamea);
+    delete filenamea;
+
     if(DEBUG)    cout << "Parameters set" << endl;
+    if(DEBUG)    cout << "beta = " << beta << endl;
 
     // Setting up the lattice with site parameters and interactions
 
@@ -74,7 +80,17 @@ int main()   // main. Monte Carlo steps here?
     Lattice mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
     if(DEBUG)    cout << "Instance of class Lattice initialized" << endl;
     // Choosing type of lattice
-    mylattice.cubic_helical_initialize();
+    //mylattice.fcc_helical_initialize();
+    //mylattice.cubic_helical_initialize();
+    mylattice.quadratic_helical_initialize();
+    /*
+    if(latticetype=='FH')
+    {
+        mylattice.fcc_helical_initialize();
+        cout << "Lattice type: fcc (helical bc's)" << endl;
+    } */
+    //else if(latticetype=='CH')  mylattice.cubic_helical_initialize();
+    //else if(latticetype=='QH')  mylattice.quadratic_helical_initialize();
     // Should I be storing the number of neighbours in Lattice or Site? Probably a good idea. But for know:
     end_clock = clock();
     double total_time_initialize_lattice = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
@@ -82,6 +98,7 @@ int main()   // main. Monte Carlo steps here?
     int no_of_neighbours = mylattice.no_of_neighbours;
 
    if(DEBUG)     cout << "Lattice set up" << endl;
+   if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
 
     // Setting the initial energy    // Should we have an own function for calculating the energy?...Probably not
     int N = mylattice.N;
@@ -209,19 +226,22 @@ int main()   // main. Monte Carlo steps here?
 
     if(DEBUG)    cout << "Done creating random generators" << endl;
 
-
+    double acceptancerate;
+    vector<double> mcstepf_output;
     // Equilibration steps
     start_clock = clock();
     for(int i=0; i<eqsteps; i++)
     {
         if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
         //cout << "In equilibration loop" << endl;
-        //double start_clock_i  = clock();
-        energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+        //double start_clock_i  = clock();,
+        mcstepf_output = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+        energy_old = mcstepf_output[0];
+        acceptancerate = mcstepf_output[1];
         //double end_clock_i = clock();
         //double equilibration_comptime_i = (end_clock_i - start_clock_i)/(double) CLOCKS_PER_SEC;
         //cout << "i: " << i << "; time to compute mcstep i: " << equilibration_comptime_i << endl;
-        if(HUMBUG)    cout << "Done with the equilibration step" << endl;
+        if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
     }
     end_clock = clock();
     double equilibration_comptime = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
@@ -235,13 +255,16 @@ int main()   // main. Monte Carlo steps here?
         if(LADYBUG)    cout << "i = " << i << "; energy_av before loop: " << energy_av << endl;
         std::vector<double> energies = std::vector<double>(mcsteps_inbin);
         for(int j=0; j<mcsteps_inbin; j++)
-        {    // For each mcstep
-            energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
-
+        {    // For each mcstep, acceptancerate
+            mcstepf_output = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+            energy_old = mcstepf_output[0];
+            acceptancerate = mcstepf_output[1];
+            //cout << "The energy we have inside the loop: " << energy_old << endl;
             // Measurements
             // energy
             energies[j] = energy_old;    // Storing to get the standard deviation
             energy_av +=energy_old;
+            arFile << acceptancerate << endl;
             bigFile << i << " " << energy_av/(j+1) << endl;
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
@@ -265,7 +288,7 @@ int main()   // main. Monte Carlo steps here?
     {
         ofstream bondsatsiteFile;
         //string filenamePrefix1 = "test10x10x10_cubic";
-        string filenamePrefix1 = "desdemona";
+        string filenamePrefix1 = "ising_quadratic10t10t10beta2p5";
         char *filename1 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         bondsatsiteFile.open(filename1);
@@ -273,10 +296,8 @@ int main()   // main. Monte Carlo steps here?
 
         // Opening file to print to
         ofstream sitesatbondFile;
-        //string filenamePrefix2 = "test10x10x10_cubic";
-        string filenamePrefix2 = "goneril";
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
-        sprintf(filename2, "%s_sitesofbond.txt", filenamePrefix2.c_str() );   // Create filename with prefix and ending
+        sprintf(filename2, "%s_sitesofbond.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         sitesatbondFile.open(filename2);
         delete filename2;
 
@@ -391,14 +412,15 @@ void MonteCarlo()
 // Should rather call Metropolis
 // But have to make sure that mylattice is changed.
 // make it double to return the energy?
-double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
+vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
+    bool DEBUG = true;
     bool HUMBUG = false;  // The humbug is defeated. I think...
+    double changes = 0;
     if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
     for(int n=0; n<N; n++)
     {
         if(HUMBUG)    cout << "Inside loop in mcstepf. n = " << n << endl;
-        double energy_new = energy_old;
         double energy_diff = 0;
 
         int k = distribution_n(generator_n);
@@ -456,7 +478,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 partnerspinz += J*szk;
             }
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
-            energy_diff -= 0.5*(partnerspinx*sx + partnerspiny*sy + partnerspinz*sz);
+            energy_diff -= partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             //energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
         }
         if(dm)
@@ -478,12 +500,13 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 double szk = mylattice.sites[l].spinz;
                 if(HUMBUG)    cout << "Components of spin no. " << l << " accessed." << endl;
 
-                energy_diff += 0.5*(Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk));
+                energy_diff += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
             }
             if(HUMBUG)    cout << "Done with the loop in dm in mcstepf" << endl;
             //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
         }
         if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
+        //cout << "Contribution from energy before: " << energy_diff << endl;
 
         // Changing the spin (tentatively):
         double u = distribution_u(generator_u);
@@ -518,7 +541,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(magfield)
         {
-            if(HUMBUG)    cout << "Finging the energy difference from magfield" << endl;
+            if(HUMBUG)    cout << "Finding the energy difference from magfield" << endl;
             double hx = mylattice.sites[k].hx;
             double hy = mylattice.sites[k].hy;
             double hz = mylattice.sites[k].hz;
@@ -527,7 +550,7 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         }
         if(isotropic)
         {
-            if(HUMBUG)    cout << "Finging the energy difference from isotropic" << endl;
+            if(HUMBUG)    cout << "Finding the energy difference from isotropic" << endl;
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
@@ -546,12 +569,13 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 partnerspiny += J*syk;
                 partnerspinz += J*szk;
             }
-            energy_diff += 0.5*(partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t);
+            // Halving it because of double counting
+            energy_diff += partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t;
             //energy_diff -= isotropic_energy(k, sx, sy, sz, mylattice);
         }
         if(dm)
         {
-            if(HUMBUG)    cout << "Finging the energy difference from dm" << endl;
+            if(HUMBUG)    cout << "Finding the energy difference from dm" << endl;
             for(int j=0; j<no_of_neighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
@@ -563,13 +587,13 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 double syk = mylattice.sites[l].spiny;
                 double szk = mylattice.sites[l].spinz;
 
-                energy_diff -= 0.5*(Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk));
+                energy_diff -= Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
             }
             //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
         }
 
         // This should work, but there is probably some error here...
-        energy_new = energy_old + energy_diff;
+        double energy_new = energy_old + energy_diff;
         // Or should I just test if energy_new < 0? ... May have to find energy_new anyways...
 
         // Updating the energy and the state according to Metropolis
@@ -578,6 +602,10 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
             mylattice.sites[k].spinx = sx_t;
             mylattice.sites[k].spiny = sy_t;
             mylattice.sites[k].spinz = sz_t;
+            //cout << "Energy decreased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]." << " deltaE =  " << energy_diff  << endl;
+            changes+=1;
+            //cout << "Percentage of hits: " << changes/(n+1)  << endl;
+            //cout << "ENERGY DECREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
             energy_old = energy_new; // Update energy
         }
         else
@@ -589,10 +617,19 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
                 mylattice.sites[k].spinx = sx_t;
                 mylattice.sites[k].spiny = sy_t;
                 mylattice.sites[k].spinz = sz_t;
+                //cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]" << energy_diff << endl;
+                //cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
+                changes+=1;
+                //cout << "Percentage of hits: " << changes/(n+1)  << endl;
                 energy_old = energy_new;  // Update energy
             }
         }
     }
-    return energy_old;
+    double acceptancerate = changes/N; // Write the percentage of hits to file.
+    vector<double> mcstepf_return = vector<double>(2);
+    mcstepf_return[0] = energy_old;
+    mcstepf_return[1] = acceptancerate;
+
+    return mcstepf_return;
 
 }
