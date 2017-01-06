@@ -373,7 +373,8 @@ void Lattice::setbondinteractions_test()
     vector<double> Dzs = vector<double>(limit);
 
     for(int i=0; i<limit; i++)
-    {
+    {   // Is this a bit overkill? Maybe have an option of sending in empty vectors when
+        // we don't consider that exact interaction?
         Js[i]   = 1;
         Dxes[i] = 1;
         Dys[i]  = 1;
@@ -418,7 +419,7 @@ std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz,
         return siteint;
     }
 }
-
+/*
 std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm)
 {
     if(isotropic && dm)
@@ -451,3 +452,4 @@ std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, dou
         return bondints;
     }
 }
+*/

@@ -20,7 +20,7 @@ double dm_energy(int i, double sxi, double syi, double szi, Lattice mylattice);
 
 
 void MonteCarlo();
-double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n);
+vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n);
 // Is the next one neccessary?
 double energy(bool isotropic, bool sianisotropy, bool magfield, bool dm, Lattice mylattice);
 
@@ -38,7 +38,7 @@ int main()   // main. Monte Carlo steps here?
     bool sianisotropy = true;
     bool magfield = false;
     bool dm = false;
-    double beta = 0.1; // Just setting a beta.
+    double beta = 0.0; // Just setting a beta.
 
     // Run parameters
     int eqsteps = 1000; // Number of steps in the equilibration procedure
@@ -49,21 +49,30 @@ int main()   // main. Monte Carlo steps here?
     double start_clock, end_clock;
 
     // Opening file to print to
+    // File for results
     ofstream printFile;
     //string filenamePrefix = "test10x10x10_fcc";
-    string filenamePrefix = "macbethII";
+    string filenamePrefix = "fcc10t10t10beta0";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
     delete filename;
 
+    // File for inspecting every step
     ofstream bigFile;
-    //string filenamePrefixb = "test10x10x10_fcc";
-    string filenamePrefixb = "reganII";
     char *filenameb = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefixb.c_str() );   // Create filename with prefix and ending
+    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     bigFile.open(filenameb);
     delete filenameb;
+
+    // File for storing the acceptance rates for each MC-step
+    ofstream arFile;
+    char *filenamea = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamea, "%s_acceptancerate.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    arFile.open(filenamea);
+    delete filenamea;
+
+
 
     if(DEBUG)    cout << "Parameters set" << endl;
 
@@ -74,7 +83,7 @@ int main()   // main. Monte Carlo steps here?
     Lattice mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
     if(DEBUG)    cout << "Instance of class Lattice initialized" << endl;
     // Choosing type of lattice
-    mylattice.cubic_helical_initialize();
+    mylattice.fcc_helical_initialize();
     // Should I be storing the number of neighbours in Lattice or Site? Probably a good idea. But for know:
     end_clock = clock();
     double total_time_initialize_lattice = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
@@ -222,7 +231,8 @@ int main()   // main. Monte Carlo steps here?
 
     if(DEBUG)    cout << "Done creating random generators" << endl;
 
-
+    double acceptancerate;
+    vector<double> mcstepf_output;
     // Equilibration steps
     start_clock = clock();
     for(int i=0; i<eqsteps; i++)
@@ -230,7 +240,8 @@ int main()   // main. Monte Carlo steps here?
         if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
         //cout << "In equilibration loop" << endl;
         //double start_clock_i  = clock();
-        energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+        mcstepf_output = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+        energy_old     = mcstepf_output[0];
         //double end_clock_i = clock();
         //double equilibration_comptime_i = (end_clock_i - start_clock_i)/(double) CLOCKS_PER_SEC;
         //cout << "i: " << i << "; time to compute mcstep i: " << equilibration_comptime_i << endl;
@@ -249,13 +260,16 @@ int main()   // main. Monte Carlo steps here?
         std::vector<double> energies = std::vector<double>(mcsteps_inbin);
         for(int j=0; j<mcsteps_inbin; j++)
         {    // For each mcstep
-            energy_old = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+            mcstepf_output = mcstepf(no_of_neighbours, N, beta, energy_old, sianisotropy, magfield, isotropic, dm, mylattice, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+            energy_old     = mcstepf_output[0];
+            acceptancerate = mcstepf_output[1];
             //cout << "The energy we have inside the loop: " << energy_old << endl;
             // Measurements
             // energy
             energies[j] = energy_old;    // Storing to get the standard deviation
             energy_av +=energy_old;
             bigFile << i << " " << energy_av/(j+1) << endl;
+            arFile << acceptancerate << endl;
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }
@@ -278,7 +292,7 @@ int main()   // main. Monte Carlo steps here?
     {
         ofstream bondsatsiteFile;
         //string filenamePrefix1 = "test10x10x10_fcc";
-        string filenamePrefix1 = "desdemonaII";
+        string filenamePrefix1 = "fcc10t10t10beta0";
         char *filename1 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         bondsatsiteFile.open(filename1);
@@ -286,10 +300,8 @@ int main()   // main. Monte Carlo steps here?
 
         // Opening file to print to
         ofstream sitesatbondFile;
-        //string filenamePrefix2 = "test10x10x10_fcc";
-        string filenamePrefix2 = "gonerilII";
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
-        sprintf(filename2, "%s_sitesofbond.txt", filenamePrefix2.c_str() );   // Create filename with prefix and ending
+        sprintf(filename2, "%s_sitesofbond.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         sitesatbondFile.open(filename2);
         delete filename2;
 
@@ -312,11 +324,13 @@ int main()   // main. Monte Carlo steps here?
         sitesatbondFile.close();
         printFile.close();
         bigFile.close();
+        arFile.close();
     }
     else
     {
         printFile.close();
         bigFile.close();
+        arFile.close();
     }
 }
 
@@ -419,8 +433,9 @@ void MonteCarlo()
 // Should rather call Metropolis
 // But have to make sure that mylattice is changed.
 // make it double to return the energy?
-double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
+vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
+    bool DEBUG = true;
     bool HUMBUG = false;  // The humbug is defeated. I think...
     double changes = 0;
     if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
@@ -589,13 +604,13 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
         {
             // Considering ONE spin flip, so double counting is not an issue here
             if(HUMBUG)    cout << "Finding the energy difference from dm" << endl;
-            vector<int> spinbonds = mylattice.bondsofsites[k];
+            vector<int> spinbonds = mylattice.bondsofsites[k];     // The list of neighbours of spin k
             for(int j=0; j<no_of_neighbours; j++)
             {
                 int neighbour;
-                int jbond = spinbonds[j];
-                vector<int> bondj = mylattice.sitesofbonds[jbond];
-                if(bondj[0]==k)    neighbour = bondj[1];
+                int jbond = spinbonds[j];                          // The index the jth bond of spin k.
+                vector<int> bondj = mylattice.sitesofbonds[jbond]; // The vector of the endpoints of bond
+                if(bondj[0]==k)    neighbour = bondj[1];           // Finding the neighbour of spin k
                 else               neighbour = bondj[0];
                 double Dx = mylattice.bonds.Dxes[jbond];
                 double Dy = mylattice.bonds.Dys[jbond];
@@ -649,7 +664,11 @@ double mcstepf(int no_of_neighbours, double N, double beta, double energy_old, b
             }
         }
     }
-    //cout << "The energy mcstepf sends to the loop:" << energy_old << endl;
-    return energy_old;
+    double acceptancerate = changes/N;
+    vector<double> mcstepf_return;
+    mcstepf_return[0] = energy_old;
+    mcstepf_return[1] = acceptancerate;
+
+    return mcstepf_return;
 
 }
