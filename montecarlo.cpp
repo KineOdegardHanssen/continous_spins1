@@ -13,12 +13,11 @@ MonteCarlo::MonteCarlo(bool isotropic, bool sianisotropy, bool magfield, bool dm
     this->N = mylattice.N;
 
     acceptancerate = 0;
-
-    initialize_energy();
 }
 
 void MonteCarlo::initialize_energy()
 {
+    energy_old = 0;
     double energy_contribution_sites = 0;
     double energy_contribution_bonds = 0;
 
@@ -111,13 +110,15 @@ void MonteCarlo::initialize_energy()
     }
 }
 
-void MonteCarlo::runmetropolis()
+void MonteCarlo::runmetropolis(string filenamePrefix)
 {
+    bool HUMBUG  = false;
+    bool LADYBUG = false;
     // Printing //Send prefix in?
     // Opening file to print to
     ofstream printFile;
     //string filenamePrefix = "test";
-    string filenamePrefix = "fcc10t10t10_sian1_1_1_beta2p5";
+    //string filenamePrefix = "fcc10t10t10_sian1_1_1_beta2p5";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
@@ -149,6 +150,8 @@ void MonteCarlo::runmetropolis()
     std::default_random_engine generator_n;
     std::uniform_int_distribution<int> distribution_n(0,N-1);
 
+    initialize_energy();
+
     // Equilibration steps
     for(int i=0; i<eqsteps; i++)
     {
@@ -169,7 +172,7 @@ void MonteCarlo::runmetropolis()
             // energy
             energies[j] = energy_old;    // Storing to get the standard deviation
             energy_av +=energy_old;
-            arFile << acceptancerate << endl;
+            arFile << acceptancerate << endl;  // Maybe I should change what I send in to this one. Possibly change how I handle acceptancerate as well.
             bigFile << i << " " << energy_av/(j+1) << endl;
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
@@ -331,7 +334,5 @@ void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std
         }
     }
     acceptancerate = changes/N; // Write the percentage of hits to file.
-
     return mcstepf_return;
-
 }
