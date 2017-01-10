@@ -33,7 +33,7 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 10; // The program is going to be slower than before as we have a 3D lattice
+    int L = 5; // The program is going to be slower than before as we have a 3D lattice
     bool isotropic = true;
     bool sianisotropy = true;
     bool magfield = false;
@@ -51,8 +51,8 @@ int main()   // main. Monte Carlo steps here?
     // Opening file to print to
     // File for results
     ofstream printFile;
-    //string filenamePrefix = "test10x10x10_fcc";
-    string filenamePrefix = "fcc10t10t10beta0";
+    string filenamePrefix = "test10x10x10_fcc";
+    //string filenamePrefix = "fcc10t10t10beta0";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
@@ -92,6 +92,16 @@ int main()   // main. Monte Carlo steps here?
 
    if(DEBUG)     cout << "Lattice set up" << endl;
    if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
+
+   if(HUMBUG)
+   {
+       cout << "spin 42, indices:";
+       cout << "--> [" << mylattice.sites[42].n1 << "," << mylattice.sites[42].n2 << "," << mylattice.sites[42].n3 <<  "]" << endl;
+       cout << "spin 42, position (gridsize 1): " << "--> [" << mylattice.sites[42].xpos << "," << mylattice.sites[42].ypos << "," << mylattice.sites[42].zpos <<  "]" << endl;
+       cout << "spin 78, indices:" << "--> [" << mylattice.sites[78].n1 << "," << mylattice.sites[78].n2 << "," << mylattice.sites[78].n3 <<  "]" << endl;
+       cout << "spin 105, indices:" << "--> [" << mylattice.sites[105].n1 << "," << mylattice.sites[105].n2 << "," << mylattice.sites[105].n3 <<  "]" << endl;
+
+   }
 
     // Setting the initial energy    // Should we have an own function for calculating the energy?...Probably not
     int N = mylattice.N;
@@ -291,8 +301,8 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)
     {
         ofstream bondsatsiteFile;
-        //string filenamePrefix1 = "test10x10x10_fcc";
-        string filenamePrefix1 = "fcc10t10t10beta0";
+        string filenamePrefix1 = "test10x10x10_fcc";
+        //string filenamePrefix1 = "fcc10t10t10beta0";
         char *filename1 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         bondsatsiteFile.open(filename1);

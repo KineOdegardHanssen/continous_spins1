@@ -16,6 +16,8 @@ void Lattice::quadratic_helical_initialize()
     //N = L*(L+1); // Look this up!
     N = L*L;
     no_of_neighbours = 4;
+    int L1 = L;
+    int L2 = L;
     double a = 1/sqrt(3);
     double spinx = a;
     double spiny = a;
@@ -76,7 +78,7 @@ void Lattice::quadratic_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint));
+        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -121,6 +123,8 @@ void Lattice::cubic_helical_initialize()
     //N = L*(L+1)*(L+1); // Look this up!
     N = L*L*L;
     no_of_neighbours = 6;
+    int L1 = L;
+    int L2 =L;
     //cout << "Do not use cubib_helical_initialize() yet. Not implemented" << endl;
     double a = 1/sqrt(3);
     double spinx = a;
@@ -187,7 +191,7 @@ void Lattice::cubic_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint)); //, bonds)
+        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint)); //, bonds)
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -234,6 +238,8 @@ void Lattice::fcc_helical_initialize()
     //N = L*(L+1)*(L+1); // Look this up!
     N = L*L*L;
     no_of_neighbours = 12;
+    int L1 = L;
+    int L2 = L;
     cout << "In fcc_helical_initialize" << endl;
     // Setting up the sites
     // We set up the matrix by having all spins in the same direction. Or maybe draw at random?
@@ -315,7 +321,7 @@ void Lattice::fcc_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint)); // , bonds))
+        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint)); // , bonds))
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
