@@ -20,7 +20,9 @@ public:
     Lattice mylattice;
 
     void initialize_energy();
-    void runmetropolis(string filenamePrefix);
+
+    // Standard Metropolis functions
+    void runmetropolis(double beta, string filenamePrefix);
     void mcstepf_metropolis(std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n); //
 
 };
