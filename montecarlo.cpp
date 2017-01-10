@@ -110,7 +110,7 @@ void MonteCarlo::initialize_energy()
     }
 }
 
-void MonteCarlo::runmetropolis(string filenamePrefix)
+void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
 {
     bool HUMBUG  = false;
     bool LADYBUG = false;
