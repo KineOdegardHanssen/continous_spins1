@@ -33,8 +33,9 @@ int main()   // main. Monte Carlo steps here?
 
     // Input parameters
     int L = 10; // The program is going to be slower than before as we have a 3D lattice
-    bool isotropic    = true;
-    bool sianisotropy = false;
+    // bools to determine system
+    bool isotropic    = false;
+    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
     //char latticetype = 'FH'; // FH: face-centered cubic,helical; C: cubic, helical; Q:quadratic, helical
@@ -50,8 +51,8 @@ int main()   // main. Monte Carlo steps here?
 
     // Opening file to print to
     ofstream printFile;
-    //string filenamePrefix = "test10x10x10_cubic";
-    string filenamePrefix = "ising_quadratic10t10t10beta2p5";
+    //string filenamePrefix = "test";
+    string filenamePrefix = "fcc10t10t10_sian1_1_1_beta2p5";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
@@ -80,9 +81,9 @@ int main()   // main. Monte Carlo steps here?
     Lattice mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
     if(DEBUG)    cout << "Instance of class Lattice initialized" << endl;
     // Choosing type of lattice
-    //mylattice.fcc_helical_initialize();
+    mylattice.fcc_helical_initialize();
     //mylattice.cubic_helical_initialize();
-    mylattice.quadratic_helical_initialize();
+    //mylattice.quadratic_helical_initialize();
     /*
     if(latticetype=='FH')
     {
@@ -97,8 +98,18 @@ int main()   // main. Monte Carlo steps here?
     cout << "Time to initialize Lattice: " << total_time_initialize_lattice  << endl;
     int no_of_neighbours = mylattice.no_of_neighbours;
 
-   if(DEBUG)     cout << "Lattice set up" << endl;
-   if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
+    if(DEBUG)     cout << "Lattice set up" << endl;
+    if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
+
+    if(HUMBUG)
+    {
+        cout << "spin 42, indices:";
+        cout << "--> [" << mylattice.sites[42].n1 << "," << mylattice.sites[42].n2 << "," << mylattice.sites[42].n3 <<  "]" << endl;
+        cout << "spin 42, position (gridsize 1): " << "--> [" << mylattice.sites[42].xpos << "," << mylattice.sites[42].ypos << "," << mylattice.sites[42].zpos <<  "]" << endl;
+        cout << "spin 78, indices:" << "--> [" << mylattice.sites[78].n1 << "," << mylattice.sites[78].n2 << "," << mylattice.sites[78].n3 <<  "]" << endl;
+        cout << "spin 105, indices:" << "--> [" << mylattice.sites[105].n1 << "," << mylattice.sites[105].n2 << "," << mylattice.sites[105].n3 <<  "]" << endl;
+
+    }
 
     // Setting the initial energy    // Should we have an own function for calculating the energy?...Probably not
     int N = mylattice.N;
@@ -287,8 +298,8 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)
     {
         ofstream bondsatsiteFile;
-        //string filenamePrefix1 = "test10x10x10_cubic";
-        string filenamePrefix1 = "ising_quadratic10t10t10beta2p5";
+        //string filenamePrefix1 = "test";
+        string filenamePrefix1 = "fcc10t10t10_sian1_1_1_beta2p5";
         char *filename1 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         bondsatsiteFile.open(filename1);
@@ -414,7 +425,7 @@ void MonteCarlo()
 // make it double to return the energy?
 vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energy_old, bool sianisotropy, bool magfield, bool isotropic, bool dm, Lattice &mylattice, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob, std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
-    bool DEBUG = true;
+    bool DEBUG = false;
     bool HUMBUG = false;  // The humbug is defeated. I think...
     double changes = 0;
     if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
@@ -606,12 +617,14 @@ vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energ
             changes+=1;
             //cout << "Percentage of hits: " << changes/(n+1)  << endl;
             //cout << "ENERGY DECREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
+            if(DEBUG)    cout << "ENERGY DECREASED!" << endl;
             energy_old = energy_new; // Update energy
         }
         else
         {
             double prob = exp(-beta*(energy_new-energy_old));
             double drawn = distribution_prob(generator_prob);
+            if(DEBUG)    cout << "Suggesting energy increase. Probability of success: " << prob << "; number drawn: " << drawn << endl;
             if(drawn<prob)
             {
                 mylattice.sites[k].spinx = sx_t;
@@ -620,6 +633,7 @@ vector<double> mcstepf(int no_of_neighbours, double N, double beta, double energ
                 //cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]" << energy_diff << endl;
                 //cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
                 changes+=1;
+                if(DEBUG)    cout << "Success" << endl;
                 //cout << "Percentage of hits: " << changes/(n+1)  << endl;
                 energy_old = energy_new;  // Update energy
             }

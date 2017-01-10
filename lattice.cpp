@@ -34,7 +34,7 @@ void Lattice::quadratic_helical_initialize()
 
     // And, in the future, have it in the loop.
 
-    double J = -1; // As in Ising model work
+    double J =  1; // As in Ising model work
     double Dx = 1;
     double Dy = 1;
     double Dz = 1;
@@ -76,7 +76,7 @@ void Lattice::quadratic_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, L, L, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -120,6 +120,11 @@ void Lattice::cubic_helical_initialize()
     //N = L*(L+1)*(L+1); // Look this up!
     N = L*L*L;
     no_of_neighbours = 6;
+
+    // Temporary fix. May want to send in L1, L2 and L3 to Lattice and deal with a 'rectangular' crystal
+    int L1 = L;
+    int L2 = L;
+
     //cout << "Do not use cubib_helical_initialize() yet. Not implemented" << endl;
     double a = 1/sqrt(3);
     double spinx = a;
@@ -186,7 +191,7 @@ void Lattice::cubic_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;
@@ -234,6 +239,11 @@ void Lattice::fcc_helical_initialize()
     N = L*L*L;
     no_of_neighbours = 12;
     cout << "In fcc_helical_initialize" << endl;
+
+    // Temporary fix. May want to send L1, L2 and L3 into Lattice and deal with a 'rectangular' lattice
+    int L1 = L;
+    int L2 = L;
+
     // Setting up the sites
     // We set up the matrix by having all spins in the same direction. Or maybe draw at random?
     double a = 1/sqrt(3);
@@ -245,16 +255,16 @@ void Lattice::fcc_helical_initialize()
     // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
     // unneccessary calculations.
     // have some function for doing this:
+    // magfield
     double hx = 1;
     double hy = 1;
     double hz = 1;
+    //sianisotropy
     double Dix = 1;
     double Diy = 1;
     double Diz = 1;
-
     // And, in the future, have it in the loop.
-
-    double J = 1;
+    double J =  1;
     double Dx = 1;
     double Dy = 1;
     double Dz = 1;
@@ -313,7 +323,7 @@ void Lattice::fcc_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
         vecint neighbours;

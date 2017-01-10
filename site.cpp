@@ -1,6 +1,6 @@
 #include "site.h"
 
-Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds)
+Site::Site(int n, int L1, int L2, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds)
 {
     index = n;
     this->spinx = spinx;   // Have spinx in a new class, State?s
@@ -32,6 +32,14 @@ Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, 
         }
     }
 
+    // Giving the position
+    n1 = n%L1;
+    n2 = n/L1 - n/(L1*L2)*L2;
+    n3 = n/(L1*L2);
+
+    xpos = 0.5*(n1+n3);
+    ypos = 0.5*(n1+n2);
+    zpos = 0.5*(n2+n3);
 }
 
 
