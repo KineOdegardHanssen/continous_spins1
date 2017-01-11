@@ -34,8 +34,8 @@ int main()   // main. Monte Carlo steps here?
     // Input parameters
     int L = 10; // The program is going to be slower than before as we have a 3D lattice
     // bools to determine system
-    bool isotropic    = false;
-    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool isotropic    = true;
+    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
     //char latticetype = 'FH'; // FH: face-centered cubic,helical; C: cubic, helical; Q:quadratic, helical
@@ -51,8 +51,8 @@ int main()   // main. Monte Carlo steps here?
 
     // Opening file to print to
     ofstream printFile;
-    //string filenamePrefix = "test";
-    string filenamePrefix = "fcc10t10t10_sian1_1_1_beta2p5";
+    string filenamePrefix = "compare_beforeMCclass_fcc101010isotropic1beta2p5";
+    //string filenamePrefix = "fcc10t10t10_sian1_1_1_beta2p5";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
@@ -298,8 +298,8 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)
     {
         ofstream bondsatsiteFile;
-        //string filenamePrefix1 = "test";
-        string filenamePrefix1 = "fcc10t10t10_sian1_1_1_beta2p5";
+        string filenamePrefix1 = "compare_beforeMCclass_fcc101010isotropic1beta2p5";
+        //string filenamePrefix1 = "fcc10t10t10_sian1_1_1_beta2p5";
         char *filename1 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename1, "%s_bondsatsite.txt", filenamePrefix1.c_str() );   // Create filename with prefix and ending
         bondsatsiteFile.open(filename1);
