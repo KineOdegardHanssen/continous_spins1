@@ -1,22 +1,57 @@
 #include "montecarlo.h"
 
-MonteCarlo::MonteCarlo(bool isotropic, bool sianisotropy, bool magfield, bool dm, Lattice mylattice)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice)
 {
+
+    // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
+    this->eqsteps = eqsteps;
+    this->mcsteps_inbin = mcsteps_inbin;
+    this->no_of_bins = no_of_bins;
+
     // Setting the bools
     this->isotropic = isotropic;
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
 
-    // The lattice  // Could just extract the bools from here...
-    this->mylattice = mylattice;
-    this->N = mylattice.N;
-
     acceptancerate = 0;
+
+    DEBUG = false;
 }
+
+void MonteCarlo::debugmode(bool on)
+{
+    if(on)    DEBUG = true;
+    else      DEBUG = false;
+}
+
+
+void MonteCarlo::latticetype(int L, char type_lattice)
+{
+    if(DEBUG)    cout << "In latticetype in class MonteCarlo. L =" << L << endl;
+    // Making the Lattice
+    double starttime = clock();
+    mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
+    cout << "Instance of class Lattice initialized" << endl;
+
+    // Type of Lattice
+    if(type_lattice=='F')      mylattice.fcc_helical_initialize();
+    else if(type_lattice=='C') mylattice.cubic_helical_initialize();
+    else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();
+    double endtime = clock();
+    double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
+    if(DEBUG)    cout << "Lattice set, time: " << total_time << endl;
+
+    // The lattice  // Could just extract the bools from here...
+    this->N = mylattice.N;
+    this->no_of_neighbours = mylattice.no_of_neighbours;
+    if(DEBUG)    cout << "Number of sites and neighbours retrieved to MonteCarlo." << endl;
+}
+
 
 void MonteCarlo::initialize_energy()
 {
+    if(DEBUG)    cout << "In MonteCarlo_initialize_energy" << endl;
     energy_old = 0;
     double energy_contribution_sites = 0;
     double energy_contribution_bonds = 0;
@@ -108,17 +143,18 @@ void MonteCarlo::initialize_energy()
         }
         if(BEDBUG) cout << "Done with one, onto the others" << endl;
     }
+    energy_old = energy_contribution_sites + energy_contribution_bonds/2.0;
+    if(DEBUG)    cout << "Energy initialized, energy = " << energy_old << endl;
 }
 
 void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
 {
+    if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
     bool HUMBUG  = false;
     bool LADYBUG = false;
     // Printing //Send prefix in?
     // Opening file to print to
     ofstream printFile;
-    //string filenamePrefix = "test";
-    //string filenamePrefix = "fcc10t10t10_sian1_1_1_beta2p5";
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     printFile.open(filename);
@@ -150,17 +186,28 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
     std::default_random_engine generator_n;
     std::uniform_int_distribution<int> distribution_n(0,N-1);
 
+    // Initializing the energy
     initialize_energy();
 
+    if(DEBUG)    cout << "Done with initialize_energy()" << endl << "Starting equilibration steps" << endl;
+
     // Equilibration steps
+    double starttime = clock();
     for(int i=0; i<eqsteps; i++)
     {
         if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
-        mcstepf_metropolis();
+        mcstepf_metropolis(beta, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
         if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
     }
+    double endtime = clock();
+    double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
+    cout << "Time equilibration steps: " << total_time << endl;
+
+
+    if(DEBUG)    cout << "Done with equilibration steps" << endl << "Starting the Monte Carlo steps and measurements" << endl;
 
     // Monte Carlo steps and measurements
+    starttime = clock();
     for(int i=0; i<no_of_bins; i++)
     {   // For each bin
         double energy_av = 0;
@@ -168,7 +215,7 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
         std::vector<double> energies = std::vector<double>(mcsteps_inbin);
         for(int j=0; j<mcsteps_inbin; j++)
         {    // For each mcstep, acceptancerate
-            mcstepf_metropolis(generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+            mcstepf_metropolis(beta, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
             // energy
             energies[j] = energy_old;    // Storing to get the standard deviation
             energy_av +=energy_old;
@@ -188,13 +235,18 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
         printFile << energy_av << " " << E_stdv << endl;
         // Print to file
     }
+    endtime = clock();
+    total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
+    cout << "Time MC steps and measurements: "  << total_time << endl;
+    cout << "Done with the Monte Carlo procedure this time around" << endl;
 }
 
 
-void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
+void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
-    bool DEBUG = false;
-    bool HUMBUG = false;  // The humbug is defeated. I think...
+
+    bool HUMBUG = false;  // The humbug is defeated.
+    if(HUMBUG)    cout << "In mcstepf_metropolis" << endl;
     double changes = 0;
     if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
     for(int n=0; n<N; n++)
@@ -255,10 +307,7 @@ void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
-                // I could, alternatively, just store the index
-                // of bonds. But then I need to organize the bonds
-                // and coordinate them with the sites. List of
-                //sites that points to the bonds and vice versa.
+
                 double J = mylattice.sites[k].bonds[j].J;
                 double sxk = mylattice.sites[l].spinx;
                 double syk = mylattice.sites[l].spiny;
@@ -268,14 +317,14 @@ void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std
                 partnerspinz += J*szk;
             }
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
-            energy_diff = partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz);
+            energy_diff += partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz);
         }
         if(dm)
         {
             if(HUMBUG)    cout << "In dm in mcstepf" << endl;
             for(int j=0; j<no_of_neighbours; j++)
             {
-                int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
+                int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
 
                 double Dx = mylattice.sites[k].bonds[j].Dx;
@@ -299,6 +348,7 @@ void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std
 
         // This should work, but there is probably some error here...
         double energy_new = energy_old + energy_diff;
+        //cout << "energy_diff: " << energy_diff << ";  Difference in spin: [" << (sx-sx_t) << "," << (sy-sy_t) << "," << (sz-sz_t) << "]" << endl;
         // Or should I just test if energy_new < 0? ... May have to find energy_new anyways...
 
         // Updating the energy and the state according to Metropolis
@@ -311,14 +361,16 @@ void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std
             changes+=1;
             //cout << "Percentage of hits: " << changes/(n+1)  << endl;
             //cout << "ENERGY DECREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
-            if(DEBUG)    cout << "ENERGY DECREASED!" << endl;
+            if(HUMBUG)    cout << "ENERGY DECREASED!" << endl;
+            //cout << "Resetting energy. Energy_old = " << energy_old << "; energy_new = " << energy_new << endl;
             energy_old = energy_new; // Update energy
+            //cout << "Energy should be reset now. energy_old = " << energy_old << "; energy_new = " << energy_new << endl;
         }
         else
         {
             double prob = exp(-beta*(energy_new-energy_old));
             double drawn = distribution_prob(generator_prob);
-            if(DEBUG)    cout << "Suggesting energy increase. Probability of success: " << prob << "; number drawn: " << drawn << endl;
+            if(HUMBUG)    cout << "Suggesting energy increase. Probability of success: " << prob << "; number drawn: " << drawn << endl;
             if(drawn<prob)
             {
                 mylattice.sites[k].spinx = sx_t;
@@ -327,12 +379,11 @@ void MonteCarlo::mcstepf_metropolis( std::default_random_engine generator_u, std
                 //cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]" << energy_diff << endl;
                 //cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
                 changes+=1;
-                if(DEBUG)    cout << "Success" << endl;
+                if(HUMBUG)    cout << "Success" << endl;
                 //cout << "Percentage of hits: " << changes/(n+1)  << endl;
                 energy_old = energy_new;  // Update energy
             }
         }
     }
     acceptancerate = changes/N; // Write the percentage of hits to file.
-    return mcstepf_return;
 }
