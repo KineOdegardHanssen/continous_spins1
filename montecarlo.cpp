@@ -211,14 +211,42 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
     for(int i=0; i<no_of_bins; i++)
     {   // For each bin
         double energy_av = 0;
+        double mx_av = 0;
+        double my_av = 0;
+        double mz_av = 0;
         if(LADYBUG)    cout << "i = " << i << "; energy_av before loop: " << energy_av << endl;
         std::vector<double> energies = std::vector<double>(mcsteps_inbin);
+        std::vector<double> mxs = std::vector<double>(mcsteps_inbin);
+        std::vector<double> mys = std::vector<double>(mcsteps_inbin);
+        std::vector<double> mzs = std::vector<double>(mcsteps_inbin);
         for(int j=0; j<mcsteps_inbin; j++)
         {    // For each mcstep, acceptancerate
             mcstepf_metropolis(beta, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
             // energy
-            energies[j] = energy_old;    // Storing to get the standard deviation
+            energies[j] = energy_old;    // Storing to get the standard deviation            
             energy_av +=energy_old;
+            // Magnetization
+            double mx = 0;
+            double my = 0;
+            double mz = 0;
+            for(int k=0; k<N; k++)
+            {
+                mx+= mylattice.sites[k].spinx;
+                my+= mylattice.sites[k].spiny;
+                mz+= mylattice.sites[k].spinz;
+            }
+            mx = mx/N;
+            my = my/N;
+            mz = mz/N;
+
+            mxs[j] = mx;
+            mys[j] = my;
+            mzs[j] = mz;
+
+            mx_av += mx;
+            my_av += my;
+            mz_av += mz;
+
             arFile << acceptancerate << endl;  // Maybe I should change what I send in to this one. Possibly change how I handle acceptancerate as well.
             bigFile << i << " " << energy_av/(j+1) << endl;
 
@@ -227,12 +255,32 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
         // Energy
         energy_av = energy_av/mcsteps_inbin;
 
+
         // Error in the energy //
         double E_stdv = 0;
-        for(int i=0; i<no_of_bins; i++)    E_stdv += (energies[i]-energy_av)*(energies[i]-energy_av);
+        for(int l=0; l<no_of_bins; l++)    E_stdv += (energies[l]-energy_av)*(energies[l]-energy_av);
         E_stdv = sqrt(E_stdv/(no_of_bins*(no_of_bins-1)));
 
-        printFile << energy_av << " " << E_stdv << endl;
+        // Magnetization
+        mx_av = mx_av/mcsteps_inbin;
+        my_av = my_av/mcsteps_inbin;
+        mz_av = mz_av/mcsteps_inbin;
+
+        // Error in the magnetization //
+        double mx_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mx_stdv += (mxs[l]-mx_av)*(mxs[l]-mx_av);
+        mx_stdv = sqrt(mx_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double my_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    my_stdv += (mys[l]-my_av)*(mys[l]-my_av);
+        my_stdv = sqrt(my_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double mz_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
+        mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
+
+        printFile << energy_av << " " << E_stdv << " " <<  mx_av << " " << mx_stdv << " " << my_av;
+        printFile << " " << my_stdv << " " << mz_av << " " << mz_stdv << endl;
         // Print to file
     }
     endtime = clock();
@@ -264,9 +312,11 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
         if(HUMBUG)    cout << "Components of spin " << k << " accessed" << endl;
 
         // Changing the spin (tentatively):
+        /*
         double u = distribution_u(generator_u);
         double v = distribution_v(generator_v);
         if(HUMBUG)    cout << "Have drawn random numbers in mcstepf" << endl;
+
 
         double theta = acos(1.0-2.0*u);
         double phi = 2.0*M_PI*v;
@@ -276,6 +326,35 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
         double sy_t = sintheta*sin(phi);
         //double sz_t = sqrt(1-sintheta*sintheta);
         double sz_t = cos(theta);
+        */
+
+
+        double zetasq = 2.0;  // zeta squared. Value to initialize loop.
+        double zeta1;
+        double zeta2;
+        while(zetasq>=1.0) // Is this correct? Could equal 1 too, right?
+        {
+            double r_1 = distribution_u(generator_u);
+            double r_2 = distribution_v(generator_v);
+
+            double zeta1 = 1.0-2.0*r_1;
+            double zeta2 = 1.0-2.0*r_2;
+
+            zetasq = zeta1*zeta1 + zeta2*zeta2;
+        }
+
+        double thesqrt = sqrt(1-zetasq);
+        double sx_t = 2.0*zeta1*thesqrt;
+        double sy_t = 2.0*zeta2*thesqrt;
+        double sz_t = 1.0-2.0*zetasq;
+
+        double stot = sqrt(sx_t*sx_t + sy_t*sy_t + sz_t*sz_t);
+        sx_t = sx_t/stot;
+        sy_t = sy_t/stot;
+        sz_t = sz_t/stot;
+        // Check normalization
+        //if(DEBUG)    cout << "Normalized? S^2 = " << (sx_t*sx_t + sy_t*sy_t + sz_t*sz_t) << endl;
+
 
         if(HUMBUG)    cout << "Have made a uniform spherical distribution using them" << endl;
         // Energy contribution after spin change
