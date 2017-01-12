@@ -174,10 +174,10 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
 
     // Random generators
     std::default_random_engine generator_u;                       // I asked the internet, and it replied
-    std::uniform_real_distribution<double> distribution_u(0,1);
+    std::uniform_real_distribution<double> distribution_u(-1,1);
 
     std::default_random_engine generator_v;                       // I asked the internet, and it replied
-    std::uniform_real_distribution<double> distribution_v(0,1);
+    std::uniform_real_distribution<double> distribution_v(-1,1);
 
     std::default_random_engine generator_prob;                       // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_prob(0,1);
@@ -208,23 +208,30 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
 
     // Monte Carlo steps and measurements
     starttime = clock();
-    for(int i=0; i<no_of_bins; i++)
+    for(int i=0; i<no_of_bins; i++)  // Loop over the bins
     {   // For each bin
         double energy_av = 0;
+        double energy_sq_av = 0;
+        double cv_average = 0;
         double mx_av = 0;
         double my_av = 0;
         double mz_av = 0;
         if(LADYBUG)    cout << "i = " << i << "; energy_av before loop: " << energy_av << endl;
-        std::vector<double> energies = std::vector<double>(mcsteps_inbin);
+        // Setting vectors
+        std::vector<double> energies    = std::vector<double>(mcsteps_inbin);
+        std::vector<double> energies_sq = std::vector<double>(mcsteps_inbin);
+        std::vector<double> cvs         = std::vector<double>(mcsteps_inbin);
         std::vector<double> mxs = std::vector<double>(mcsteps_inbin);
         std::vector<double> mys = std::vector<double>(mcsteps_inbin);
         std::vector<double> mzs = std::vector<double>(mcsteps_inbin);
-        for(int j=0; j<mcsteps_inbin; j++)
-        {    // For each mcstep, acceptancerate
+        for(int j=0; j<mcsteps_inbin; j++)    // Loop over mcsteps in bin
+        {   // For each mcstep
             mcstepf_metropolis(beta, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
             // energy
-            energies[j] = energy_old;    // Storing to get the standard deviation            
-            energy_av +=energy_old;
+            energies[j]    = energy_old;    // Storing to get the standard deviation
+            energies_sq[j] = energy_old*energy_old;
+            energy_av      +=energy_old;
+            energy_sq_av   +=energy_old*energy_old;
             // Magnetization
             double mx = 0;
             double my = 0;
@@ -247,19 +254,37 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
             my_av += my;
             mz_av += mz;
 
+            cvs[j] = beta*beta*(energies_sq[j]-energies[j]*energies[j]);
+            cv_average += cvs[j];
+
             arFile << acceptancerate << endl;  // Maybe I should change what I send in to this one. Possibly change how I handle acceptancerate as well.
             bigFile << i << " " << energy_av/(j+1) << endl;
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
-        }
+        }  // End loop over mcsteps
+        // For every bin, we find the following quantities:
         // Energy
         energy_av = energy_av/mcsteps_inbin;
-
+        energy_sq_av = energy_sq_av/mcsteps_inbin;
 
         // Error in the energy //
         double E_stdv = 0;
         for(int l=0; l<no_of_bins; l++)    E_stdv += (energies[l]-energy_av)*(energies[l]-energy_av);
         E_stdv = sqrt(E_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double Esq_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    Esq_stdv += (energies_sq[l]-energy_sq_av)*(energies_sq[l]-energy_sq_av);
+        Esq_stdv = sqrt(Esq_stdv/(no_of_bins*(no_of_bins-1)));
+
+        // Heat capacity
+        double cv = beta*beta*(energy_av-energy_sq_av*energy_sq_av);
+
+        // Approximate error in the heat capacity:
+        cv_average = cv_average/no_of_bins;
+
+        double cv_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    cv_stdv += (cvs[l]-cv_average)*(cvs[l]-cv_average);
+        cv_stdv = sqrt(cv_stdv/(no_of_bins*(no_of_bins-1)));
 
         // Magnetization
         mx_av = mx_av/mcsteps_inbin;
@@ -279,10 +304,10 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
         for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
         mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
 
-        printFile << energy_av << " " << E_stdv << " " <<  mx_av << " " << mx_stdv << " " << my_av;
-        printFile << " " << my_stdv << " " << mz_av << " " << mz_stdv << endl;
+        printFile << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
+        printFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << endl;
         // Print to file
-    }
+    }  // End loops over bins
     endtime = clock();
     total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
     cout << "Time MC steps and measurements: "  << total_time << endl;
@@ -328,7 +353,6 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
         double sz_t = cos(theta);
         */
 
-
         double zetasq = 2.0;  // zeta squared. Value to initialize loop.
         double zeta1;
         double zeta2;
@@ -337,12 +361,17 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
             double r_1 = distribution_u(generator_u);
             double r_2 = distribution_v(generator_v);
 
-            double zeta1 = 1.0-2.0*r_1;
-            double zeta2 = 1.0-2.0*r_2;
+            zeta1 = 1.0-2.0*r_1;
+            zeta2 = 1.0-2.0*r_2;
 
             zetasq = zeta1*zeta1 + zeta2*zeta2;
+            //if(DEBUG)    cout << "Inside while loop, n = " << n << ": zeta1 = " << zeta1 << "; zeta2 = " << zeta2 << "; zeta^2 = " << zetasq << endl;
+
+            //cout << "Inside loop, n = " << n << " " << zetasq << endl;
         }
 
+        //cout << "Outside loop, n = " << n << " " << zetasq << endl;
+        //if(DEBUG)    cout << "Outside while loop, n = " << n << ": zeta1 = " << zeta1 << "; zeta2 = " << zeta2 <<"; zeta^2 = " << zetasq << endl;
         double thesqrt = sqrt(1-zetasq);
         double sx_t = 2.0*zeta1*thesqrt;
         double sy_t = 2.0*zeta2*thesqrt;
@@ -354,7 +383,6 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
         sz_t = sz_t/stot;
         // Check normalization
         //if(DEBUG)    cout << "Normalized? S^2 = " << (sx_t*sx_t + sy_t*sy_t + sz_t*sz_t) << endl;
-
 
         if(HUMBUG)    cout << "Have made a uniform spherical distribution using them" << endl;
         // Energy contribution after spin change
