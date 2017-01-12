@@ -2,8 +2,8 @@
 #define LATTICE_H
 #include <iostream>
 #include <math.h>
-#include <bond.h>
-#include <site.h>
+#include "bond.h"
+#include "site.h"
 //#include <armadillo>  // in this case, enter LIBS += -larmadillo -llapack -lblas in .pro-file
 
 using namespace std; // Now, I can remove all std's.
@@ -11,6 +11,7 @@ using namespace std; // Now, I can remove all std's.
 class Lattice
 {
 public:
+    Lattice();
     Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
@@ -23,11 +24,6 @@ public:
 
     //std::vector<Bond> bonds;
     std::vector<Site> sites;
-
-    // Lists of how bonds and sites are related
-    intmatrix bondsofsites;
-    intmatrix sitesofbonds;
-
 
     //Lattice grid functions
     void quadratic_helical_initialize();
