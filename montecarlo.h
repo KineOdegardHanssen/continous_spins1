@@ -37,6 +37,8 @@ public:
     void runmetropolis(double beta); // Or should beta be a class variable?
     void mcstepf_metropolis(double beta, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n); //
 
+    //
+    void endsims();
 };
 
 #endif // MONTECARLO_H

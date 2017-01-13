@@ -13,6 +13,7 @@ using namespace std;
 using std::ofstream; using std::string;
 
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
+void test_betagenerator(int beta_n, int betamax, int betamin);
 
 int main()   // main. Monte Carlo steps here?
 {
@@ -71,15 +72,33 @@ int main()   // main. Monte Carlo steps here?
 
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
 {
-
     // Initializing Monte Carlo
     MonteCarlo mymc = MonteCarlo(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
     mymc.debugmode(true);
     mymc.latticetype(L, type_lattice);
 
+    int beta_n = 100; // Or something. Could have this as input
+    vector<double> betas = vector<double>(beta_n);
+    double deltabeta = (betamax-betamin)/(beta_n+1);
 
-    mymc.runmetropolis(beta, filenamePrefix);
-    mymc.reset_energy();  // Should I in fact print beta to file in all cases?
+    for(int i=0; i<beta_n; i++)
+    {
+        betas[i] = betamin + deltabeta*i;
+        mymc.runmetropolis(beta);
+        mymc.reset_energy();
+    }
+    mymc.endsims();
 }
+
+void test_betagenerator(int beta_n, int betamax, int betamin)
+{
+    vector<double> betas = vector<double>(beta_n);
+    double deltabeta = (betamax-betamin)/(beta_n+1);
+
+    for(int i=0; i<beta_n; i++)
+    {
+        betas[i] = betamin + deltabeta*i;
+        cout << "i = " << i << "; betas[i] = " << betas[i] << endl;
+    }
 }
 

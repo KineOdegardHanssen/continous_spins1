@@ -259,7 +259,7 @@ void MonteCarlo::runmetropolis(double beta)
 
             //Print to arFile and bigFile
             print.printing_everystep(beta, energy_old, energy_sq[j], cvs[j], mx, my, mz);
-            print.printing_acceptancerates(acceptancerate);
+            print.printing_acceptancerates(beta, acceptancerate);
 
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
@@ -306,7 +306,7 @@ void MonteCarlo::runmetropolis(double beta)
         for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
         mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
 
-        print.printing_everybin(energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
+        print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
         // Print to file
     }  // End loops over bins
     endtime = clock();
@@ -496,4 +496,9 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
         }
     }
     acceptancerate = changes/N; // Write the percentage of hits to file.
+}
+
+void MonteCarlo::endsims()
+{
+    print.closeAllFiles();
 }

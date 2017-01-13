@@ -24,7 +24,9 @@ public:
 
     //std::vector<Bond> bonds;
     std::vector<Site> sites;
+    //std::vector<std::vector<double> > sitepositions_chain; // In case we introduce a grid length
     std::vector<std::vector<double> > sitepositions;
+    std::vector<std::vector<int> >    sitecoordinates;
 
     //Lattice grid functions
     void chain_periodic_initialize();

@@ -70,6 +70,7 @@ void Lattice::chain_periodic_initialize()
         sites.push_back(Site(n, L, L, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+
     }
 
 }
@@ -137,6 +138,12 @@ void Lattice::quadratic_helical_initialize()
         sites.push_back(Site(n, L, L, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+
+        position_n[0] = 1.0*((int)n%L); // n1
+        position_n[1] = 1.0*((int)n/L); // n2. Should allow for grid length a.
+
+        sitepositions.push_back(position_n);
+
     } // End of loop over all sites ( = loop over n)
 }
 
@@ -217,13 +224,13 @@ void Lattice::cubic_helical_initialize()
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 
         // Giving the position
-        double n1 = n%L1;
-        double n2 = n/L1 - n/(L1*L2)*L2;
-        double n3 = n/(L1*L2);
+        int n1 = n%L1;
+        int n2 = n/L1 - n/(L1*L2)*L2;
+        int n3 = n/(L1*L2);
 
-        position_n[0] = n1;     // Could possibly multiply by grid length a
-        position_n[1] = n2;
-        position_n[2] = n3;
+        position_n[0] = 1.0*n1;     // Could possibly multiply by grid length a
+        position_n[1] = 1.0*n2;
+        position_n[2] = 1.0*n3;
 
         sitepositions.push_back(position_n);
     } // End loop over n (all sites)
@@ -270,7 +277,8 @@ void Lattice::fcc_helical_initialize()
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
     std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
-    std::vector<double> position_n = std::vector<double>(6);
+    std::vector<double> position_n = std::vector<double>(3);
+    std::vector<double> coord_n = std::vector<double>(3);
 
     // Could have these inside the loop and add randomness.
 
@@ -323,9 +331,9 @@ void Lattice::fcc_helical_initialize()
         // Listing the positions of the spins:
 
         // Giving the position of the fcc
-        double n1 = n%L1;
-        double n2 = n/L1 - n/(L1*L2)*L2;
-        double n3 = n/(L1*L2);
+        int n1 = n%L1;
+        int n2 = (int)n/L1 - (int)n/(L1*L2)*L2;
+        int n3 = n/(L1*L2);
 
         double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
         double ypos = 0.5*(n1+n2);
@@ -334,11 +342,13 @@ void Lattice::fcc_helical_initialize()
         position_n[0] = xpos;
         position_n[1] = ypos;
         position_n[2] = zpos;
-        position_n[3] = n1;     // Have these here in case I want to check
-        position_n[4] = n2;
-        position_n[5] = n3;
+
+        coord_n[3] = n1;     // Have these here in case I want to check
+        coord_n[4] = n2;
+        coord_n[5] = n3;
 
         sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
 
     }
     cout << "Done with fcc_helical_initialize" << endl;

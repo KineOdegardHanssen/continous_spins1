@@ -8,23 +8,6 @@ Printing::Printing()
 Printing::Printing(string filenamePrefix)
 { // Initialisation of a printer object - it needs a prefix
     this->filenamePrefix = filenamePrefix;
-
-    // Should I have this here? Or open as I please?
-    char *filename = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    allFile.open(filename);
-    delete filename;
-
-    char *filenameb = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    bigFile.open(filenameb);
-    delete filenameb;
-
-    // File for storing the acceptance rates for each MC-step
-    char *filenamea = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenamea, "%s_acceptancerate.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    arFile.open(filenamea);
-    delete filenamea;
 } // End initialisation
 
 
@@ -76,10 +59,10 @@ void Printing::print_header_allFile(double N)
 }
 
 
-void Printing::printing_everybin(double energy_av, double E_stdv, double energy_sq_av, double Esq_stdv, double cv, double cv_stdv, double mx_av, double mx_stdv, double my_av, double my_stdv, double mz_av, double mz_stdv)
+void Printing::printing_everybin(double beta, double energy_av, double E_stdv, double energy_sq_av, double Esq_stdv, double cv, double cv_stdv, double mx_av, double mx_stdv, double my_av, double my_stdv, double mz_av, double mz_stdv)
 {
     allFile << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
-    allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << endl;
+    allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << beta << endl;
 } // End printingPosition-function
 
 void Printing::printing_everystep(double beta, double energy_old, double energy_sq_av, double cv, double mx, double my, double mz)
@@ -87,9 +70,9 @@ void Printing::printing_everystep(double beta, double energy_old, double energy_
     bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << cv << " " << mx << " " << my << " " << mz << endl;
 }
 
-void Printing::acceptancerates(double acceptancerate)
+void Printing::acceptancerates(double beta, double acceptancerate)
 {   // Decide how often I shoud print this.
-    arFile << acceptancerate << endl;
+    arFile << beta << " " << acceptancerate << endl;
 }
 
 void Printing::closeAllFiles()
