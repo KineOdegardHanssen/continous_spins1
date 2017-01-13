@@ -179,7 +179,7 @@ void MonteCarlo::runmetropolis(double beta)
     std::default_random_engine generator_v;                       // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_v(-1,1);
 
-    std::default_random_engine generator_prob;                       // I asked the internet, and it replied
+    std::default_random_engine generator_prob;                    // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_prob(0,1);
 
     // For index. This is given helical boundary conditions, then I only need one index
@@ -208,22 +208,29 @@ void MonteCarlo::runmetropolis(double beta)
 
     // Monte Carlo steps and measurements
     starttime = clock();
+    std::vector<double> energies    = std::vector<double>(no_of_bins);
+    std::vector<double> energies_sq = std::vector<double>(no_of_bins);
+    std::vector<double> cvs         = std::vector<double>(no_of_bins);
+    std::vector<double> mxs = std::vector<double>(no_of_bins);
+    std::vector<double> mys = std::vector<double>(no_of_bins);
+    std::vector<double> mzs = std::vector<double>(no_of_bins);
+    double energy_av = 0;
+    double energy_sq_av = 0;
+    double cv_average = 0;
+    double mx_av = 0;
+    double my_av = 0;
+    double mz_av = 0;
     for(int i=0; i<no_of_bins; i++)  // Loop over the bins
     {   // For each bin
-        double energy_av = 0;
-        double energy_sq_av = 0;
-        double cv_average = 0;
-        double mx_av = 0;
-        double my_av = 0;
-        double mz_av = 0;
+        energies[i]  = 0;
+        energies_sq[i] = 0;
+        cvs[i]         = 0;
+        mxs[i]         = 0;
+        mys[i]         = 0;
+        mzs[i]         = 0;
         if(LADYBUG)    cout << "i = " << i << "; energy_av before loop: " << energy_av << endl;
         // Setting vectors
-        std::vector<double> energies    = std::vector<double>(mcsteps_inbin);
-        std::vector<double> energies_sq = std::vector<double>(mcsteps_inbin);
-        std::vector<double> cvs         = std::vector<double>(mcsteps_inbin);
-        std::vector<double> mxs = std::vector<double>(mcsteps_inbin);
-        std::vector<double> mys = std::vector<double>(mcsteps_inbin);
-        std::vector<double> mzs = std::vector<double>(mcsteps_inbin);
+
         for(int j=0; j<mcsteps_inbin; j++)    // Loop over mcsteps in bin
         {   // For each mcstep
             mcstepf_metropolis(beta, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
@@ -246,69 +253,74 @@ void MonteCarlo::runmetropolis(double beta)
             my = my/N;
             mz = mz/N;
 
-            mxs[j] = mx;
-            mys[j] = my;
-            mzs[j] = mz;
-
             mx_av += mx;
             my_av += my;
             mz_av += mz;
 
-            cvs[j] = beta*beta*(energies_sq[j]-energies[j]*energies[j]);
-            cv_average += cvs[j];
+            mxs[i] += mx;
+            mys[i] += my;
+            mzs[i] += mz;
 
             //Print to arFile and bigFile
-            print.printing_everystep(beta, energy_old, energy_sq[j], cvs[j], mx, my, mz);
+            print.printing_everystep(beta, energy_old, energy_sq[j], mx, my, mz);
             print.printing_acceptancerates(beta, acceptancerate);
-
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }  // End loop over mcsteps
         // For every bin, we find the following quantities:
-        // Energy
-        energy_av = energy_av/mcsteps_inbin;
-        energy_sq_av = energy_sq_av/mcsteps_inbin;
+        mxs[i]   = mxs[i]/mcsteps_inbin;
+        mys[i]   = mys[i]/mcsteps_inbin;
+        mzs[i]   = mzs[i]/mcsteps_inbin;
+        energies[i]         = energies[i]/mcsteps_inbin;
+        energies_sq[i]      = energies_sq[i]/mcsteps_inbin;
+        cvs[i]   = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
 
-        // Error in the energy //
-        double E_stdv = 0;
-        for(int l=0; l<no_of_bins; l++)    E_stdv += (energies[l]-energy_av)*(energies[l]-energy_av);
-        E_stdv = sqrt(E_stdv/(no_of_bins*(no_of_bins-1)));
-
-        double Esq_stdv = 0;
-        for(int l=0; l<no_of_bins; l++)    Esq_stdv += (energies_sq[l]-energy_sq_av)*(energies_sq[l]-energy_sq_av);
-        Esq_stdv = sqrt(Esq_stdv/(no_of_bins*(no_of_bins-1)));
-
-        // Heat capacity
-        double cv = beta*beta*(energy_av-energy_sq_av*energy_sq_av);
-
-        // Approximate error in the heat capacity:
-        cv_average = cv_average/no_of_bins;
-
-        double cv_stdv = 0;
-        for(int l=0; l<no_of_bins; l++)    cv_stdv += (cvs[l]-cv_average)*(cvs[l]-cv_average);
-        cv_stdv = sqrt(cv_stdv/(no_of_bins*(no_of_bins-1)));
-
-        // Magnetization
-        mx_av = mx_av/mcsteps_inbin;
-        my_av = my_av/mcsteps_inbin;
-        mz_av = mz_av/mcsteps_inbin;
-
-        // Error in the magnetization //
-        double mx_stdv = 0;
-        for(int l=0; l<no_of_bins; l++)    mx_stdv += (mxs[l]-mx_av)*(mxs[l]-mx_av);
-        mx_stdv = sqrt(mx_stdv/(no_of_bins*(no_of_bins-1)));
-
-        double my_stdv = 0;
-        for(int l=0; l<no_of_bins; l++)    my_stdv += (mys[l]-my_av)*(mys[l]-my_av);
-        my_stdv = sqrt(my_stdv/(no_of_bins*(no_of_bins-1)));
-
-        double mz_stdv = 0;
-        for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
-        mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
-
-        print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
-        // Print to file
     }  // End loops over bins
+    //----------------------// Energy //-----------------------//
+    energy_av = energy_av/(mcsteps_inbin*no_of_bins);
+    energy_sq_av = energy_sq_av/(mcsteps_inbin*no_of_bins);
+    // Error in the energy //
+    double E_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    E_stdv += (energies[l]-energy_av)*(energies[l]-energy_av);
+    E_stdv = sqrt(E_stdv/(no_of_bins*(no_of_bins-1)));
+
+    double Esq_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    Esq_stdv += (energies_sq[l]-energy_sq_av)*(energies_sq[l]-energy_sq_av);
+    Esq_stdv = sqrt(Esq_stdv/(no_of_bins*(no_of_bins-1)));
+
+    //---------------------//Heat capacity//---------------------//
+    double cv = beta*beta*(energy_sq_av-energy_av*energy_av);
+
+    // Approximate error in the heat capacity:
+    cv_average = cv_average/(mcsteps_inbin*no_of_bins);
+
+    double cv_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    cv_stdv += (cvs[l]-cv_average)*(cvs[l]-cv_average);
+    cv_stdv = sqrt(cv_stdv/(no_of_bins*(no_of_bins-1)));
+
+    //-----------------------//Magnetization//----------------------//
+    mx_av = mx_av/(mcsteps_inbin*no_of_bins);
+    my_av = my_av/(mcsteps_inbin*no_of_bins);
+    mz_av = mz_av/(mcsteps_inbin*no_of_bins);
+
+    // Error in the magnetization //
+    double mx_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    mx_stdv += (mxs[l]-mx_av)*(mxs[l]-mx_av);
+    mx_stdv = sqrt(mx_stdv/(no_of_bins*(no_of_bins-1)));
+
+    double my_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    my_stdv += (mys[l]-my_av)*(mys[l]-my_av);
+    my_stdv = sqrt(my_stdv/(no_of_bins*(no_of_bins-1)));
+
+    double mz_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
+    mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
+
+    // Printing
+
+    print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
+
+    // Guess I should have stuff here instead. Print once for every beta.
     endtime = clock();
     total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
     cout << "Time MC steps and measurements: "  << total_time << endl;
