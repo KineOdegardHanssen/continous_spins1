@@ -24,8 +24,10 @@ public:
 
     //std::vector<Bond> bonds;
     std::vector<Site> sites;
+    std::vector<std::vector<double> > sitepositions;
 
     //Lattice grid functions
+    void chain_periodic_initialize();
     void quadratic_helical_initialize();
     void cubic_helical_initialize();
     void fcc_helical_initialize();

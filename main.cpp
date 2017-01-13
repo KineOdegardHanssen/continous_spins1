@@ -12,6 +12,8 @@
 using namespace std;
 using std::ofstream; using std::string;
 
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
+
 int main()   // main. Monte Carlo steps here?
 {
     bool DEBUG = true;
@@ -65,6 +67,19 @@ int main()   // main. Monte Carlo steps here?
     mymc.debugmode(true);
     mymc.latticetype(L, type_lattice);
     mymc.runmetropolis(beta, filenamePrefix);
+}
 
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
+{
+
+    // Initializing Monte Carlo
+    MonteCarlo mymc = MonteCarlo(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
+    mymc.debugmode(true);
+    mymc.latticetype(L, type_lattice);
+
+
+    mymc.runmetropolis(beta, filenamePrefix);
+    mymc.reset_energy();  // Should I in fact print beta to file in all cases?
+}
 }
 

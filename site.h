@@ -12,7 +12,6 @@ public:
     int index; // is this neccessary?
     int lenint; // Length of interaction array.
     int n1, n2, n3;
-    double xpos, ypos, zpos;          // Should send in the grid length a
     double hx, hy, hz, Dix, Diy, Diz; // This would lead to a lot of zero elements, possibly
     double spinx, spiny, spinz;
 
@@ -28,7 +27,8 @@ public:
 
     // Initializer
     //Site(int n,  bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds, std::vector<bool> boolvec);
-    Site(int n, int L1, int L2, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+
 };
 
 #endif // SITE_H

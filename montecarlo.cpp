@@ -1,6 +1,6 @@
 #include "montecarlo.h"
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
 {
 
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
@@ -13,6 +13,11 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
+
+    // Initializing class for printing to file
+    print = Printing(filenamePrefix);
+    // For now: Just print to all files. Have other options, of course.
+    print.open_all();
 
     acceptancerate = 0;
 
@@ -147,30 +152,25 @@ void MonteCarlo::initialize_energy()
     if(DEBUG)    cout << "Energy initialized, energy = " << energy_old << endl;
 }
 
-void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
+void MonteCarlo::reset_energy()
+{  // In case it gets stuck in some region, I guess...
+    double originalvalue = 1/sqrt(3);
+    for(int i=0; i<N; i++)
+    {   // Reset all spins
+        mylattice.sites[i].spinx = originalvalue;
+        mylattice.sites[i].spiny = originalvalue;
+        mylattice.sites[i].spinz = originalvalue;
+    }
+
+    initialize_energy();
+}
+
+void MonteCarlo::runmetropolis(double beta)
 {
     if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
     bool HUMBUG  = false;
     bool LADYBUG = false;
-    // Printing //Send prefix in?
-    // Opening file to print to
-    ofstream printFile;
-    char *filename = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filename, "%s_cspinMC.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    printFile.open(filename);
-    delete filename;
 
-    ofstream bigFile;
-    char *filenameb = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenameb, "%s_dev_energyav.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    bigFile.open(filenameb);
-    delete filenameb;
-
-    // File for storing the acceptance rates for each MC-step
-    ofstream arFile;
-    char *filenamea = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenamea, "%s_acceptancerate.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    arFile.open(filenamea);
 
     // Random generators
     std::default_random_engine generator_u;                       // I asked the internet, and it replied
@@ -257,8 +257,10 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
             cvs[j] = beta*beta*(energies_sq[j]-energies[j]*energies[j]);
             cv_average += cvs[j];
 
-            arFile << acceptancerate << endl;  // Maybe I should change what I send in to this one. Possibly change how I handle acceptancerate as well.
-            bigFile << i << " " << energy_av/(j+1) << endl;
+            //Print to arFile and bigFile
+            print.printing_everystep(beta, energy_old, energy_sq[j], cvs[j], mx, my, mz);
+            print.printing_acceptancerates(acceptancerate);
+
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }  // End loop over mcsteps
@@ -304,8 +306,7 @@ void MonteCarlo::runmetropolis(double beta, string filenamePrefix)
         for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
         mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
 
-        printFile << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
-        printFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << endl;
+        print.printing_everybin(energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
         // Print to file
     }  // End loops over bins
     endtime = clock();
