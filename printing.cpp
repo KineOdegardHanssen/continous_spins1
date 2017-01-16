@@ -1,5 +1,5 @@
 #include "printing.h"
-#include <vec3.h>
+
 
 Printing::Printing()
 {
@@ -8,13 +8,20 @@ Printing::Printing()
 Printing::Printing(string filenamePrefix)
 { // Initialisation of a printer object - it needs a prefix
     this->filenamePrefix = filenamePrefix;
-} // End initialisation
+    open_all();
+} // End initialization
 
 
+void Printing::givePrefix(string filenamePrefix)
+{ // Initialisation of a printer object - it needs a prefix
+    this->filenamePrefix = filenamePrefix;
+} // End initialization
+/*
 Printing::~Printing()
 { // Destructor works by closing all files
     closeAllFiles();
 } // End destructor
+*/
 
 void Printing::open_allFile()
 {
@@ -65,12 +72,12 @@ void Printing::printing_everybin(double beta, double energy_av, double E_stdv, d
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << beta << endl;
 } // End printingPosition-function
 
-void Printing::printing_everystep(double beta, double energy_old, double energy_sq_av, double cv, double mx, double my, double mz)
+void Printing::printing_everystep(double beta, double energy_old, double energy_sq_av, double mx, double my, double mz)
 {
-    bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << cv << " " << mx << " " << my << " " << mz << endl;
+    bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << mx << " " << my << " " << mz << endl;
 }
 
-void Printing::acceptancerates(double beta, double acceptancerate)
+void Printing::printing_acceptancerates(double beta, double acceptancerate)
 {   // Decide how often I shoud print this.
     arFile << beta << " " << acceptancerate << endl;
 }

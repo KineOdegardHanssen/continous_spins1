@@ -9,7 +9,7 @@
 #include "lattice.h"
 #include "site.h"    // Are these really neccessary... ?
 #include "bond.h"
-#include "printing.h"
+//#include "printing.h"
 
 using namespace std;
 using std::ofstream; using std::string;
@@ -17,7 +17,10 @@ using std::ofstream; using std::string;
 class MonteCarlo
 {
 public:
-    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
+    // Printing part
+    ofstream    allFile;
+    ofstream    bigFile;
+    string      filenamePrefix;
 
     int N, eqsteps, mcsteps_inbin, no_of_bins, no_of_neighbours;
     double energy_old, acceptancerate;
@@ -25,8 +28,12 @@ public:
     bool DEBUG;
 
     Lattice mylattice;
-    Printing print;
+    //Printing print;
 
+    MonteCarlo();
+    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
+
+    void chooseprintfile(string filenamePrefix);
     void debugmode(bool on);
 
     void latticetype(int L, char type_lattice);

@@ -67,7 +67,7 @@ void Lattice::chain_periodic_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, L, L, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 
@@ -135,7 +135,7 @@ void Lattice::quadratic_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, L, L, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 
@@ -219,7 +219,7 @@ void Lattice::cubic_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 
@@ -278,7 +278,7 @@ void Lattice::fcc_helical_initialize()
     std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     std::vector<double> position_n = std::vector<double>(3);
-    std::vector<double> coord_n = std::vector<double>(3);
+    std::vector<int> coord_n = std::vector<int>(3);
 
     // Could have these inside the loop and add randomness.
 
@@ -324,7 +324,7 @@ void Lattice::fcc_helical_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, L1, L2, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 

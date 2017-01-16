@@ -11,8 +11,6 @@ using namespace std; // Now, I can remove all std's.
 class Lattice
 {
 public:
-    Lattice();
-    Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
 
@@ -27,6 +25,11 @@ public:
     //std::vector<std::vector<double> > sitepositions_chain; // In case we introduce a grid length
     std::vector<std::vector<double> > sitepositions;
     std::vector<std::vector<int> >    sitecoordinates;
+
+    // Initialization
+    Lattice();
+    Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);
+
 
     //Lattice grid functions
     void chain_periodic_initialize();

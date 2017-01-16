@@ -1,7 +1,17 @@
 #include "montecarlo.h"
 
+MonteCarlo::MonteCarlo()
+{
+}
+
 MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
 {
+    // Initializing class for printing to file
+    //print(filenamePrefix);
+    //print(filenamePrefix);
+    //print.givePrefix(filenamePrefix);
+    // For now: Just print to all files. Have other options, of course.
+    //print.open_all();
 
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
@@ -14,15 +24,33 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->magfield = magfield;
     this->dm = dm;
 
+    // Initializing some other quantities
+    acceptancerate = 0;
+    DEBUG = false;
+
+    // Setting up files to print to. Might want to allow more flexibility here
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_everybeta.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    allFile.open(filename);
+    delete filename;
+
+    char *filenameb = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenameb, "%s_everyMCstep.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    bigFile.open(filenameb);
+    delete filenameb;
+}
+
+/*
+void MonteCarlo::chooseprintfile(string filenamePrefix)
+{
     // Initializing class for printing to file
-    print = Printing(filenamePrefix);
+    print(filenamePrefix);
+    //print(filenamePrefix);
+    //print.givePrefix(filenamePrefix);
     // For now: Just print to all files. Have other options, of course.
     print.open_all();
-
-    acceptancerate = 0;
-
-    DEBUG = false;
 }
+*/
 
 void MonteCarlo::debugmode(bool on)
 {
@@ -171,7 +199,6 @@ void MonteCarlo::runmetropolis(double beta)
     bool HUMBUG  = false;
     bool LADYBUG = false;
 
-
     // Random generators
     std::default_random_engine generator_u;                       // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_u(-1,1);
@@ -208,21 +235,24 @@ void MonteCarlo::runmetropolis(double beta)
 
     // Monte Carlo steps and measurements
     starttime = clock();
+    std::vector<double> acceptancerates    = std::vector<double>(no_of_bins);
     std::vector<double> energies    = std::vector<double>(no_of_bins);
     std::vector<double> energies_sq = std::vector<double>(no_of_bins);
     std::vector<double> cvs         = std::vector<double>(no_of_bins);
     std::vector<double> mxs = std::vector<double>(no_of_bins);
     std::vector<double> mys = std::vector<double>(no_of_bins);
     std::vector<double> mzs = std::vector<double>(no_of_bins);
-    double energy_av = 0;
+    // Resetting quantities
+    double ar_av        = 0;
+    double energy_av    = 0;
     double energy_sq_av = 0;
-    double cv_average = 0;
+    double cv_average   = 0;
     double mx_av = 0;
     double my_av = 0;
     double mz_av = 0;
     for(int i=0; i<no_of_bins; i++)  // Loop over the bins
     {   // For each bin
-        energies[i]  = 0;
+        energies[i]    = 0;
         energies_sq[i] = 0;
         cvs[i]         = 0;
         mxs[i]         = 0;
@@ -234,9 +264,12 @@ void MonteCarlo::runmetropolis(double beta)
         for(int j=0; j<mcsteps_inbin; j++)    // Loop over mcsteps in bin
         {   // For each mcstep
             mcstepf_metropolis(beta, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+            // acceptancerate
+            acceptancerates[i] += acceptancerate;
+            ar_av += acceptancerate;
             // energy
-            energies[j]    = energy_old;    // Storing to get the standard deviation
-            energies_sq[j] = energy_old*energy_old;
+            energies[i]    += energy_old;    // Storing to get the standard deviation // Something odd here
+            energies_sq[i] += energy_old*energy_old;
             energy_av      +=energy_old;
             energy_sq_av   +=energy_old*energy_old;
             // Magnetization
@@ -261,9 +294,8 @@ void MonteCarlo::runmetropolis(double beta)
             mys[i] += my;
             mzs[i] += mz;
 
-            //Print to arFile and bigFile
-            print.printing_everystep(beta, energy_old, energy_sq[j], mx, my, mz);
-            print.printing_acceptancerates(beta, acceptancerate);
+            //Print to bigFile
+            bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << mx << " " << my << " " << mz << endl;
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }  // End loop over mcsteps
@@ -276,6 +308,13 @@ void MonteCarlo::runmetropolis(double beta)
         cvs[i]   = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
 
     }  // End loops over bins
+    //----------------------// Acceptance rate //-----------------------//
+    ar_av = ar_av/(mcsteps_inbin*no_of_bins);
+    // Standard deviation //
+    double ar_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    ar_stdv +=(acceptancerates[l]-ar_av)*(acceptancerates[l]-ar_av);
+    ar_stdv = sqrt(ar_stdv/(no_of_bins*(no_of_bins-1)));
+
     //----------------------// Energy //-----------------------//
     energy_av = energy_av/(mcsteps_inbin*no_of_bins);
     energy_sq_av = energy_sq_av/(mcsteps_inbin*no_of_bins);
@@ -317,8 +356,9 @@ void MonteCarlo::runmetropolis(double beta)
     mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
 
     // Printing
-
-    print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
+    allFile << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
+    allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv << endl;
+    //print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
 
     // Guess I should have stuff here instead. Print once for every beta.
     endtime = clock();
@@ -512,5 +552,7 @@ void MonteCarlo::mcstepf_metropolis(double beta, std::default_random_engine gene
 
 void MonteCarlo::endsims()
 {
-    print.closeAllFiles();
+    //print.closeAllFiles();
+    if(allFile.is_open())      allFile.close();
+    if(bigFile.is_open())      bigFile.close();
 }

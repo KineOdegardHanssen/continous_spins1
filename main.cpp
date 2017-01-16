@@ -7,6 +7,7 @@
 #include "bond.h"
 #include "site.h"
 #include "lattice.h"
+#include "printing.h"
 #include "montecarlo.h"
 
 using namespace std;
@@ -62,18 +63,22 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
     */
 
-    string filenamePrefix = "fcc10t10t10_iso1_beta2p5_compareMCclass";
+    //string filenamePrefix = "fcc10t10t10_iso1_beta2p5_compareMCclass";
 
+    /*
     MonteCarlo mymc = MonteCarlo(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice);
     mymc.debugmode(true);
     mymc.latticetype(L, type_lattice);
     mymc.runmetropolis(beta, filenamePrefix);
+    */
+
+    test_betagenerator(10, 0, 4);
 }
 
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
 {
     // Initializing Monte Carlo
-    MonteCarlo mymc = MonteCarlo(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
     mymc.debugmode(true);
     mymc.latticetype(L, type_lattice);
 
@@ -84,7 +89,7 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
     for(int i=0; i<beta_n; i++)
     {
         betas[i] = betamin + deltabeta*i;
-        mymc.runmetropolis(beta);
+        mymc.runmetropolis(betas[i]);
         mymc.reset_energy();
     }
     mymc.endsims();
