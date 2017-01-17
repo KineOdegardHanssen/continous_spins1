@@ -238,7 +238,9 @@ void Lattice::cubic_helical_initialize()
 }
 
 void Lattice::fcc_helical_initialize()
-{   // Should include something saying how the parameters are set.
+{
+    bool DEBUG = true;
+    // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
     N = L*L*L;
     no_of_neighbours = 12;
@@ -282,8 +284,10 @@ void Lattice::fcc_helical_initialize()
 
     // Could have these inside the loop and add randomness.
 
+    if(DEBUG)    cout << "Now entering the loop" << endl;
     for(int n=0; n<N; n++)
     {
+        if(DEBUG)    cout << "In loop, n = " << n << endl;
         // Finding the neighbours to n
         // NB!: So far, I have only added neighbours that are a distance 1 apart, 2 being the length of the cell.
         // So no linking two cell corner atoms together as of now.
@@ -303,33 +307,65 @@ void Lattice::fcc_helical_initialize()
         int nmL2m1 = (n+N-L*L+1)%N;
         int nmL2mL = (n+N-L*L+L)%N;
 
+        if(DEBUG)
+        {
+            cout << "np1" << " " << np1 << endl;
+            cout << "npL" << " " << npL << endl;
+            cout << "npL2" << " " << npL2 << endl;
+            cout << "npLm1" << " " << npLm1 << endl;
+            cout << "npL2m1" << " " << npL2m1 << endl;
+            cout << "npL2mL" << " " << npL2mL << endl;
+            cout << "nm1" << " " << nm1 << endl;
+            cout << "nmL" << " " << nmL << endl;
+            cout << "nmL2" << " " << nmL2 << endl;
+            cout << "nmLm1" << " " << nmLm1 << endl;
+            cout << "nmL2m1" << " " << nmL2m1 << endl;
+            cout << "nmL2mL" << " " << nmL2mL << endl;
+        }
+
         std::vector<Bond> bonds;
 
+        if(DEBUG)    cout << "Setting the bonds" << endl;
         // Making a lot of bond classes to be added to bonds.
         bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
+        if(DEBUG)    cout << "Bond 1 done" << endl;
         bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 2 done" << endl;
         bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 3 done" << endl;
         bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 4 done" << endl;
         bonds.push_back(Bond(n, npL2, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 5 done" << endl;
         bonds.push_back(Bond(n, nmL2, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 6 done" << endl;
         bonds.push_back(Bond(n, npLm1, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 7 done" << endl;
         bonds.push_back(Bond(n, nmLm1, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 8 done" << endl;
         bonds.push_back(Bond(n, npL2m1, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 9 done" << endl;
         bonds.push_back(Bond(n, nmL2m1, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 10 done" << endl;
         bonds.push_back(Bond(n, npL2mL, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 11 done" << endl;
         bonds.push_back(Bond(n, nmL2mL, isotropic, dm, bondints));
+        if(DEBUG)    cout << "Bond 12 done" << endl;
 
         // or
         //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
+        cout << "Done setting the bonds. Setting the sites" << endl;
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 
         // Listing the positions of the spins:
 
+        //  /*
+        if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
         // Giving the position of the fcc
         int n1 = n%L1;
         int n2 = (int)n/L1 - (int)n/(L1*L2)*L2;
@@ -339,16 +375,19 @@ void Lattice::fcc_helical_initialize()
         double ypos = 0.5*(n1+n2);
         double zpos = 0.5*(n2+n3);
 
+        cout << "[" << xpos << "," << ypos << "," << zpos << "]" << endl;
+
         position_n[0] = xpos;
         position_n[1] = ypos;
         position_n[2] = zpos;
 
-        coord_n[3] = n1;     // Have these here in case I want to check
-        coord_n[4] = n2;
-        coord_n[5] = n3;
+        coord_n[0] = n1;     // Have these here in case I want to check
+        coord_n[1] = n2;
+        coord_n[2] = n3;
 
         sitepositions.push_back(position_n);
         sitecoordinates.push_back(coord_n);
+        // */
 
     }
     cout << "Done with fcc_helical_initialize" << endl;
