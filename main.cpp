@@ -13,7 +13,7 @@
 using namespace std;
 using std::ofstream; using std::string;
 
-void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
 void test_betagenerator(int beta_n, int betamin, int betamax);
 
 int main()   // main. Monte Carlo steps here?
@@ -22,13 +22,13 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 10; // The program is going to be slower than before as we have a 3D lattice
+    int L = 2; // The program is going to be slower than before as we have a 3D lattice
     // bools to determine system
     bool isotropic    = true;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
-    char type_lattice = 'F';
+    char type_lattice = 'P';
     //char latticetype = 'FH'; // FH: face-centered cubic,helical; C: cubic, helical; Q:quadratic, helical
     double beta = 2.5; // Just setting a beta.
 
@@ -63,26 +63,32 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
     */
 
-    //string filenamePrefix = "fcc10t10t10_iso1_beta2p5_compareMCclass";
+    string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     /*
-    MonteCarlo mymc = MonteCarlo(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice);
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
     mymc.debugmode(true);
     mymc.latticetype(L, type_lattice);
-    mymc.runmetropolis(beta, filenamePrefix);
+    mymc.runmetropolis(beta);
     */
 
-    test_betagenerator(10, 0, 4);
+
+    //test_betagenerator(10, 0, 4);
+    int beta_n = 100;
+    double betamin = 0.01;
+    double betamax = 4;
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
+
 }
 
-void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
 {
     // Initializing Monte Carlo
     MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
     mymc.debugmode(true);
-    mymc.latticetype(L, type_lattice);
+    //mymc.latticetype(L, type_lattice);  // Runs for chain, quadratic and cubic lattice, not for fcc.
 
-    int beta_n = 100; // Or something. Could have this as input
+    //int beta_n = 100; // Or something. Could have this as input
     vector<double> betas = vector<double>(beta_n);
     double deltabeta = (betamax-betamin)/(beta_n-1.0);
 

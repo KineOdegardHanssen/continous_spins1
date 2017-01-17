@@ -6,11 +6,16 @@ Bond::Bond()
 
 Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<double> bondints)
 {
-    this->bondints = bondints; // Do I really need this
+    //std::cout << "Initializing instance of class Bond" << std::endl;
+    this->bondints = bondints; // Do I really need this?
     // Or function feed bondints
+
+    //std::cout << "Bondints set" << std::endl;
 
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
+
+    //std::cout << "Siteindex set" << std::endl;
 
     if(isotropic==true)
     {
@@ -31,6 +36,7 @@ Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<
             Dz = bondints[2];
         }
     }
+    //std::cout << "Interactions unpacked, exiting Bond" << std::endl;
 }
 
 /*
