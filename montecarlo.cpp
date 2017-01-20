@@ -145,7 +145,7 @@ void MonteCarlo::initialize_energy()
             {
                 if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
                 int k = mylattice.sites[i].bonds[j].siteindex2;
-                if(j<k)    // To avoid double counting. More computationally efficient than halving the energy.
+                if(i<k)    // To avoid double counting. More computationally efficient than halving the energy.
                 {
                     if(BEDBUG)    cout << "Have set k in loop, k = " << k << "; N = " << N << endl;
                     double J = mylattice.sites[i].bonds[j].J;
@@ -179,7 +179,7 @@ void MonteCarlo::initialize_energy()
             {
 
                 int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                if(j<k)    // To avoid double counting. Hopefully saves time for large systems
+                if(i<k)    // To avoid double counting. Hopefully saves time for large systems
                 {
                     double Dx = mylattice.sites[i].bonds[j].Dx;
                     double Dy = mylattice.sites[i].bonds[j].Dy;
