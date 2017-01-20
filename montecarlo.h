@@ -9,6 +9,7 @@
 #include "lattice.h"
 #include "site.h"    // Are these really neccessary... ?
 #include "bond.h"
+#include "gaussiandeviate.h"  // Just to test against another random number generator.
 //#include "printing.h"
 
 using namespace std;
@@ -20,9 +21,11 @@ public:
     // Printing part
     ofstream    allFile;
     ofstream    bigFile;
+    ofstream    compareFile;
     string      filenamePrefix;
 
     int N, eqsteps, mcsteps_inbin, no_of_bins, no_of_neighbours;
+    long int seed;
     double energy_old, acceptancerate;
     bool isotropic, sianisotropy, magfield, dm;
     bool DEBUG, MAJORDEBUG;

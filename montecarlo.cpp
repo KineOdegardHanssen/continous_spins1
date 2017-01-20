@@ -17,6 +17,8 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->magfield = magfield;
     this->dm = dm;
 
+    this->filenamePrefix = filenamePrefix;
+
     // Making the Lattice
     double starttime = clock();
     mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
@@ -38,14 +40,15 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     cout << "Number of sites and neighbours retrieved to MonteCarlo." << endl;
 
     // Random generators
-    distribution_u    = std::uniform_real_distribution<double>(0,1);
-    distribution_v    = std::uniform_real_distribution<double>(0,1);
+    distribution_u    = std::uniform_real_distribution<double>(0,1);  // Varies depending on distribution
+    distribution_v    = std::uniform_real_distribution<double>(0,1);  // Varies depending on distribution
     distribution_prob = std::uniform_real_distribution<double>(0,1);
     // For index. This is given helical boundary conditions, then I only need one index
     distribution_n    = std::uniform_int_distribution<int>(0,N-1);
 
     // Initializing some other quantities
     acceptancerate = 0;
+    seed = 59;  // Seed to start random number generator
     DEBUG = false;
     MAJORDEBUG = false;
 
@@ -82,6 +85,12 @@ void MonteCarlo::debugmode(bool on)
 void MonteCarlo::majordebugtrue()
 {
     MAJORDEBUG = true;
+
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_comparetheory_results.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    compareFile.open(filename);
+    delete filename;
+
 }
 
 /*
@@ -365,6 +374,7 @@ void MonteCarlo::runmetropolis(double beta)
     }  // End loops over bins
     //----------------------// Acceptance rate //-----------------------//
     ar_av = ar_av/(mcsteps_inbin*no_of_bins);
+
     // Standard deviation //
     double ar_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    ar_stdv +=(acceptancerates[l]-ar_av)*(acceptancerates[l]-ar_av);
@@ -373,6 +383,7 @@ void MonteCarlo::runmetropolis(double beta)
     //----------------------// Energy //-----------------------//
     energy_av = energy_av/(mcsteps_inbin*no_of_bins);
     energy_sq_av = energy_sq_av/(mcsteps_inbin*no_of_bins);
+
     // Error in the energy //
     double E_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    E_stdv += (energies[l]-energy_av)*(energies[l]-energy_av);
@@ -478,8 +489,11 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
 
         // Changing the spin (tentatively):
         ///*
-        double u = distribution_u(generator_u);
-        double v = distribution_v(generator_v);
+        //double u = distribution_u(generator_u);
+        //double v = distribution_v(generator_v);
+
+        double u = ran2(&seed);  // Just testing
+        double v = ran2(&seed);
         if(HUMBUG)    cout << "Have drawn random numbers in mcstepf" << endl;
 
 
@@ -619,6 +633,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             mylattice.sites[k].spinx = sx_t;
             mylattice.sites[k].spiny = sy_t;
             mylattice.sites[k].spinz = sz_t;
+            //cout << "Spin normalized?" << (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
             //cout << "Energy decreased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]." << " deltaE =  " << energy_diff  << endl;
             changes+=1;
             //if(DEBUG)    cout << "Percentage of hits: " << changes/(n+1)  << endl;
@@ -640,6 +655,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 mylattice.sites[k].spinx = sx_t;
                 mylattice.sites[k].spiny = sy_t;
                 mylattice.sites[k].spinz = sz_t;
+                //cout << "Spin normalized?" << (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
                 //if(DEBUG)    cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]" << energy_diff << endl;
                 if(HUMBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
                 changes+=1;
@@ -675,5 +691,5 @@ void MonteCarlo::debug1d2p()
 
     double test_energy = 2*homJ*(spin0x*spin1x+spin0y*spin1y+spin0z*spin1z);
 
-    cout << "Energy as calculated from theory: " << test_energy << "; our current energy: " << energy_old << endl;
+    compareFile  << test_energy << " " << energy_old << endl;
 }
