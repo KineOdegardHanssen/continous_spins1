@@ -13,6 +13,7 @@
 using namespace std;
 using std::ofstream; using std::string;
 
+void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
 void test_betagenerator(int beta_n, int betamin, int betamax);
 
@@ -37,48 +38,27 @@ int main()   // main. Monte Carlo steps here?
     int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
     int no_of_bins = 100;     // The number of bins.
 
-    if(DEBUG)    cout << "Parameters set" << endl;
-    if(DEBUG)    cout << "beta = " << beta << endl;
-
-    // Setting up the lattice with site parameters and interactions
-
-    /*
-    start_clock = clock();
-    // Initializing instance of class Lattice
-    Lattice mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
-    if(DEBUG)    cout << "Instance of class Lattice initialized" << endl;
-
-    // Choosing type of lattice
-    mylattice.fcc_helical_initialize();
-    //mylattice.cubic_helical_initialize();
-    //mylattice.quadratic_helical_initialize();
-    cout << "in main again" << endl;
-
-    end_clock = clock();
-    double total_time_initialize_lattice = (end_clock - start_clock)/(double) CLOCKS_PER_SEC;
-    cout << "Time to initialize Lattice: " << total_time_initialize_lattice  << endl;
-    int no_of_neighbours = mylattice.no_of_neighbours;
-
-    if(DEBUG)     cout << "Lattice set up" << endl;
-    if(DEBUG)     cout << "Number of neighbours: " << no_of_neighbours << endl;
-    */
-
-    string filenamePrefix = "chain2_periodic_iso1_beta0to4";
-
-    /*
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
-    mymc.debugmode(true);
-    mymc.latticetype(L, type_lattice);
-    mymc.runmetropolis(beta);
-    */
-
+    string filenamePrefix = "test";
+    //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     //test_betagenerator(10, 0, 4);
     int beta_n = 100;
     double betamin = 0.01;
     double betamax = 4;
+
     run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
 
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
+}
+
+void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
+{
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
+    mymc.debugmode(true);
+    // Run Metropolis algorithm
+    mymc.runmetropolis(beta);
+    mymc.endsims();
 }
 
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
@@ -86,6 +66,7 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
     // Initializing Monte Carlo
     MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
     mymc.debugmode(true);
+    //mymc.majordebugtrue();
     //mymc.latticetype(L, type_lattice);  // Runs for chain, quadratic and cubic lattice, not for fcc.
 
     //int beta_n = 100; // Or something. Could have this as input

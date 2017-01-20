@@ -25,7 +25,7 @@ public:
     int N, eqsteps, mcsteps_inbin, no_of_bins, no_of_neighbours;
     double energy_old, acceptancerate;
     bool isotropic, sianisotropy, magfield, dm;
-    bool DEBUG;
+    bool DEBUG, MAJORDEBUG;
 
     // Random generators
     std::default_random_engine generator_u;                       // I asked the internet, and it replied
@@ -48,7 +48,10 @@ public:
     MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
 
     void chooseprintfile(string filenamePrefix);
+    // debugging
     void debugmode(bool on);
+    void majordebugtrue();
+    void debug1d2p();
 
     void latticetype(int L, char type_lattice);
     void initialize_energy();

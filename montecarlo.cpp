@@ -6,13 +6,6 @@ MonteCarlo::MonteCarlo()
 
 MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
 {
-    // Initializing class for printing to file
-    //print(filenamePrefix);
-    //print(filenamePrefix);
-    //print.givePrefix(filenamePrefix);
-    // For now: Just print to all files. Have other options, of course.
-    //print.open_all();
-
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
     this->mcsteps_inbin = mcsteps_inbin;
@@ -30,22 +23,23 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     cout << "Instance of class Lattice initialized" << endl;
 
     // Type of Lattice
-    if(type_lattice=='F')      mylattice.fcc_helical_initialize();
-    else if(type_lattice=='C') mylattice.cubic_helical_initialize();
-    else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();
-    else if(type_lattice=='P') mylattice.chain_periodic_initialize();
+    if(type_lattice=='F')      mylattice.fcc_helical_initialize();       // F for fcc
+    else if(type_lattice=='C') mylattice.cubic_helical_initialize();     // C for cubic
+    else if(type_lattice=='Q') mylattice.quadratic_helical_initialize(); // Q for quadratic
+    else if(type_lattice=='P') mylattice.chain_periodic_initialize();    // P for periodic chain
+    //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
-    if(DEBUG)    cout << "Lattice set, time: " << total_time << endl;
+    cout << "Lattice set, time: " << total_time << endl;
 
     // The lattice  // Could just extract the bools from here...
     this->N = mylattice.N;
     this->no_of_neighbours = mylattice.no_of_neighbours;
-    if(DEBUG)    cout << "Number of sites and neighbours retrieved to MonteCarlo." << endl;
+    cout << "Number of sites and neighbours retrieved to MonteCarlo." << endl;
 
     // Random generators
-    distribution_u    = std::uniform_real_distribution<double>(-1,1);
-    distribution_v    = std::uniform_real_distribution<double>(-1,1);
+    distribution_u    = std::uniform_real_distribution<double>(0,1);
+    distribution_v    = std::uniform_real_distribution<double>(0,1);
     distribution_prob = std::uniform_real_distribution<double>(0,1);
     // For index. This is given helical boundary conditions, then I only need one index
     distribution_n    = std::uniform_int_distribution<int>(0,N-1);
@@ -53,6 +47,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     // Initializing some other quantities
     acceptancerate = 0;
     DEBUG = false;
+    MAJORDEBUG = false;
 
     // Setting up files to print to. Might want to allow more flexibility here
     char *filename = new char[1000];                                // File name can have max 1000 characters
@@ -82,6 +77,11 @@ void MonteCarlo::debugmode(bool on)
 {
     if(on)    DEBUG = true;
     else      DEBUG = false;
+}
+
+void MonteCarlo::majordebugtrue()
+{
+    MAJORDEBUG = true;
 }
 
 /*
@@ -144,27 +144,27 @@ void MonteCarlo::initialize_energy()
             for(int j=0; j<no_of_neighbours; j++)
             {
                 if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
-                int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                //                                          // I could, alternatively, just store the index
-                //                                          // of bonds. But then I need to organize the bonds
-                //                                          // and that is such a hassle.
-                if(BEDBUG)    cout << "Have set k in loop, k = " << k << "; N = " << N << endl;
-                double J = mylattice.sites[i].bonds[j].J;
-                if(BEDBUG)    cout << "Have accessed J in bond between spins" << endl;
-                double sx = mylattice.sites[k].spinx;
-                double sy = mylattice.sites[k].spiny;
-                double sz = mylattice.sites[k].spinz;
-                if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
-                partnerspinx += J*sx;
-                partnerspiny += J*sy;
-                partnerspinz += J*sz;
-                if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
+                int k = mylattice.sites[i].bonds[j].siteindex2;
+                if(j<k)    // To avoid double counting. More computationally efficient than halving the energy.
+                {
+                    if(BEDBUG)    cout << "Have set k in loop, k = " << k << "; N = " << N << endl;
+                    double J = mylattice.sites[i].bonds[j].J;
+                    if(BEDBUG)    cout << "Have accessed J in bond between spins" << endl;
+                    double sx = mylattice.sites[k].spinx;
+                    double sy = mylattice.sites[k].spiny;
+                    double sz = mylattice.sites[k].spinz;
+                    if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
+                    partnerspinx += J*sx;
+                    partnerspiny += J*sy;
+                    partnerspinz += J*sz;
+                    if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
+                }
             }
             if(BEDBUG)   cout << "Done with the loop in isotropic" << endl;
             double sx = mylattice.sites[i].spinx;
             double sy = mylattice.sites[i].spiny;
             double sz = mylattice.sites[i].spinz;
-            energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            energy_contribution_bonds += (partnerspinx*sx + partnerspiny*sy + partnerspinz*sz);///2.0;
             // half this thing. Or find a reasonable way to not double count.
             if(BEDBUG)     cout << "Done with isotropic" << endl;
         }
@@ -179,21 +179,24 @@ void MonteCarlo::initialize_energy()
             {
 
                 int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                double Dx = mylattice.sites[i].bonds[j].Dx;
-                double Dy = mylattice.sites[i].bonds[j].Dy;
-                double Dz = mylattice.sites[i].bonds[j].Dz;
+                if(j<k)    // To avoid double counting. Hopefully saves time for large systems
+                {
+                    double Dx = mylattice.sites[i].bonds[j].Dx;
+                    double Dy = mylattice.sites[i].bonds[j].Dy;
+                    double Dz = mylattice.sites[i].bonds[j].Dz;
 
-                double sxk = mylattice.sites[k].spinx;
-                double syk = mylattice.sites[k].spiny;
-                double szk = mylattice.sites[k].spinz;
+                    double sxk = mylattice.sites[k].spinx;
+                    double syk = mylattice.sites[k].spiny;
+                    double szk = mylattice.sites[k].spinz;
 
-                energy_contribution_bonds -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
+                    energy_contribution_bonds -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
+                }
             }
         }
         if(BEDBUG) cout << "Done with one, onto the others" << endl;
     }
-    energy_old = energy_contribution_sites + energy_contribution_bonds/2.0;
-    if(DEBUG)    cout << "Energy initialized, energy = " << energy_old << endl;
+    energy_old = energy_contribution_sites + energy_contribution_bonds;
+    if(BEDBUG)    cout << "Energy initialized, energy = " << energy_old << endl;
 }
 
 void MonteCarlo::reset_energy()
@@ -319,7 +322,6 @@ void MonteCarlo::runmetropolis(double beta)
             mxquad = mxsq*mxsq;
             myquad = mysq*mysq;
             mzquad = mzsq*mzsq;
-
 
             mx_av += mx;
             my_av += my;
@@ -475,7 +477,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(HUMBUG)    cout << "Components of spin " << k << " accessed" << endl;
 
         // Changing the spin (tentatively):
-         /*
+        ///*
         double u = distribution_u(generator_u);
         double v = distribution_v(generator_v);
         if(HUMBUG)    cout << "Have drawn random numbers in mcstepf" << endl;
@@ -490,14 +492,14 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         //double sz_t = sqrt(1-sintheta*sintheta);
         double sz_t = cos(theta);
 
-        cout << "sx_t = " << sx_t << endl;
-        cout << "sy_t = " << sy_t << endl;
-        cout << "sz_t = " << sz_t << endl;
-        cout <<  "Checking if spin is normalized: " <<  (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
+        //cout << "sx_t = " << sx_t << endl;
+        //cout << "sy_t = " << sy_t << endl;
+        //cout << "sz_t = " << sz_t << endl;
+        //cout <<  "Checking if spin is normalized: " <<  (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
 
-          */
+        //*/
 
-        ///*
+        /*
         double zetasq = 2.0;  // zeta squared. Value to initialize loop.
         double zeta1;
         double zeta2;
@@ -532,8 +534,8 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         //cout << "sz_t = " << sz_t << endl;
         //cout <<  "Checking if spin is normalized: " <<  (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
         // Check normalization
-        //if(DEBUG)    cout << "Normalized? S^2 = " << (sx_t*sx_t + sy_t*sy_t + sz_t*sz_t) << endl;
-        //*/
+        if(HUMBUG)    cout << "Normalized? S^2 = " << (sx_t*sx_t + sy_t*sy_t + sz_t*sz_t) << endl;
+        */
 
         if(HUMBUG)    cout << "Have made a uniform spherical distribution using them" << endl;
         // Energy contribution after spin change
@@ -626,6 +628,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             energy_old = energy_new; // Update energy
             //cout << "Energy changed. Energy difference = " << energy_diff << endl;
             //cout << "Energy should be reset now. energy_old = " << energy_old << "; energy_new = " << energy_new << endl;
+            if(MAJORDEBUG)    debug1d2p();
         }
         else
         {
@@ -638,12 +641,13 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 mylattice.sites[k].spiny = sy_t;
                 mylattice.sites[k].spinz = sz_t;
                 //if(DEBUG)    cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]" << energy_diff << endl;
-                //if(DEBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
+                if(HUMBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
                 changes+=1;
                 if(HUMBUG)    cout << "Success" << endl;
                 //cout << "Percentage of hits: " << changes/(n+1)  << endl;
                 energy_old = energy_new;  // Update energy
                 //cout << "Energy changed. Energy difference = " << energy_diff << endl;
+                if(MAJORDEBUG)    debug1d2p();
             }
         }
     }
@@ -655,4 +659,21 @@ void MonteCarlo::endsims()
     //print.closeAllFiles();
     if(allFile.is_open())      allFile.close();
     if(bigFile.is_open())      bigFile.close();
+}
+
+
+void MonteCarlo::debug1d2p()
+{
+    // Only to work for chain with two particles, homogenous J
+    double spin0x = mylattice.sites[0].spinx;
+    double spin0y = mylattice.sites[0].spiny;
+    double spin0z = mylattice.sites[0].spinz;
+    double spin1x = mylattice.sites[1].spinx;
+    double spin1y = mylattice.sites[1].spiny;
+    double spin1z = mylattice.sites[1].spinz;
+    double homJ = mylattice.sites[0].bonds[0].J;
+
+    double test_energy = 2*homJ*(spin0x*spin1x+spin0y*spin1y+spin0z*spin1z);
+
+    cout << "Energy as calculated from theory: " << test_energy << "; our current energy: " << energy_old << endl;
 }

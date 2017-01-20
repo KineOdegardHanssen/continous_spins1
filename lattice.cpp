@@ -16,6 +16,67 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     this->dm = dm;
 }
 
+/*
+void Lattice::chain_2p_periodic_initialize()
+{   // Hard coding because things should be different when we have only two spins and periodic boundary conditions
+    N = 2;
+    no_of_neighbours = 1;
+    double a = 1/sqrt(3);
+    double spinx = a;
+    double spiny = a;
+    double spinz = a;
+
+    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
+    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
+    // unneccessary calculations.
+    // have some function for doing this:
+    double hx = 1;
+    double hy = 1;
+    double hz = 1;
+    double Dix = 1;
+    double Diy = 1;
+    double Diz = 1;
+
+    // And, in the future, have it in the loop.
+
+    double J =  1; // As in Ising model work
+    double Dx = 1;
+    double Dy = 1;
+    double Dz = 1;
+
+    // Move these when neccessary
+    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
+    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+
+    for(int n=0; n<N; n++)
+    {
+        // Finding the neighbours to n
+        // This should only be done once. And that is exactly what we are doing.
+        // Doing modulo operations, as suggested in Newman & Barkema
+        // These neighbours are consistent with the sketch in Newman & Barkema
+        int neighbour;
+        if(n==0)    neighbour = 1;
+        else        neighbour = 0;
+
+        cout << "Spin " << n << ", neighbour: " << neighbour << endl;
+
+        std::vector<Bond> bonds;
+
+        // Making a lot of bond classes to be added to bonds.
+        bonds.push_back(Bond(n, neighbour, isotropic, dm, bondints));  // Do I really need to send in n?
+
+        // or
+        //bonds.push_back(Bond(n, np1, bondints));
+
+        // Is it too nested to make Site inherit Bond? ... Seems fair?
+        // Send in bools
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        // or
+        //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+    }
+}
+*/
+
 void Lattice::chain_periodic_initialize()
 {
     N = L;
@@ -55,6 +116,8 @@ void Lattice::chain_periodic_initialize()
         // These neighbours are consistent with the sketch in Newman & Barkema
         int np1 = (n+1)%N;
         int nm1 = (n+N-1)%N;
+
+        cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
 
         std::vector<Bond> bonds;
 
