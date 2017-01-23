@@ -146,11 +146,14 @@ void MonteCarlo::initialize_energy()
         if(isotropic)
         {
             if(BEDBUG)   cout << "In isotropic" << endl;
-            // Declare no_of_neighbours here in case
+            double nneighbours;
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
-            for(int j=0; j<no_of_neighbours; j++)
+            // Determining the number of neighbours of the site
+            if(mylattice.notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
+            else                         nneighbours = no_of_neighbours;
+            for(int j=0; j<nneighbours; j++)
             {
                 if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
                 int k = mylattice.sites[i].bonds[j].siteindex2;
@@ -181,12 +184,15 @@ void MonteCarlo::initialize_energy()
         {
             if(BEDBUG)    cout << "In dm" << endl;
             // Double loops and stuff. Could maybe make this more efficient
+            int nneighbours;
             double sxi = mylattice.sites[i].spinx;
             double syi = mylattice.sites[i].spiny;
             double szi = mylattice.sites[i].spinz;
-            for(int j=0; j<no_of_neighbours; j++)
+            // Determining the number of neighbours of the site
+            if(mylattice.notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
+            else                         nneighbours = no_of_neighbours;
+            for(int j=0; j<nneighbours; j++)
             {
-
                 int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
                 if(i<k)    // To avoid double counting. Hopefully saves time for large systems
                 {
@@ -369,7 +375,9 @@ void MonteCarlo::runmetropolis(double beta)
         mzsquad[i]     = mzsquad[i]/mcsteps_inbin;
         energies[i]    = energies[i]/mcsteps_inbin;
         energies_sq[i] = energies_sq[i]/mcsteps_inbin;
-        cvs[i]         = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
+        double cv_bin  = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
+        cvs[i]         = cv_bin;
+        cv_average    += cv_bin;
 
     }  // End loops over bins
     //----------------------// Acceptance rate //-----------------------//
@@ -398,6 +406,7 @@ void MonteCarlo::runmetropolis(double beta)
 
     // Approximate error in the heat capacity:
     cv_average = cv_average/(mcsteps_inbin*no_of_bins);
+    //cout << "cv_average: " << cv_average << endl;
 
     double cv_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    cv_stdv += (cvs[l]-cv_average)*(cvs[l]-cv_average);
@@ -455,7 +464,7 @@ void MonteCarlo::runmetropolis(double beta)
     allFile << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
     allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
-    allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv << endl;
+    allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv << " " << cv_average << endl;
     //print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
 
     // Guess I should have stuff here instead. Print once for every beta.
@@ -488,7 +497,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(HUMBUG)    cout << "Components of spin " << k << " accessed" << endl;
 
         // Changing the spin (tentatively):
-        ///*
+
         //double u = distribution_u(generator_u);
         //double v = distribution_v(generator_v);
 
@@ -496,7 +505,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         double v = ran2(&seed);
         if(HUMBUG)    cout << "Have drawn random numbers in mcstepf" << endl;
 
-
+        ///*
         double theta = acos(1.0-2.0*u);
         double phi = 2.0*M_PI*v;
 
@@ -521,6 +530,8 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         {
             double r_1 = distribution_u(generator_u);
             double r_2 = distribution_v(generator_v);
+            r_1 = 1.0-2.0*r_1;
+            r_2 = 1.0 -2.0*r_2;
 
             zeta1 = 1.0-2.0*r_1;
             zeta2 = 1.0-2.0*r_2;
@@ -576,10 +587,15 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         {
             if(HUMBUG)    cout << "In isotropic in mcstepf" << endl;
             if(HUMBUG)    cout << "no_of_neighbours = " << no_of_neighbours << endl;
+            int nneighbours;
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
-            for(int j=0; j<no_of_neighbours; j++)
+            // Determining the number of neighbours
+            if(mylattice.notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else                         nneighbours = no_of_neighbours;
+            cout << nneighbours;
+            for(int j=0; j<nneighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
@@ -598,7 +614,11 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(dm)
         {
             if(HUMBUG)    cout << "In dm in mcstepf" << endl;
-            for(int j=0; j<no_of_neighbours; j++)
+            // Determining the number of neighbours
+            int nneighbours;
+            if(mylattice.notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else                         nneighbours = no_of_neighbours;
+            for(int j=0; j<nneighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;

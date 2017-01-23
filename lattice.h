@@ -13,6 +13,7 @@ class Lattice
 public:
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
+    bool notperiodic;            // Bool to keep track of neighbours
 
     int L,N, no_of_neighbours;
 
@@ -34,6 +35,7 @@ public:
     //Lattice grid functions
     //void chain_2p_periodic_initialize();
     void chain_periodic_initialize();
+    void chain_closed_initialize();
     void quadratic_helical_initialize();
     void cubic_helical_initialize();
     void fcc_helical_initialize();

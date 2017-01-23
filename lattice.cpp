@@ -6,21 +6,22 @@ Lattice::Lattice()
 }
 
 Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm)
-{   // Ta inn chars eller bools og bestemme hvilken funksjon som skal kalles?
+{
     this->L = L;
-    // Do these really need to be a part of Lattice?
-    // Quite neat, though not neccessary. No, I guess these come in handy.
     this->isotropic = isotropic;
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
+
+    notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
 }
 
-/*
-void Lattice::chain_2p_periodic_initialize()
-{   // Hard coding because things should be different when we have only two spins and periodic boundary conditions
-    N = 2;
-    no_of_neighbours = 1;
+void Lattice::chain_closed_initialize()
+{
+    notperiodic = true;
+    cout << "NB! Bool notperiodic changed to true. Now operating with closed BCs!" << endl;
+    N = L;
+    no_of_neighbours = 2; // For the most part
     double a = 1/sqrt(3);
     double spinx = a;
     double spiny = a;
@@ -51,31 +52,38 @@ void Lattice::chain_2p_periodic_initialize()
     for(int n=0; n<N; n++)
     {
         // Finding the neighbours to n
-        // This should only be done once. And that is exactly what we are doing.
-        // Doing modulo operations, as suggested in Newman & Barkema
-        // These neighbours are consistent with the sketch in Newman & Barkema
-        int neighbour;
-        if(n==0)    neighbour = 1;
-        else        neighbour = 0;
-
-        cout << "Spin " << n << ", neighbour: " << neighbour << endl;
+        int no_of_neighbours_site = 0;
+        int np1 = (n+1)%N;
+        int nm1 = (n+N-1)%N;
 
         std::vector<Bond> bonds;
 
-        // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, neighbour, isotropic, dm, bondints));  // Do I really need to send in n?
+        // Excluding periodic neighbours
+        if(np1>n)
+        {
+            bonds.push_back(Bond(n, np1, isotropic, dm, bondints));
+            no_of_neighbours_site++;
+        }
+        if(nm1<n)
+        {
+            bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
+            no_of_neighbours_site++;
+        }
+
+
+        cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
 
         // or
         //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, no_of_neighbours_site, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
     }
 }
-*/
+
 
 void Lattice::chain_periodic_initialize()
 {
@@ -133,9 +141,7 @@ void Lattice::chain_periodic_initialize()
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
-
     }
-
 }
 
 void Lattice::quadratic_helical_initialize()

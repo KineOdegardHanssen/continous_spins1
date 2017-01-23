@@ -38,7 +38,7 @@ int main()   // main. Monte Carlo steps here?
     int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
     int no_of_bins = 100;     // The number of bins.
 
-    string filenamePrefix = "test";
+    string filenamePrefix = "test2";
     //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     //test_betagenerator(10, 0, 4);

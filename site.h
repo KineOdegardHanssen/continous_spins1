@@ -19,16 +19,18 @@ public:
     //std::vector<int> bondtype1; // Not here
     //std::vector<int> bondtype2;
     //std::vector<int> bondtype3;
-    //std::vector<double> spin;   // maybe store in each direction instead
-    //std::vector<int> bondindexes; // Or some sort of pointer...
     std::vector<double> siteint; // Array for site interaction
     std::vector<Bond> bonds; // I guess I do have to add a pointer to Bond. But then both classes inherit each other. Weird.
     // Should I have some bondlength parameter?
 
-    // Initializer
-    //Site(int n,  bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds, std::vector<bool> boolvec);
-    Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    // For closed boundary conditions
+    int no_of_neighbours_site;
 
+    // Initializer
+    // For periodic boundary conditions
+    Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    // For closed boundary conditions
+    Site(int n, int no_of_neighbours_site, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
 };
 
 #endif // SITE_H
