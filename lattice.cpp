@@ -71,10 +71,7 @@ void Lattice::chain_closed_initialize()
         }
 
 
-        cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
-
-        // or
-        //bonds.push_back(Bond(n, np1, bondints));
+        //cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools

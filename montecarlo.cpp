@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, string filenamePrefix)
 {
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
@@ -19,16 +19,27 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     this->filenamePrefix = filenamePrefix;
 
+    if(periodic)    notperiodic = false;
+    else            notperiodic = true;
+
     // Making the Lattice
     double starttime = clock();
     mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
     cout << "Instance of class Lattice initialized" << endl;
 
     // Type of Lattice
-    if(type_lattice=='F')      mylattice.fcc_helical_initialize();       // F for fcc
-    else if(type_lattice=='C') mylattice.cubic_helical_initialize();     // C for cubic
-    else if(type_lattice=='Q') mylattice.quadratic_helical_initialize(); // Q for quadratic
-    else if(type_lattice=='P') mylattice.chain_periodic_initialize();    // P for periodic chain
+    if(periodic)
+    {
+        if(type_lattice=='F')      mylattice.fcc_helical_initialize();       // F for fcc
+        else if(type_lattice=='C') mylattice.cubic_helical_initialize();     // C for cubic
+        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize(); // Q for quadratic
+        else if(type_lattice=='O') mylattice.chain_periodic_initialize();    // O for one-dimensional
+    }
+    else
+    {
+        if(type_lattice=='O')      mylattice.chain_closed_initialize();
+    }
+
     //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -151,8 +162,8 @@ void MonteCarlo::initialize_energy()
             double partnerspiny = 0;
             double partnerspinz = 0;
             // Determining the number of neighbours of the site
-            if(mylattice.notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
-            else                         nneighbours = no_of_neighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
             for(int j=0; j<nneighbours; j++)
             {
                 if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
@@ -189,8 +200,8 @@ void MonteCarlo::initialize_energy()
             double syi = mylattice.sites[i].spiny;
             double szi = mylattice.sites[i].spinz;
             // Determining the number of neighbours of the site
-            if(mylattice.notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
-            else                         nneighbours = no_of_neighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
             for(int j=0; j<nneighbours; j++)
             {
                 int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
@@ -592,9 +603,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             double partnerspiny = 0;
             double partnerspinz = 0;
             // Determining the number of neighbours
-            if(mylattice.notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
-            else                         nneighbours = no_of_neighbours;
-            cout << nneighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
+            //cout << nneighbours;
             for(int j=0; j<nneighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2;
@@ -616,8 +627,8 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             if(HUMBUG)    cout << "In dm in mcstepf" << endl;
             // Determining the number of neighbours
             int nneighbours;
-            if(mylattice.notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
-            else                         nneighbours = no_of_neighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
             for(int j=0; j<nneighbours; j++)
             {
                 int l = mylattice.sites[k].bonds[j].siteindex2;

@@ -28,6 +28,7 @@ public:
     long int seed;
     double energy_old, acceptancerate;
     bool isotropic, sianisotropy, magfield, dm;
+    bool notperiodic;
     bool DEBUG, MAJORDEBUG;
 
     // Random generators
@@ -48,7 +49,7 @@ public:
     //Printing print;
 
     MonteCarlo();
-    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, char type_lattice, string filenamePrefix);
+    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool periodic, bool dm, char type_lattice, string filenamePrefix);
 
     void chooseprintfile(string filenamePrefix);
     // debugging
