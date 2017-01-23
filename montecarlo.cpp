@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, string filenamePrefix)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix)
 {
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
@@ -18,6 +18,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->dm = dm;
 
     this->filenamePrefix = filenamePrefix;
+    this->printeveryMCstep = printeveryMCstep;
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
@@ -69,10 +70,15 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     allFile.open(filename);
     delete filename;
 
-    char *filenameb = new char[1000];                                // File name can have max 1000 characters
-    sprintf(filenameb, "%s_everyMCstep.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-    bigFile.open(filenameb);
-    delete filenameb;
+
+    if(printeveryMCstep)
+    {
+        char *filenameb = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenameb, "%s_everyMCstep.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        bigFile.open(filenameb);
+        delete filenameb;
+    }
+
 }
 
 /*
@@ -370,7 +376,10 @@ void MonteCarlo::runmetropolis(double beta)
             mzsquad[i] += mzquad;
 
             //Print to bigFile
-            bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << mx << " " << my << " " << mz << endl;
+            if(printeveryMCstep)
+            {
+                bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << mx << " " << my << " " << mz << endl;
+            }
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }  // End loop over mcsteps
@@ -705,7 +714,7 @@ void MonteCarlo::endsims()
 {
     //print.closeAllFiles();
     if(allFile.is_open())      allFile.close();
-    if(bigFile.is_open())      bigFile.close();
+    if(printeveryMCstep)       if(bigFile.is_open())      bigFile.close();
 }
 
 

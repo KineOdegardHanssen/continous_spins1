@@ -13,8 +13,8 @@
 using namespace std;
 using std::ofstream; using std::string;
 
-void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, string filenamePrefix);
-void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, string filenamePrefix);
+void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix);
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix);
 void test_betagenerator(int beta_n, int betamin, int betamax);
 
 int main()   // main. Monte Carlo steps here?
@@ -29,17 +29,19 @@ int main()   // main. Monte Carlo steps here?
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
-    char type_lattice = 'O';
-    bool periodic     = true;
-    //char latticetype = 'FH'; // FH: face-centered cubic,helical; C: cubic, helical; Q:quadratic, helical
-    double beta = 2.5; // Just setting a beta.
+    char type_lattice = 'O';   // F: face-centered cubic; C: cubic; Q:quadratic; O: chain;
+    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
+    bool printeveryMCstep = false;
+    //char latticetype = 'FH'; //
+    //double beta = 2.5; // Just setting a beta.
 
     // Run parameters
     int eqsteps = 1000; // Number of steps in the equilibration procedure
     int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
     int no_of_bins = 100;     // The number of bins.
 
-    string filenamePrefix = "test2";
+    //string filenamePrefix = "printtestyo";
+    string filenamePrefix = "test_notperiodicchain_2p";
     //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     //test_betagenerator(10, 0, 4);
@@ -47,25 +49,25 @@ int main()   // main. Monte Carlo steps here?
     double betamin = 0.01;
     double betamax = 4;
 
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, filenamePrefix);
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix);
 
     //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, type_lattice, filenamePrefix);
 }
 
-void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, string filenamePrefix)
+void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix)
 {
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, filenamePrefix);
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix);
     mymc.debugmode(true);
     // Run Metropolis algorithm
     mymc.runmetropolis(beta);
     mymc.endsims();
 }
 
-void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, string filenamePrefix)
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix)
 {
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, filenamePrefix);
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix);
     mymc.debugmode(true);
     //mymc.majordebugtrue();
     //mymc.latticetype(L, type_lattice);  // Runs for chain, quadratic and cubic lattice, not for fcc.
