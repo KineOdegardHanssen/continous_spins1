@@ -281,9 +281,12 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mxs = std::vector<double>(no_of_bins);
     std::vector<double> mys = std::vector<double>(no_of_bins);
     std::vector<double> mzs = std::vector<double>(no_of_bins);
-    std::vector<double> mxssq = std::vector<double>(no_of_bins);
-    std::vector<double> myssq = std::vector<double>(no_of_bins);
-    std::vector<double> mzssq = std::vector<double>(no_of_bins);
+    std::vector<double> mxs_abs = std::vector<double>(no_of_bins);
+    std::vector<double> mys_abs = std::vector<double>(no_of_bins);
+    std::vector<double> mzs_abs = std::vector<double>(no_of_bins);
+    std::vector<double> mxssq   = std::vector<double>(no_of_bins);
+    std::vector<double> myssq   = std::vector<double>(no_of_bins);
+    std::vector<double> mzssq   = std::vector<double>(no_of_bins);
     std::vector<double> mxsquad = std::vector<double>(no_of_bins);
     std::vector<double> mysquad = std::vector<double>(no_of_bins);
     std::vector<double> mzsquad = std::vector<double>(no_of_bins);
@@ -295,6 +298,9 @@ void MonteCarlo::runmetropolis(double beta)
     double mx_av        = 0;
     double my_av        = 0;
     double mz_av        = 0;
+    double mx_abs_av    = 0;
+    double my_abs_av    = 0;
+    double mz_abs_av    = 0;
     double mxsq_av      = 0;
     double mysq_av      = 0;
     double mzsq_av      = 0;
@@ -309,6 +315,9 @@ void MonteCarlo::runmetropolis(double beta)
         mxs[i]         = 0;
         mys[i]         = 0;
         mzs[i]         = 0;
+        mxs_abs[i]     = 0;
+        mys_abs[i]     = 0;
+        mzs_abs[i]     = 0;
         mxssq[i]       = 0;
         myssq[i]       = 0;
         mzssq[i]       = 0;
@@ -333,6 +342,9 @@ void MonteCarlo::runmetropolis(double beta)
             double mx = 0;
             double my = 0;
             double mz = 0;
+            double mx_abs = 0;
+            double my_abs = 0;
+            double mz_abs = 0;
             double mxsq = 0;
             double mysq = 0;
             double mzsq = 0;
@@ -348,6 +360,9 @@ void MonteCarlo::runmetropolis(double beta)
             mx = mx/N;
             my = my/N;
             mz = mz/N;
+            mx_abs = abs(mx);
+            my_abs = abs(my);
+            mz_abs = abs(mz);
             mxsq = mx*mx;
             mysq = my*my;
             mzsq = mz*mz;
@@ -358,6 +373,9 @@ void MonteCarlo::runmetropolis(double beta)
             mx_av += mx;
             my_av += my;
             mz_av += mz;
+            mx_abs_av += mx_abs;
+            my_abs_av += my_abs;
+            mz_abs_av += mz_abs;
             mxsq_av += mxsq;
             mysq_av += mysq;
             mzsq_av += mzsq;
@@ -368,6 +386,9 @@ void MonteCarlo::runmetropolis(double beta)
             mxs[i] += mx;
             mys[i] += my;
             mzs[i] += mz;
+            mxs_abs[i] += mx_abs;
+            mys_abs[i] += my_abs;
+            mzs_abs[i] += mz_abs;
             mxssq[i] += mxsq;
             myssq[i] += mysq;
             mzssq[i] += mzsq;
@@ -378,7 +399,7 @@ void MonteCarlo::runmetropolis(double beta)
             //Print to bigFile
             if(printeveryMCstep)
             {
-                bigFile << beta << " " << energy_old << " " << energy_sq_av << " " << mx << " " << my << " " << mz << endl;
+                bigFile << beta << " " << energy_old << " " << energy_old*energy_old << " " << mx << " " << my << " " << mz << endl;
             }
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
@@ -387,6 +408,9 @@ void MonteCarlo::runmetropolis(double beta)
         mxs[i]         = mxs[i]/mcsteps_inbin;
         mys[i]         = mys[i]/mcsteps_inbin;
         mzs[i]         = mzs[i]/mcsteps_inbin;
+        mxs_abs[i]     = mxs_abs[i]/mcsteps_inbin;
+        mys_abs[i]     = mys_abs[i]/mcsteps_inbin;
+        mzs_abs[i]     = mzs_abs[i]/mcsteps_inbin;
         mxssq[i]       = mxssq[i]/mcsteps_inbin;
         myssq[i]       = myssq[i]/mcsteps_inbin;
         mzssq[i]       = mzssq[i]/mcsteps_inbin;
@@ -436,6 +460,9 @@ void MonteCarlo::runmetropolis(double beta)
     mx_av     = mx_av/(mcsteps_inbin*no_of_bins);
     my_av     = my_av/(mcsteps_inbin*no_of_bins);
     mz_av     = mz_av/(mcsteps_inbin*no_of_bins);
+    mx_abs_av = mx_abs_av/(mcsteps_inbin*no_of_bins);
+    my_abs_av = my_abs_av/(mcsteps_inbin*no_of_bins);
+    mz_abs_av = mz_abs_av/(mcsteps_inbin*no_of_bins);
     mxsq_av   = mxsq_av/(mcsteps_inbin*no_of_bins);
     mysq_av   = mysq_av/(mcsteps_inbin*no_of_bins);
     mzsq_av   = mzsq_av/(mcsteps_inbin*no_of_bins);
@@ -444,6 +471,7 @@ void MonteCarlo::runmetropolis(double beta)
     mzquad_av = mzquad_av/(mcsteps_inbin*no_of_bins);
 
     // Error in the magnetization //
+    // First power
     double mx_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    mx_stdv += (mxs[l]-mx_av)*(mxs[l]-mx_av);
     mx_stdv = sqrt(mx_stdv/(no_of_bins*(no_of_bins-1)));
@@ -456,6 +484,20 @@ void MonteCarlo::runmetropolis(double beta)
     for(int l=0; l<no_of_bins; l++)    mz_stdv += (mzs[l]-mz_av)*(mzs[l]-mz_av);
     mz_stdv = sqrt(mz_stdv/(no_of_bins*(no_of_bins-1)));
 
+    // Absoulte value
+    double mx_abs_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    mx_abs_stdv += (mxs_abs[l]-mx_abs_av)*(mxs_abs[l]-mx_abs_av);
+    mx_abs_stdv = sqrt(mx_abs_stdv/(no_of_bins*(no_of_bins-1)));
+
+    double my_abs_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    my_abs_stdv += (mys_abs[l]-my_abs_av)*(mys_abs[l]-my_abs_av);
+    my_abs_stdv = sqrt(my_abs_stdv/(no_of_bins*(no_of_bins-1)));
+
+    double mz_abs_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    mz_abs_stdv += (mzs_abs[l]-mz_abs_av)*(mzs_abs[l]-mz_abs_av);
+    mz_abs_stdv = sqrt(mz_abs_stdv/(no_of_bins*(no_of_bins-1)));
+
+    // Squared
     double mxsq_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    mxsq_stdv += (mxssq[l]-mxsq_av)*(mxssq[l]-mxsq_av);
     mxsq_stdv = sqrt(mxsq_stdv/(no_of_bins*(no_of_bins-1)));
@@ -468,6 +510,7 @@ void MonteCarlo::runmetropolis(double beta)
     for(int l=0; l<no_of_bins; l++)    mzsq_stdv += (mzssq[l]-mzsq_av)*(mzssq[l]-mzsq_av);
     mzsq_stdv = sqrt(mzsq_stdv/(no_of_bins*(no_of_bins-1)));
 
+    // Quadrupled
     double mxquad_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    mxquad_stdv += (mxsquad[l]-mxquad_av)*(mxsquad[l]-mxquad_av);
     mxquad_stdv = sqrt(mxquad_stdv/(no_of_bins*(no_of_bins-1)));
@@ -484,7 +527,8 @@ void MonteCarlo::runmetropolis(double beta)
     allFile << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
     allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
-    allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv << " " << cv_average << endl;
+    allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv;
+    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv << endl;
     //print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
 
     // Guess I should have stuff here instead. Print once for every beta.

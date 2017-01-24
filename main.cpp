@@ -30,7 +30,7 @@ int main()   // main. Monte Carlo steps here?
     bool magfield     = false;
     bool dm           = false;
     char type_lattice = 'O';   // F: face-centered cubic; C: cubic; Q:quadratic; O: chain;
-    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
+    bool periodic     = true; // To determine whether we have periodic boundary conditions or not
     bool printeveryMCstep = false;
     //char latticetype = 'FH'; //
     //double beta = 2.5; // Just setting a beta.
@@ -41,7 +41,7 @@ int main()   // main. Monte Carlo steps here?
     int no_of_bins = 100;     // The number of bins.
 
     //string filenamePrefix = "printtestyo";
-    string filenamePrefix = "test_notperiodicchain_2p";
+    string filenamePrefix = "test_periodicchain_2p";
     //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     //test_betagenerator(10, 0, 4);
