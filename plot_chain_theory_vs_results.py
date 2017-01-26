@@ -12,7 +12,7 @@ import sys
 # Open the file for reading
 
 #infile = open("chain2_periodic_iso1_beta0to4_everybeta.txt", "r")
-infile = open("test_everybeta.txt", "r")  # Just to compare methods
+infile = open("test2_everybeta.txt", "r")  # Just to compare methods
 
 # Getting lists ready to store the data
 betas     = []          # List of beta values
@@ -42,6 +42,7 @@ myquads_av2   = []
 myquads_stdv2 = []
 mzquads_av2   = []
 mzquads_stdv2 = []
+#cv_average    = []
 
 
 '''
@@ -83,6 +84,7 @@ for line in lines:
         myquads_stdv2.append(float(words[24]))
         mzquads_av2.append(float(words[25]))
         mzquads_stdv2.append(float(words[26]))
+        #cv_average.append(float(words[27]))
         
 # Remember to close the file
 infile.close()
@@ -114,6 +116,7 @@ myquads_av2   = array(myquads_av2)
 myquads_stdv2 = array(myquads_stdv2)
 mzquads_av2   = array(mzquads_av2)
 mzquads_stdv2 = array(mzquads_stdv2)
+#cv_average    = array(cv_average)
 
 # Theory. Since J =1, betas = betas*J 
 '''
@@ -123,21 +126,24 @@ partition_function2[0] = 16*pi**2 # Series expansion of sinh, inserting for beta
 for i in range(1, len(betas)):
     partition_function2[i] = 8*pi**2/(betas[i])*sinh(2*betas[i])
 '''
-    
+length = len(betas)
 # Energy with J = 1
 energy2_theory = 2*(1/(2*betas)-(cosh(2*betas)/sinh(2*betas)))
-energy2_theory = zeros(len(betas))
+energy2_theory = zeros(length)
 for i in range(0,len(betas)):
     energy2_theory[i] =  2*( 1/(2*betas[i]) - (cosh(2*betas[i])/sinh(2*betas[i])))
 
 # Heat capacity with J = 1
 #k = 8.6173303e-5 # Boltzmann constant in eV K**(-1)
-cvs2_theory = (1+4*(1-(1/sinh(2*betas)**2)))#*k
+# Gives a slightly different result
+cvs2_theory = (1-(4*betas*betas/(sinh(2*betas)**2)))#*k
 
 ### Plotting
 # Energy
 figure()
-errorbar(betas, energies2, yerr=energies2_stdv, label='Simulation')
+(_, caps, _) = errorbar(betas, energies2, yerr=energies2_stdv, fmt=None, label='Simulation')
+for cap in caps:
+    cap.set_markeredgewidth(0)
 hold('on')
 plot(betas, energy2_theory, label='Theory')
 title('Energy for two particle chain', fontsize=16)
@@ -146,6 +152,21 @@ ylabel('Energy', fontsize=20)
 legend(loc='upper right')
 show()
 
+
+figure()
+(_, caps, _) = errorbar(betas, (energies2-energy2_theory)/energy2_theory, yerr=energies2_stdv, fmt=None, label='Deviation') # fmt= none (eller noe), linestyle=...
+for cap in caps:
+    cap.set_markeredgewidth(0)
+plot(betas, zeros(len(betas)))
+hold('on')
+#plot(betas, energy2_theory, label='Theory')
+title('Energy of two particle chain: Deviation from theory', fontsize=16)
+xlabel(r'$\beta$', fontsize=20)
+ylabel(r'Energy difference $\Delta E$', fontsize=20)
+legend(loc='upper right')
+show()
+
+''' # Want to have less plots appear. Comment out when needed
 # Energy squared
 figure()
 errorbar(betas, energiessq2, yerr=energiessq2_stdv, label='Simulation')
@@ -154,21 +175,34 @@ xlabel(r'$\beta$', fontsize=20)
 ylabel('Energy', fontsize=20)
 legend(loc='upper right')
 show()
+'''
 
 # Heat capacity
 figure()
-errorbar(betas, cvs2, yerr=cvs2_stdv, label='Simulation')
+(_, caps, _) = errorbar(betas, cvs2, yerr=cvs2_stdv, fmt=None, label='Simulation')
+
+for cap in caps:
+    cap.set_markeredgewidth(0)
+#plot(betas, cvs2, 'o')
 hold('on')
-plot(betas, cvs2_theory)
+#plot(betas, cv_average, label='Average from bins')
+#hold('on')
+plot(betas, cvs2_theory, label='Theory')
+#hold('on')
 title(r'Heat capacity $C_V$ for two particle chain', fontsize=16) # Specific?
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$C_V$', fontsize=20)
-legend(loc='upper right')
+legend(loc='lower right')
 show()
 
+
+
+#'''
 # Magnetization in the x-direction
 figure()
-errorbar(betas, mxs_av2, yerr=mxs_stdv2, label='Simulation')
+errorbar(betas, mxs_av2, yerr=mxs_stdv2, fmt=None, label='Simulation')
+hold('on')
+plot(betas, zeros(len(betas)))
 title(r'Magnetization in the x-direction, $<m_x>$, for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m_x>$', fontsize=20)
@@ -177,7 +211,9 @@ show()
 
 # Magnetization in the y-direction
 figure()
-errorbar(betas, mys_av2, yerr=mys_stdv2, label='Simulation')
+errorbar(betas, mys_av2, yerr=mys_stdv2, fmt=None, label='Simulation')
+hold('on')
+plot(betas, zeros(len(betas)))
 title(r'Magnetization in the y-direction, $<m_y>$, for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m_y>$', fontsize=20)
@@ -186,14 +222,17 @@ show()
 
 # Magnetization in the z-direction
 figure()
-errorbar(betas, mzs_av2, yerr=mzs_stdv2, label='Simulation')
+errorbar(betas, mzs_av2, yerr=mzs_stdv2, fmt=None, label='Simulation')
+hold('on')
+plot(betas, zeros(len(betas)))
 title(r'Magnetization in the z-direction, $<m_z>$, for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m_z>$', fontsize=20)
 legend(loc='upper right')
 show()
+#'''
 
-# Magnetization in the x-direction
+# Magnetization squared in the x-direction
 figure()
 errorbar(betas, mxsqs_av2, yerr=mxsqs_stdv2, label='Simulation')
 title(r'Magnetization squared in the x-direction, $<m^2_x>$, for two particle chain', fontsize=16)
@@ -220,6 +259,7 @@ ylabel(r'$<m^2_z>$', fontsize=20)
 legend(loc='upper right')
 show()
 
+'''
 # Magnetization in the x-direction
 figure()
 errorbar(betas, mxquads_av2, yerr=mxquads_stdv2, label='Simulation')
@@ -246,9 +286,7 @@ xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m^4_z>$', fontsize=20)
 legend(loc='upper right')
 show()
-
-
-
+'''
 
 # Acceptance rates
 figure()
@@ -258,28 +296,5 @@ title('Acceptance rates for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel('Acceptance rate', fontsize=20)
 show()
-
-'''
-### Plotting
-figure()
-errorbar(betas, acceptancerates2, yerr=acceptancerates2_stdv, label='J=0.1')
-hold('on')
-errorbar(betas, acceptanceratesvsbeta0p5, yerr=arstds0p5, label='J=0.5')
-hold('on')
-errorbar(betas, acceptanceratesvsbeta1, yerr=arstds1, label='J=1')
-hold('on')
-errorbar(betas, acceptanceratesvsbeta5, yerr=arstds5, label='J=5')
-hold('on')
-errorbar(betas, acceptanceratesvsbeta10, yerr=arstds10, label='J=10')
-hold('on')
-errorbar(betas, acceptanceratesvsbeta50, yerr=arstds50, label='J=50')
-hold('on')
-title('Acceptance rates for isotropic 10x10x10 fcc', fontsize=16)
-xlabel(r'$\beta$', fontsize=20)
-ylabel('Acceptance rate', fontsize=20)
-legend(loc='upper right')
-show()
-
-'''
 
 
