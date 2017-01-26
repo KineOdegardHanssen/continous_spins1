@@ -141,9 +141,10 @@ cvs2_theory = (1-(4*betas*betas/(sinh(2*betas)**2)))#*k
 ### Plotting
 # Energy
 figure()
-(_, caps, _) = errorbar(betas, energies2, yerr=energies2_stdv, fmt=None, label='Simulation')
-for cap in caps:
-    cap.set_markeredgewidth(0)
+errorbar(betas, energies2, yerr=energies2_stdv, capsize=2, fmt=None, label='Simulation')
+#(_, caps, _) = 
+#for cap in caps:
+#    cap.capsize(0)
 hold('on')
 plot(betas, energy2_theory, label='Theory')
 title('Energy for two particle chain', fontsize=16)
@@ -154,9 +155,7 @@ show()
 
 
 figure()
-(_, caps, _) = errorbar(betas, (energies2-energy2_theory)/energy2_theory, yerr=energies2_stdv, fmt=None, label='Deviation') # fmt= none (eller noe), linestyle=...
-for cap in caps:
-    cap.set_markeredgewidth(0)
+errorbar(betas, (energies2-energy2_theory)/energy2_theory, yerr=energies2_stdv, capsize=2, fmt=None, label='Deviation') # fmt= none (eller noe), linestyle=...
 plot(betas, zeros(len(betas)))
 hold('on')
 #plot(betas, energy2_theory, label='Theory')
@@ -179,10 +178,7 @@ show()
 
 # Heat capacity
 figure()
-(_, caps, _) = errorbar(betas, cvs2, yerr=cvs2_stdv, fmt=None, label='Simulation')
-
-for cap in caps:
-    cap.set_markeredgewidth(0)
+errorbar(betas, cvs2, yerr=cvs2_stdv, capsize=1.5, fmt=None, label='Simulation')
 #plot(betas, cvs2, 'o')
 hold('on')
 #plot(betas, cv_average, label='Average from bins')
@@ -200,7 +196,7 @@ show()
 #'''
 # Magnetization in the x-direction
 figure()
-errorbar(betas, mxs_av2, yerr=mxs_stdv2, fmt=None, label='Simulation')
+errorbar(betas, mxs_av2, yerr=mxs_stdv2, capsize=1.5, fmt=None, label='Simulation')
 hold('on')
 plot(betas, zeros(len(betas)))
 title(r'Magnetization in the x-direction, $<m_x>$, for two particle chain', fontsize=16)
@@ -211,7 +207,7 @@ show()
 
 # Magnetization in the y-direction
 figure()
-errorbar(betas, mys_av2, yerr=mys_stdv2, fmt=None, label='Simulation')
+errorbar(betas, mys_av2, yerr=mys_stdv2, capsize=1.5, fmt=None, label='Simulation')
 hold('on')
 plot(betas, zeros(len(betas)))
 title(r'Magnetization in the y-direction, $<m_y>$, for two particle chain', fontsize=16)
@@ -222,7 +218,7 @@ show()
 
 # Magnetization in the z-direction
 figure()
-errorbar(betas, mzs_av2, yerr=mzs_stdv2, fmt=None, label='Simulation')
+errorbar(betas, mzs_av2, yerr=mzs_stdv2, capsize=1.5, fmt=None, label='Simulation')
 hold('on')
 plot(betas, zeros(len(betas)))
 title(r'Magnetization in the z-direction, $<m_z>$, for two particle chain', fontsize=16)
@@ -234,7 +230,7 @@ show()
 
 # Magnetization squared in the x-direction
 figure()
-errorbar(betas, mxsqs_av2, yerr=mxsqs_stdv2, label='Simulation')
+errorbar(betas, mxsqs_av2, yerr=mxsqs_stdv2, capsize=1.5, label='Simulation')
 title(r'Magnetization squared in the x-direction, $<m^2_x>$, for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m^2_x>$', fontsize=20)
@@ -243,7 +239,7 @@ show()
 
 # Magnetization in the y-direction
 figure()
-errorbar(betas, mysqs_av2, yerr=mysqs_stdv2, label='Simulation')
+errorbar(betas, mysqs_av2, yerr=mysqs_stdv2, capsize=1.5, label='Simulation')
 title(r'Magnetization squared  in the y-direction, $<m^2_y>$, for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m^2_y>$', fontsize=20)
@@ -252,7 +248,7 @@ show()
 
 # Magnetization in the z-direction
 figure()
-errorbar(betas, mzsqs_av2, yerr=mzsqs_stdv2, label='Simulation')
+errorbar(betas, mzsqs_av2, yerr=mzsqs_stdv2, capsize=1.5, label='Simulation')
 title(r'Magnetization squared in the z-direction, $<m^2_z>$, for two particle chain', fontsize=16)
 xlabel(r'$\beta$', fontsize=20)
 ylabel(r'$<m^2_z>$', fontsize=20)
