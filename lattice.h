@@ -4,6 +4,7 @@
 #include <math.h>
 #include "bond.h"
 #include "site.h"
+#include "gaussiandeviate.h"
 //#include <armadillo>  // in this case, enter LIBS += -larmadillo -llapack -lblas in .pro-file
 
 using namespace std; // Now, I can remove all std's.
@@ -15,8 +16,8 @@ public:
     bool sianisotropy, magfield; // Bools for site terms
     bool notperiodic;            // Bool to keep track of neighbours
 
-    int L,N, no_of_neighbours;
-
+    int dim, L, N, no_of_neighbours;
+    long int seed;
     // Typedefs
     typedef vector<int> vecint;
     typedef vector<vecint> intmatrix;

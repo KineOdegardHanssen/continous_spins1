@@ -19,7 +19,9 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
 void Lattice::chain_closed_initialize()
 {
     notperiodic = true;
+    bool randomspins = false;  // Adding the option to change the spins
     cout << "NB! Bool notperiodic changed to true. Now operating with closed BCs!" << endl;
+    dim = 1;
     N = L;
     no_of_neighbours = 2; // For the most part
     double a = 1/sqrt(3);
@@ -58,6 +60,21 @@ void Lattice::chain_closed_initialize()
 
         std::vector<Bond> bonds;
 
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
+
+
         // Excluding periodic neighbours
         if(np1>n)
         {
@@ -84,6 +101,7 @@ void Lattice::chain_closed_initialize()
 
 void Lattice::chain_periodic_initialize()
 {
+    dim = 1;
     N = L;
     no_of_neighbours = 2;
     double a = 1/sqrt(3);
@@ -144,6 +162,7 @@ void Lattice::chain_periodic_initialize()
 void Lattice::quadratic_helical_initialize()
 {   // This one is primarily for testing.
     //N = L*(L+1); // Look this up!
+    dim = 2;
     N = L*L;
     no_of_neighbours = 4;
     double a = 1/sqrt(3);
@@ -216,6 +235,7 @@ void Lattice::quadratic_helical_initialize()
 void Lattice::cubic_helical_initialize()
 {
     //N = L*(L+1)*(L+1); // Look this up!
+    dim = 3;
     N = L*L*L;
     no_of_neighbours = 6;
 
@@ -308,6 +328,7 @@ void Lattice::fcc_helical_initialize()
     bool DEBUG = true;
     // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
+    dim = 3;
     N = L*L*L;
     no_of_neighbours = 12;
     cout << "In fcc_helical_initialize" << endl;

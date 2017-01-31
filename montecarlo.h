@@ -6,11 +6,19 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <complex>
 #include "lattice.h"
 #include "site.h"    // Are these really neccessary... ?
 #include "bond.h"
 #include "gaussiandeviate.h"  // Just to test against another random number generator.
-//#include "printing.h"
+
+
+// For correlation function, need to access FFTW. Is this notation really neccessary? Could I just include?
+extern "C"
+{
+#include "fftw3.h"
+}
+
 
 using namespace std;
 using std::ofstream; using std::string;
@@ -32,6 +40,8 @@ public:
     bool printeveryMCstep;
     bool DEBUG, MAJORDEBUG;
 
+    fftw_plan p;
+
     // Random generators
     std::default_random_engine generator_u;                       // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_u; //(-1,1)
@@ -52,16 +62,19 @@ public:
     MonteCarlo();
     MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool periodic, bool printeveryMCstep, bool dm, char type_lattice, string filenamePrefix);
 
-    void chooseprintfile(string filenamePrefix);
-    // debugging
+
+    // Debugging
     void debugmode(bool on);
     void majordebugtrue();
     void debug1d2p();
 
-    void latticetype(int L, char type_lattice);
+    // Other initialization procedures
     void initialize_energy();
     void reset_energy();
-    void setrandomgenerators();
+
+    // Function making a plan for the FFT
+    void giveplanforFFT(vector<double> &r, vector<complex<double> > &q);
+
 
     // Standard Metropolis functions
     void runmetropolis(double beta); // Or should beta be a class variable?

@@ -79,6 +79,12 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
         delete filenameb;
     }
 
+    // FFT steps
+    // Should I do this here? The manual said that we can reuse the plan.
+    //vector<double> rconf;
+    //vector< complex<double> > qconf;
+    //giveplanforFFT(&rconf, &qconf);
+
 }
 
 /*
@@ -246,6 +252,34 @@ void MonteCarlo::reset_energy()
     //setrandomgenerators();
 }
 
+void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
+{
+    cout << "In giveplanforFFT" << endl;
+    // Olav's implementation:
+    /*
+    int rank=la.D(); // rank = N?
+    vector<int> n=la.SiterDims(); // What does this do?
+
+    p = fftw_plan_dft_r2c(rank,
+                          &n[0],
+                          &r[0],
+                          reinterpret_cast<fftw_complex*>(&q[0]),
+                          FFTW_ESTIMATE);
+                          */
+    //extern "C"
+    //{
+    int rank = mylattice.dim; // I guess...
+    int inN = N; //...?
+    // Remember to declare p!
+    p = fftw_plan_dft_r2c(rank,
+                          &inN,
+                          &r[0],
+                          reinterpret_cast<fftw_complex*>(&q[0]),
+                          FFTW_ESTIMATE);
+    cout << "Have made the plan" << endl;
+    //}
+}
+
 void MonteCarlo::runmetropolis(double beta)
 {
     if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
@@ -274,6 +308,7 @@ void MonteCarlo::runmetropolis(double beta)
 
     // Monte Carlo steps and measurements
     starttime = clock();
+    // Measurable quantities
     std::vector<double> acceptancerates    = std::vector<double>(no_of_bins);
     std::vector<double> energies    = std::vector<double>(no_of_bins);
     std::vector<double> energies_sq = std::vector<double>(no_of_bins);
@@ -290,6 +325,9 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mxsquad = std::vector<double>(no_of_bins);
     std::vector<double> mysquad = std::vector<double>(no_of_bins);
     std::vector<double> mzsquad = std::vector<double>(no_of_bins);
+    // For the correlation function
+    std::vector<double> spins_in_z = std::vector<double>(N);
+
     // Resetting quantities
     double ar_av        = 0;
     double energy_av    = 0;
@@ -356,6 +394,7 @@ void MonteCarlo::runmetropolis(double beta)
                 mx+= mylattice.sites[k].spinx;
                 my+= mylattice.sites[k].spiny;
                 mz+= mylattice.sites[k].spinz;
+                spins_in_z[k] = mylattice.sites[k].spinz; // For the correlation function
             }
             mx = mx/N;
             my = my/N;
@@ -395,6 +434,19 @@ void MonteCarlo::runmetropolis(double beta)
             mxsquad[i] += mxquad;
             mysquad[i] += myquad;
             mzsquad[i] += mzquad;
+
+            // FFT steps
+            // Should I do this here? The manual said that we can reuse the plan.
+            //vector<double> rconf;
+            vector< complex<double> > qconf;  // Output array?
+            giveplanforFFT(spins_in_z, qconf);  // Or send in spins_in_z
+            //giveplanforFFT(&rconf, &qconf);  // Or send in spins_in_z
+
+            cout << "Managed to get out of giveplanforFFT and into runmetropolis again." << endl;
+            // How do I get in the position? Should I store the spins by their index?
+            fftw_execute(p);
+            cout << "Have managed to execute the plan" << endl;
+
 
             //Print to bigFile
             if(printeveryMCstep)

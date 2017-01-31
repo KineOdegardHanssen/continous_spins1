@@ -10,6 +10,12 @@
 #include "printing.h"
 #include "montecarlo.h"
 
+//#include "fftw3.h"  // Only use in MonteCarlo?
+// Do not think I need these paths:
+//INCLUDEPATH += "/usr/share/doc/libfftw3-3"
+//INCLUDEPATH += "/home/ubu/Downloads/fftw-3.3.6-pl1"
+// Have    extern "C"   somewhere
+
 using namespace std;
 using std::ofstream; using std::string;
 
@@ -23,31 +29,34 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 2; // The program is going to be slower than before as we have a 3D lattice
+    int L = 5; // The program is going to be slower than before as we have a 3D lattice
     // bools to determine system
     bool isotropic    = true;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
     char type_lattice = 'O';   // F: face-centered cubic; C: cubic; Q:quadratic; O: chain;
-    bool periodic     = true; // To determine whether we have periodic boundary conditions or not
+    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
     bool printeveryMCstep = false;
     //char latticetype = 'FH'; //
     //double beta = 2.5; // Just setting a beta.
 
     // Run parameters
-    int eqsteps = 1000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
+    int eqsteps = 10000; // Number of steps in the equilibration procedure
+    int mcsteps_inbin = 10000; // MCsteps per bin. Do I need bins?
     int no_of_bins = 100;     // The number of bins.
 
-    //string filenamePrefix = "printtestyo";
-    string filenamePrefix = "test_periodicchain_2p";
+    string filenamePrefix = "printtestyo";
+    //string filenamePrefix = "test_periodicchain_2p";
+    //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
+    //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
+    //string filenamePrefix = "bigtest2";
     //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     //test_betagenerator(10, 0, 4);
-    int beta_n = 100;
-    double betamin = 0.01;
-    double betamax = 4;
+    int beta_n = 2;
+    double betamin = 1e-5;
+    double betamax = 4000;
 
     run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix);
 
@@ -68,11 +77,9 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
 {
     // Initializing Monte Carlo
     MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix);
-    mymc.debugmode(true);
+    //mymc.debugmode(true);
     //mymc.majordebugtrue();
-    //mymc.latticetype(L, type_lattice);  // Runs for chain, quadratic and cubic lattice, not for fcc.
 
-    //int beta_n = 100; // Or something. Could have this as input
     vector<double> betas = vector<double>(beta_n);
     double deltabeta = (betamax-betamin)/(beta_n-1.0);
 
