@@ -254,7 +254,7 @@ void MonteCarlo::reset_energy()
 
 void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
 {
-    cout << "In giveplanforFFT" << endl;
+    //cout << "In giveplanforFFT" << endl;
     // Olav's implementation:
     /*
     int rank=la.D(); // rank = N?
@@ -276,7 +276,7 @@ void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q) 
                           &r[0],
                           reinterpret_cast<fftw_complex*>(&q[0]),
                           FFTW_ESTIMATE);
-    cout << "Have made the plan" << endl;
+    //cout << "Have made the plan" << endl;
     //}
 }
 
@@ -327,6 +327,8 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mzsquad = std::vector<double>(no_of_bins);
     // For the correlation function
     std::vector<double> spins_in_z = std::vector<double>(N);
+    vector<double> correlation_function_av = vector<double >(N/2); // Double check
+    for(int l= 0; l<(N/2); l++)    correlation_function_av[l] = 0;
 
     // Resetting quantities
     double ar_av        = 0;
@@ -374,18 +376,18 @@ void MonteCarlo::runmetropolis(double beta)
             // energy
             energies[i]    += energy_old;    // Storing to get the standard deviation // Something odd here
             energies_sq[i] += energy_old*energy_old;
-            energy_av      +=energy_old;
-            energy_sq_av   +=energy_old*energy_old;
+            energy_av      += energy_old;
+            energy_sq_av   += energy_old*energy_old;
             // Magnetization
-            double mx = 0;
-            double my = 0;
-            double mz = 0;
+            double mx     = 0;
+            double my     = 0;
+            double mz     = 0;
             double mx_abs = 0;
             double my_abs = 0;
             double mz_abs = 0;
-            double mxsq = 0;
-            double mysq = 0;
-            double mzsq = 0;
+            double mxsq   = 0;
+            double mysq   = 0;
+            double mzsq   = 0;
             double mxquad = 0;
             double myquad = 0;
             double mzquad = 0;
@@ -395,6 +397,7 @@ void MonteCarlo::runmetropolis(double beta)
                 my+= mylattice.sites[k].spiny;
                 mz+= mylattice.sites[k].spinz;
                 spins_in_z[k] = mylattice.sites[k].spinz; // For the correlation function
+                                                          // Should I divide by N or sqrt(N) or something?
             }
             mx = mx/N;
             my = my/N;
@@ -437,16 +440,32 @@ void MonteCarlo::runmetropolis(double beta)
 
             // FFT steps
             // Should I do this here? The manual said that we can reuse the plan.
-            //vector<double> rconf;
-            vector< complex<double> > qconf;  // Output array?
-            giveplanforFFT(spins_in_z, qconf);  // Or send in spins_in_z
-            //giveplanforFFT(&rconf, &qconf);  // Or send in spins_in_z
+            // In the analytic expression, we want these vectors: (In LaTex notation):
+            // \vec{r}_i = i_1 \vec{a}_1 + i_2 \vec{a}_2 + i_3 \vec{a}_3
+            // \vec{q}_j = \frac{j_1\vec{b}_1}{L_1} + \frac{j_2\vec{b}_2}{L_2} + \frac{j_3\vec{b}_3}{L_3}
+            // \vec{b}_1 = \frac{2\pi}{v_E}(\vec{a}_2\times \vec{a}_3)
+            // \vec{b}_2 = \frac{2\pi}{v_E}(\vec{a}_3\times \vec{a}_1)
+            // \vec{b}_3 = \frac{2\pi}{v_E}(\vec{a}_1\times \vec{a}_2)
+            // v_E = \vec{a}_1\cdot(\vec{a}_1\times\vec{a}_2)
+            //vector<double> rconf(N);
+            vector< complex<double> > qconf(N);  // Output array?
+            giveplanforFFT(spins_in_z, qconf);  // Or send in rconf? But where should I send in the spins then?
+            //giveplanforFFT(&rconf, &qconf);  // Or send in spins_in_z ?
 
-            cout << "Managed to get out of giveplanforFFT and into runmetropolis again." << endl;
+            //cout << "Managed to get out of giveplanforFFT and into runmetropolis again." << endl;
             // How do I get in the position? Should I store the spins by their index?
-            fftw_execute(p);
-            cout << "Have managed to execute the plan" << endl;
+            fftw_execute(p); // This command does not take in any arrays
+            //cout << "Have managed to execute the plan" << endl;
 
+            // This should be double. Quantity times its complex conjugate
+            // Possibly define the following another place
+
+            // Or define this some other place, if I want to take the average
+
+            for(int l=0; l<(N/2); l++)   // Where should I put this?
+            {   // Accumulating the average
+                correlation_function_av[l] =  correlation_function_av[l] + (qconf[l]*conj(qconf[l])).real();
+            }
 
             //Print to bigFile
             if(printeveryMCstep)
@@ -575,12 +594,19 @@ void MonteCarlo::runmetropolis(double beta)
     for(int l=0; l<no_of_bins; l++)    mzquad_stdv += (mzsquad[l]-mzquad_av)*(mzsquad[l]-mzquad_av);
     mzquad_stdv = sqrt(mzquad_stdv/(no_of_bins*(no_of_bins-1)));
 
+
+    //----------------The correlation function-------------------//
+    for(int l = 0; l<(N/2); l++)    correlation_function_av[l] = correlation_function_av[l]/(no_of_bins*mcsteps_inbin);
+    // What should I do with it?
+
     // Printing
     allFile << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
     allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
     allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv;
-    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv << endl;
+    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv;
+    allFile << " " << correlation_function_av[5] << endl; // Printing the correlation function no 5.
+                                                          // Should I sum them or something?
     //print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
 
     // Guess I should have stuff here instead. Print once for every beta.
