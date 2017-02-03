@@ -18,9 +18,14 @@ public:
 
     int dim, L, N, no_of_neighbours;
     long int seed;
+
     // Typedefs
     typedef vector<int> vecint;
     typedef vector<vecint> intmatrix;
+
+    vector<int> dimlengths;
+    vector<double> a1, a2, a3; // primitive vectors. Mainly double because of the fcc
+    vector<double> b1, b2, b3; // Primitive vectors of the reciprocal lattice
 
     //std::vector<Bond> bonds;
     std::vector<Site> sites;
@@ -36,7 +41,7 @@ public:
     //Lattice grid functions
     //void chain_2p_periodic_initialize();
     void chain_periodic_initialize();
-    void chain_closed_initialize();
+    void chain_open_initialize();
     void quadratic_helical_initialize();
     void cubic_helical_initialize();
     void fcc_helical_initialize();

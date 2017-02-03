@@ -16,7 +16,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
 }
 
-void Lattice::chain_closed_initialize()
+void Lattice::chain_open_initialize()
 {
     notperiodic = true;
     bool randomspins = false;  // Adding the option to change the spins
@@ -24,6 +24,14 @@ void Lattice::chain_closed_initialize()
     dim = 1;
     N = L;
     no_of_neighbours = 2; // For the most part
+
+    dimlengths = vector<int>(1);
+    dimlengths[0] = L;
+    a1 = vector<double>(1);
+    a1[0] = 1;
+    b1 = vector<double>(1);
+    b1[0] = 2*M_PI;
+
     double a = 1/sqrt(3);
     double spinx = a;
     double spiny = a;
@@ -104,6 +112,14 @@ void Lattice::chain_periodic_initialize()
     dim = 1;
     N = L;
     no_of_neighbours = 2;
+
+    dimlengths = vector<int>(1);
+    dimlengths[0] = L;
+    a1 = vector<double>(1);
+    a1[0] = 1;
+    b1 = vector<double>(1);
+    b1[0] = 2*M_PI;
+
     double a = 1/sqrt(3);
     double spinx = a;
     double spiny = a;
@@ -165,6 +181,28 @@ void Lattice::quadratic_helical_initialize()
     dim = 2;
     N = L*L;
     no_of_neighbours = 4;
+
+    // No of particles in each direction
+    dimlengths = vector<int>(dim);
+    dimlengths[0] = L;
+    dimlengths[0] = L;
+
+    // Lattice vectors
+    a1 = vector<double>(2);
+    a2 = vector<double>(2);
+    a1[0] = 1;
+    a1[1] = 0;
+    a2[0] = 0;
+    a2[1] = 1;
+    // Reciprocal lattice vectors
+    b1 = vector<double>(2);
+    b2 = vector<double>(2);
+    b1[0] = 2*M_PI;
+    b1[1] = 0;
+    b2[0] = 0;
+    b2[1] = 2*M_PI;
+
+
     double a = 1/sqrt(3);
     double spinx = a;
     double spiny = a;
@@ -193,6 +231,8 @@ void Lattice::quadratic_helical_initialize()
     std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     std::vector<double> position_n = std::vector<double>(2);
+    std::vector<int> coord_n = std::vector<int>(2);
+
     // Could have these inside the loop and add randomness.
 
     for(int n=0; n<N; n++)
@@ -227,7 +267,11 @@ void Lattice::quadratic_helical_initialize()
         position_n[0] = 1.0*((int)n%L); // n1
         position_n[1] = 1.0*((int)n/L); // n2. Should allow for grid length a.
 
+        coord_n[0] = ((int)n%L); // n1
+        coord_n[1] = ((int)n/L); // n2
+
         sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
 
     } // End of loop over all sites ( = loop over n)
 }
@@ -238,6 +282,39 @@ void Lattice::cubic_helical_initialize()
     dim = 3;
     N = L*L*L;
     no_of_neighbours = 6;
+
+    // No of particles in each direction
+    dimlengths    = vector<int>(dim);
+    dimlengths[0] = L;
+    dimlengths[1] = L;
+    dimlengths[2] = L;
+
+    // Lattice vectors
+    a1 = vector<double>(3); // Should they be double?
+    a2 = vector<double>(3);
+    a3 = vector<double>(3);
+    a1[0] = 1;
+    a1[1] = 0;
+    a1[2] = 0;
+    a2[0] = 0;
+    a2[1] = 1;
+    a2[2] = 0;
+    a3[0] = 0;
+    a3[1] = 0;
+    a3[2] = 1;
+    // Reciprocal lattice vectors
+    b1 = vector<double>(3); // Should they be double?
+    b2 = vector<double>(3);
+    b3 = vector<double>(3);
+    b1[0] = 2*M_PI;
+    b1[1] = 0;
+    b1[2] = 0;
+    b2[0] = 0;
+    b2[1] = 2*M_PI;
+    b2[2] = 0;
+    b3[0] = 0;
+    b3[1] = 0;
+    b3[2] = 2*M_PI;
 
     // Temporary fix. May want to send in L1, L2 and L3 to Lattice and deal with a 'rectangular' crystal
     int L1 = L;
@@ -272,6 +349,7 @@ void Lattice::cubic_helical_initialize()
     std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     std::vector<double> position_n = std::vector<double>(3);
+    std::vector<int> coord_n = std::vector<int>(3);
 
     // Could have these inside the loop and add randomness.
 
@@ -318,7 +396,12 @@ void Lattice::cubic_helical_initialize()
         position_n[1] = 1.0*n2;
         position_n[2] = 1.0*n3;
 
+        coord_n[0] = n1;     // Could possibly multiply by grid length a
+        coord_n[1] = n2;
+        coord_n[2] = n3;
+
         sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
     } // End loop over n (all sites)
 
 }
@@ -331,6 +414,41 @@ void Lattice::fcc_helical_initialize()
     dim = 3;
     N = L*L*L;
     no_of_neighbours = 12;
+
+    // No of particles in each direction
+    dimlengths    = vector<int>(dim);
+    dimlengths[0] = L;
+    dimlengths[1] = L;
+    dimlengths[2] = L;
+
+
+    // Lattice vectors
+    a1 = vector<double>(3); // Should they be double?
+    a2 = vector<double>(3);
+    a3 = vector<double>(3);
+    a1[0] = 0.5;
+    a1[1] = 0.5;
+    a1[2] = 0;
+    a2[0] = 0;
+    a2[1] = 0.5;
+    a2[2] = 0.5;
+    a3[0] = 0.5;
+    a3[1] = 0;
+    a3[2] = 0.5;
+    // Reciprocal lattice vectors
+    b1 = vector<double>(3); // Should they be double?
+    b2 = vector<double>(3);
+    b3 = vector<double>(3);
+    b1[0] = M_PI;
+    b1[1] = M_PI;
+    b1[2] = 0;
+    b2[0] = 0;
+    b2[1] = M_PI;
+    b2[2] = M_PI;
+    b3[0] = M_PI;
+    b3[1] = 0;
+    b3[2] = M_PI;
+
     cout << "In fcc_helical_initialize" << endl;
 
     // Temporary fix. May want to send L1, L2 and L3 into Lattice and deal with a 'rectangular' lattice

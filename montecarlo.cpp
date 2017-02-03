@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix)
 {
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
@@ -17,8 +17,9 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->magfield = magfield;
     this->dm = dm;
 
-    this->filenamePrefix = filenamePrefix;
+    this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
     this->printeveryMCstep = printeveryMCstep;
+    this->calculatespincorrelationfunction = calculatespincorrelationfunction;
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
@@ -38,7 +39,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     }
     else
     {
-        if(type_lattice=='O')      mylattice.chain_closed_initialize();
+        if(type_lattice=='O')      mylattice.chain_open_initialize();
     }
 
     //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
@@ -52,11 +53,14 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     cout << "Number of sites and neighbours retrieved to MonteCarlo." << endl;
 
     // Random generators
+    // Should clean up in these...
     distribution_u    = std::uniform_real_distribution<double>(0,1);  // Varies depending on distribution
     distribution_v    = std::uniform_real_distribution<double>(0,1);  // Varies depending on distribution
     distribution_prob = std::uniform_real_distribution<double>(0,1);
     // For index. This is given helical boundary conditions, then I only need one index
     distribution_n    = std::uniform_int_distribution<int>(0,N-1);
+
+    cout << "Distributions set" << endl;
 
     // Initializing some other quantities
     acceptancerate = 0;
@@ -70,21 +74,82 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     allFile.open(filename);
     delete filename;
 
-
+    cout << "allFile set" << endl;
     if(printeveryMCstep)
     {
-        char *filenameb = new char[1000];                                // File name can have max 1000 characters
-        sprintf(filenameb, "%s_everyMCstep.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-        bigFile.open(filenameb);
-        delete filenameb;
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_everyMCstep.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        bigFile.open(filename);
+        delete filename;
     }
+    cout << "Passed if-test printeveryMCstep" << endl;
+    if(calculatespincorrelationfunction)
+    {
+        cout << "In if-test calculatespincorrelationfunction" << endl;
+        // Setting up file to print to
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_spincorrelationfunction.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFile.open(filename);
+        delete filename;
 
-    // FFT steps
-    // Should I do this here? The manual said that we can reuse the plan.
-    //vector<double> rconf;
-    //vector< complex<double> > qconf;
-    //giveplanforFFT(&rconf, &qconf);
+        cout << "File set" << endl;
 
+        if(mylattice.dim>1)  // The chain is trivial
+        {
+            // Printing information about the q-vectors straight away
+            char *filenameq = new char[1000];                                // File name can have max 1000 characters
+            sprintf(filenameq, "%s_qs.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+            qFile.open(filenameq);
+            delete filenameq;
+
+            cout << "File for printing q-vector to file is initiated" << endl;
+
+            double qx;
+            double qy;
+            double qz;
+
+            L = mylattice.L; // For now, we only have one input dimension
+
+            if(mylattice.dim==2)
+            {
+                cout << "For quadratic, in if-test" << endl;
+                for(int i=0; i<N; i++) // Possibly only up to N/2.
+                {
+                    vector<int> ns = mylattice.sitecoordinates[i];
+                    cout << "ns retrieved" << endl;
+                    // These must be changed if we change into possibly setting L1, L2, L3 different
+                    // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+                    // Could be more general
+                    qx = ns[0]*mylattice.b1[0]/L;
+                    qy = ns[1]*mylattice.b2[1]/L;
+                    //qz = ns[2]*mylattice.b3[2]/L; // No qz
+                    cout << "qvec set" << endl;
+                    // Print to file. Site number, qx, qy, qz.
+                    qFile << i << " " << qx << " " << qy << " " << endl;
+                }
+                cout << "Done printing to qFile" << endl;
+            }
+            else if(mylattice.dim==3)
+            {
+                cout << "For cubic or fcc, in if-test" << endl;
+                for(int i=0; i<N; i++) // Possibly only up to N/2.
+                {
+                    vector<int> ns = mylattice.sitecoordinates[i];
+                    //cout << "ns retrieved" << endl;
+                    // These must be changed if we change into possibly setting L1, L2, L3 different
+                    // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+                    // Could be more general, but we don't need to play around with our lattices that much...
+                    qx = (ns[0]*mylattice.b1[0] + ns[2]*mylattice.b3[0])/L;
+                    qy = (ns[0]*mylattice.b1[1] + ns[1]*mylattice.b2[1])/L;
+                    qz = (ns[1]*mylattice.b2[2] + ns[2]*mylattice.b3[2])/L;
+                    // Print to file. Site number, qx, qy, qz.
+                    qFile << i << " " << qx << " " << qy << " " << qz << endl;
+                }
+                //cout << "Done printing to qFile" << endl;
+            }
+
+        }
+    }
 }
 
 /*
@@ -115,20 +180,6 @@ void MonteCarlo::majordebugtrue()
     delete filename;
 
 }
-
-/*
-void MonteCarlo::latticetype(int L, char type_lattice)
-{
-
-}
-
-void MonteCarlo::setrandomgenerators()
-{
-
-}
-
-*/
-
 
 void MonteCarlo::initialize_energy()
 {
@@ -266,18 +317,15 @@ void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q) 
                           reinterpret_cast<fftw_complex*>(&q[0]),
                           FFTW_ESTIMATE);
                           */
-    //extern "C"
-    //{
-    int rank = mylattice.dim; // I guess...
-    int inN = N; //...?
-    // Remember to declare p!
+    int rank = mylattice.dim;               // Dimension of lattice
+    vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
+                                            // depending on the lattice
+    // p declared as a class variable
     p = fftw_plan_dft_r2c(rank,
-                          &inN,
+                          &Ls[0],
                           &r[0],
                           reinterpret_cast<fftw_complex*>(&q[0]),
                           FFTW_ESTIMATE);
-    //cout << "Have made the plan" << endl;
-    //}
 }
 
 void MonteCarlo::runmetropolis(double beta)
@@ -285,6 +333,9 @@ void MonteCarlo::runmetropolis(double beta)
     if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
     bool HUMBUG  = false;
     bool LADYBUG = false;
+
+    // Header for spcorFile
+    if(calculatespincorrelationfunction)    spcorFile << beta << " " << N << endl;
 
     // Initializing the energy
     initialize_energy();
@@ -396,8 +447,8 @@ void MonteCarlo::runmetropolis(double beta)
                 mx+= mylattice.sites[k].spinx;
                 my+= mylattice.sites[k].spiny;
                 mz+= mylattice.sites[k].spinz;
-                spins_in_z[k] = mylattice.sites[k].spinz; // For the correlation function
-                                                          // Should I divide by N or sqrt(N) or something?
+                // For the correlation function
+                if(calculatespincorrelationfunction)    spins_in_z[k] = mylattice.sites[k].spinz;
             }
             mx = mx/N;
             my = my/N;
@@ -440,31 +491,20 @@ void MonteCarlo::runmetropolis(double beta)
 
             // FFT steps
             // Should I do this here? The manual said that we can reuse the plan.
-            // In the analytic expression, we want these vectors: (In LaTex notation):
-            // \vec{r}_i = i_1 \vec{a}_1 + i_2 \vec{a}_2 + i_3 \vec{a}_3
-            // \vec{q}_j = \frac{j_1\vec{b}_1}{L_1} + \frac{j_2\vec{b}_2}{L_2} + \frac{j_3\vec{b}_3}{L_3}
-            // \vec{b}_1 = \frac{2\pi}{v_E}(\vec{a}_2\times \vec{a}_3)
-            // \vec{b}_2 = \frac{2\pi}{v_E}(\vec{a}_3\times \vec{a}_1)
-            // \vec{b}_3 = \frac{2\pi}{v_E}(\vec{a}_1\times \vec{a}_2)
-            // v_E = \vec{a}_1\cdot(\vec{a}_1\times\vec{a}_2)
-            //vector<double> rconf(N);
-            vector< complex<double> > qconf(N);  // Output array?
-            giveplanforFFT(spins_in_z, qconf);  // Or send in rconf? But where should I send in the spins then?
-            //giveplanforFFT(&rconf, &qconf);  // Or send in spins_in_z ?
+            if(calculatespincorrelationfunction)
+            {
+                vector< complex<double> > qconf(N);  // Output array
+                giveplanforFFT(spins_in_z, qconf);
+                fftw_execute(p);
 
-            //cout << "Managed to get out of giveplanforFFT and into runmetropolis again." << endl;
-            // How do I get in the position? Should I store the spins by their index?
-            fftw_execute(p); // This command does not take in any arrays
-            //cout << "Have managed to execute the plan" << endl;
-
-            // This should be double. Quantity times its complex conjugate
-            // Possibly define the following another place
-
-            // Or define this some other place, if I want to take the average
-
-            for(int l=0; l<(N/2); l++)   // Where should I put this?
-            {   // Accumulating the average
-                correlation_function_av[l] =  correlation_function_av[l] + (qconf[l]*conj(qconf[l])).real();
+                for(int l=0; l<(N/2); l++)
+                {   // Accumulating the average
+                    // Should consider whether I actually want an output array of half the length
+                    // of the input array.
+                    correlation_function_av[l] =  correlation_function_av[l] + (qconf[l]*conj(qconf[l])).real();
+                    // Multiplying a complex number by its complex conjugate should yield a real number.
+                    // but I call .real() to get the right data type.
+                }
             }
 
             //Print to bigFile
@@ -493,6 +533,20 @@ void MonteCarlo::runmetropolis(double beta)
         double cv_bin  = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
         cvs[i]         = cv_bin;
         cv_average    += cv_bin;
+
+
+        if(calculatespincorrelationfunction)
+        {   // Take the average and print to file
+            // Make the averages (is this more efficient than just calculating the average?)
+            for(int l = 0; l<(N/2); l++)
+            {
+                correlation_function_av[l] = correlation_function_av[l]/(mcsteps_inbin);
+                spcorFile << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
+            }
+            spcorFile << endl; // End line to get ready for new result
+        }
+
+
 
     }  // End loops over bins
     //----------------------// Acceptance rate //-----------------------//
@@ -596,16 +650,13 @@ void MonteCarlo::runmetropolis(double beta)
 
 
     //----------------The correlation function-------------------//
-    for(int l = 0; l<(N/2); l++)    correlation_function_av[l] = correlation_function_av[l]/(no_of_bins*mcsteps_inbin);
-    // What should I do with it?
 
     // Printing
     allFile << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
     allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
     allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv;
-    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv;
-    allFile << " " << correlation_function_av[5] << endl; // Printing the correlation function no 5.
+    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv << endl;
                                                           // Should I sum them or something?
     //print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
 
