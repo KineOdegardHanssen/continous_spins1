@@ -138,7 +138,7 @@ void Lattice::chain_periodic_initialize()
 
     // And, in the future, have it in the loop.
 
-    double J =  1; // As in Ising model work
+    double J =  1;
     double Dx = 1;
     double Dy = 1;
     double Dz = 1;

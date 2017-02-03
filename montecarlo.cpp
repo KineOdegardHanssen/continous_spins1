@@ -891,6 +891,7 @@ void MonteCarlo::endsims()
 }
 
 
+// Debugging/testing functions
 void MonteCarlo::debug1d2p()
 {
     // Only to work for chain with two particles, homogenous J
@@ -905,4 +906,37 @@ void MonteCarlo::debug1d2p()
     double test_energy = 2*homJ*(spin0x*spin1x+spin0y*spin1y+spin0z*spin1z);
 
     compareFile  << test_energy << " " << energy_old << endl;
+}
+
+void MonteCarlo::testFFTW()
+{   // Only for chain... So far...
+    vector<double> spins_in_z = vector<double>(N);
+    for(int i=0;i<N;i++)
+    {
+        // Resetting to a simple spin configuration, so we can calculate it theoretically
+        mylattice.sites[i].spinx = 0; // Maybe we don't need to actually reset these...
+        mylattice.sites[i].spiny = 0;
+        mylattice.sites[i].spinz = 1;
+        spins_in_z[i] = 1.0;
+
+    }
+
+    vector< complex<double> > qconf(N);  // Output array
+    vector<double> correlation_function_av = vector<double >(N/2); // Change this?
+    giveplanforFFT(spins_in_z, qconf);
+    fftw_execute(p);
+
+    cout << "Printing the spin correlation function" << endl;
+    for(int l=0; l<(N/2); l++)
+    {   // Accumulating the average
+        // Should consider whether I actually want an output array of half the length
+        // of the input array.
+        correlation_function_av[l] = (qconf[l]*conj(qconf[l])).real()/N;
+        // Multiplying a complex number by its complex conjugate should yield a real number.
+        // but I call .real() to get the right data type.
+        cout <<  correlation_function_av[l] << " ";
+    }
+
+    cout << endl; // End line to get ready for new result
+
 }

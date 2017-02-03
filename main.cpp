@@ -22,6 +22,7 @@ using std::ofstream; using std::string;
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix);
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix);
 void test_betagenerator(int beta_n, int betamin, int betamax);
+void test_fftw(int L);
 
 int main()   // main. Monte Carlo steps here?
 {
@@ -29,19 +30,19 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 2; // The program is going to be slower than before as we have a 3D lattice
+    int L = 4; // The program is going to be slower than before as we have a 3D lattice
 
     // bools to determine system type
     bool isotropic    = true;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
-    bool dm           = true;
+    bool dm           = false;
 
     // Bool to determine periodicity
     bool periodic     = true; // To determine whether we have periodic boundary conditions or not
 
     // Selecting the lattice type
-    char type_lattice = 'Q';   // F: face-centered cubic; C: cubic; Q:quadratic; O: chain;
+    char type_lattice = 'O';   // F: face-centered cubic; C: cubic; Q:quadratic; O: chain;
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -51,7 +52,7 @@ int main()   // main. Monte Carlo steps here?
     bool calculatespincorrelationfunction = true; // test this
 
     // A beta value for one run
-    double beta = 10.0;
+    double beta = 10000.0;
 
     // Run parameters
     int eqsteps = 1000; // Number of steps in the equilibration procedure
@@ -75,7 +76,9 @@ int main()   // main. Monte Carlo steps here?
     // By default, run_for_several_betas do not calculate the correlation function
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix);
 
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix);
+    test_fftw(L);
+
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix);
 }
 
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix)
@@ -123,3 +126,24 @@ void test_betagenerator(int beta_n,  int betamin, int betamax)
     }
 }
 
+
+void test_fftw(int L)
+{
+    // All these parameters are irrelevant for this simple test
+    int eqsteps = 1000; int mcsteps_inbin = 1000; int no_of_bins= 100;
+    bool isotropic = true; bool sianisotropy = false; bool magfield = false; bool dm = false;
+    bool periodic = true;
+
+    // These we want to turn off
+    bool printeveryMCstep = false;
+    bool calculatespincorrelationfunction = false;
+
+    // Set these
+    char type_lattice = 'O';  // Looking at a chain (at least for now)
+    string filenamePrefix = "discard"; // Want to know that this file is unimportant
+
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix);
+    mymc.testFFTW(); // Test FFTW
+    mymc.endsims();  // Close the file
+}

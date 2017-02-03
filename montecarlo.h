@@ -30,6 +30,8 @@ public:
     ofstream    allFile;
     ofstream    bigFile;
     ofstream    compareFile;
+    ofstream    spcorFile;
+    ofstream    qFile;
     string      filenamePrefix;
 
     int N, eqsteps, mcsteps_inbin, no_of_bins, no_of_neighbours;
@@ -37,7 +39,7 @@ public:
     double energy_old, acceptancerate;
     bool isotropic, sianisotropy, magfield, dm;
     bool notperiodic;
-    bool printeveryMCstep;
+    bool printeveryMCstep, calculatespincorrelationfunction;
     bool DEBUG, MAJORDEBUG;
 
     fftw_plan p;
@@ -60,13 +62,14 @@ public:
     //Printing print;
 
     MonteCarlo();
-    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool periodic, bool printeveryMCstep, bool dm, char type_lattice, string filenamePrefix);
+    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix);
 
 
-    // Debugging
+    // Debugging/testing functions
     void debugmode(bool on);
     void majordebugtrue();
     void debug1d2p();
+    void testFFTW();
 
     // Other initialization procedures
     void initialize_energy();
