@@ -377,8 +377,11 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mysquad = std::vector<double>(no_of_bins);
     std::vector<double> mzsquad = std::vector<double>(no_of_bins);
     // For the correlation function
+    // The spins
     std::vector<double> spins_in_z = std::vector<double>(N);
-    vector<double> correlation_function_av = vector<double >(N/2); // Double check
+    // Array for the results
+    int qlimit = N/2+1;
+    vector<double> correlation_function_av = vector<double >(qlimit); // Double check
     for(int l= 0; l<(N/2); l++)    correlation_function_av[l] = 0;
 
     // Resetting quantities
@@ -917,32 +920,43 @@ void MonteCarlo::testFFTW()
         mylattice.sites[i].spinx = 0; // Maybe we don't need to actually reset these...
         mylattice.sites[i].spiny = 0;
         mylattice.sites[i].spinz = 1;
-        spins_in_z[i] = 1.0;
+        spins_in_z[i] = pow(-1.0,i); // or 1.0
 
     }
+    // Giving
+    int qlimit = N/2+1;
+
+    cout << "qlimit: " << qlimit << endl;
 
     vector< complex<double> > qconf(N);  // Output array
-    vector<double> correlation_function_av = vector<double >(N/2); // Change this?
+    vector<double> correlation_function_av = vector<double >(qlimit); // Change this?
     double time_start = clock();
     giveplanforFFT(spins_in_z, qconf);
     fftw_execute(p);
     double time_end = clock();
     double time_realtocomplex = (time_end-time_start)/CLOCKS_PER_SEC;
 
+    cout << "5/2 = " << 5.0/2 << "; int(N)/2= " << int(5)/2 << endl;
+
+
+
     cout << "Printing the spin correlation function" << endl;
-    for(int l=0; l<(N/2); l++)
+    for(int l=0; l<qlimit; l++)
     {   // Accumulating the average
         // Should consider whether I actually want an output array of half the length
         // of the input array.
+        cout << "index l: " << l << endl;
         correlation_function_av[l] = (qconf[l]*conj(qconf[l])).real()/(N*N); //Should I divide by N? Or sqrt(N)?
         // Multiplying a complex number by its complex conjugate should yield a real number.
         // but I call .real() to get the right data type.
-        cout <<  correlation_function_av[l] << " ";
+        cout << "Value of correlation function: " <<  correlation_function_av[l] << " " << endl;
     }
 
     cout << endl; // End line to get ready for new result
 
-    cout << "Time spent on FFT: " << time_realtocomplex << " s" << endl;
+    for(int i=0; i<qlimit; i++)    cout << qconf[i] << endl;
+
+    //cout << "Time spent on FFT: " << time_realtocomplex << " s" << endl;
     /*
     cout << "Complex variant" << endl;
     vector< complex<double> > spins_in_z_complex;
