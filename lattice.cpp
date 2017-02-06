@@ -263,12 +263,13 @@ void Lattice::quadratic_helical_initialize()
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+        // Positions (row-major order)
+        position_n[0] = 1.0*((int)n/L); // n1
+        position_n[1] = 1.0*((int)n%L); // n2. Should allow for grid length a.
 
-        position_n[0] = 1.0*((int)n%L); // n1
-        position_n[1] = 1.0*((int)n/L); // n2. Should allow for grid length a.
+        coord_n[0] = ((int)n/L); // n1
+        coord_n[1] = ((int)n%L); // n2
 
-        coord_n[0] = ((int)n%L); // n1
-        coord_n[1] = ((int)n/L); // n2
 
         sitepositions.push_back(position_n);
         sitecoordinates.push_back(coord_n);
@@ -387,10 +388,10 @@ void Lattice::cubic_helical_initialize()
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
 
-        // Giving the position
-        int n1 = n%L1;
+        // Giving the position (row-major order)
+        int n1 = n/(L1*L2);
         int n2 = n/L1 - n/(L1*L2)*L2;
-        int n3 = n/(L1*L2);
+        int n3 = n%L1;
 
         position_n[0] = 1.0*n1;     // Could possibly multiply by grid length a
         position_n[1] = 1.0*n2;
@@ -571,10 +572,10 @@ void Lattice::fcc_helical_initialize()
 
         //  /*
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
-        // Giving the position of the fcc
-        int n1 = n%L1;
+        // Giving the position of the fcc (when saved in row-major order)
+        int n1 = n/(L1*L2);
         int n2 = (int)n/L1 - (int)n/(L1*L2)*L2;
-        int n3 = n/(L1*L2);
+        int n3 = n%L1;
 
         double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
         double ypos = 0.5*(n1+n2);

@@ -501,7 +501,7 @@ void MonteCarlo::runmetropolis(double beta)
                 {   // Accumulating the average
                     // Should consider whether I actually want an output array of half the length
                     // of the input array.
-                    correlation_function_av[l] =  correlation_function_av[l] + (qconf[l]*conj(qconf[l])).real();
+                    correlation_function_av[l] =  correlation_function_av[l] + (qconf[l]*conj(qconf[l])).real()/(N*N);
                     // Multiplying a complex number by its complex conjugate should yield a real number.
                     // but I call .real() to get the right data type.
                 }
@@ -923,20 +923,70 @@ void MonteCarlo::testFFTW()
 
     vector< complex<double> > qconf(N);  // Output array
     vector<double> correlation_function_av = vector<double >(N/2); // Change this?
+    double time_start = clock();
     giveplanforFFT(spins_in_z, qconf);
     fftw_execute(p);
+    double time_end = clock();
+    double time_realtocomplex = (time_end-time_start)/CLOCKS_PER_SEC;
 
     cout << "Printing the spin correlation function" << endl;
     for(int l=0; l<(N/2); l++)
     {   // Accumulating the average
         // Should consider whether I actually want an output array of half the length
         // of the input array.
-        correlation_function_av[l] = (qconf[l]*conj(qconf[l])).real()/N;
+        correlation_function_av[l] = (qconf[l]*conj(qconf[l])).real()/(N*N); //Should I divide by N? Or sqrt(N)?
         // Multiplying a complex number by its complex conjugate should yield a real number.
         // but I call .real() to get the right data type.
         cout <<  correlation_function_av[l] << " ";
     }
 
     cout << endl; // End line to get ready for new result
+
+    cout << "Time spent on FFT: " << time_realtocomplex << " s" << endl;
+    /*
+    cout << "Complex variant" << endl;
+    vector< complex<double> > spins_in_z_complex;
+    vector< complex<double> > qconfc(N);  // Output array
+    vector<double> correlation_function_avc = vector<double >(N);
+
+    for(int i=0;i<N;i++)
+    {
+        cout << "i = " << i << endl;
+        complex<double> spinz(1.0,0.0);
+        spins_in_z_complex[i] = spinz;
+    }
+    cout << "Hey, girl" << endl;
+    for(int i=0;i<N;i++)    cout << spins_in_z_complex[i] << " " << endl;
+
+
+    time_start = clock();
+    int rank = mylattice.dim;               // Dimension of lattice
+    vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
+                                            // depending on the lattice
+    // p declared as a class variable
+    p = fftw_plan_dft_r2c(rank,
+                          &Ls[0],
+                          reinterpret_cast<fftw_complex*>(&spins_in_z_complex[0]),
+                          reinterpret_cast<fftw_complex*>(&qconfc[0]),
+                          FFTW_ESTIMATE);
+
+    fftw_execute(p);
+    time_end = clock();
+    double time_complex = (time_end-time_start)/CLOCKS_PER_SEC;
+
+    cout << "Printing the spin correlation function" << endl;
+    for(int l=0; l<N; l++)
+    {   // Accumulating the average
+        // Should consider whether I actually want an output array of half the length
+        // of the input array.
+        correlation_function_av[l] = (qconfc[l]*conj(qconfc[l])).real()/(N*N); //Should I divide by N? Or sqrt(N)?
+        // Multiplying a complex number by its complex conjugate should yield a real number.
+        // but I call .real() to get the right data type.
+        cout <<  correlation_function_avc[l] << " ";
+    }
+
+    cout << "Time, real to complex Fourier transform: " << time_realtocomplex << endl;
+    cout << "Time, complex to complex Fourier transform: " << time_complex << endl;
+    */
 
 }

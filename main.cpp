@@ -30,7 +30,7 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 4; // The program is going to be slower than before as we have a 3D lattice
+    int L = 5; // The program is going to be slow if we run for many particles on a 3D lattice
 
     // bools to determine system type
     bool isotropic    = true;
