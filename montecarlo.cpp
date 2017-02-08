@@ -305,18 +305,6 @@ void MonteCarlo::reset_energy()
 
 void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
 {
-    //cout << "In giveplanforFFT" << endl;
-    // Olav's implementation:
-    /*
-    int rank=la.D(); // rank = N?
-    vector<int> n=la.SiterDims(); // What does this do?
-
-    p = fftw_plan_dft_r2c(rank,
-                          &n[0],
-                          &r[0],
-                          reinterpret_cast<fftw_complex*>(&q[0]),
-                          FFTW_ESTIMATE);
-                          */
     int rank = mylattice.dim;               // Dimension of lattice
     vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
                                             // depending on the lattice
@@ -380,9 +368,16 @@ void MonteCarlo::runmetropolis(double beta)
     // The spins
     std::vector<double> spins_in_z = std::vector<double>(N);
     // Array for the results
-    int qlimit = N/2+1;
+    // Determining the length of the array
+    int dim = mylattice.dim;
+    int qlimit = 1; // To be multiplied;
+    for(int l=0; l<(dim-1); l++)
+    {    // Looping over all dimensions but the last
+        qlimit *= mylattice.dimlengths[l];
+    }
+    qlimit *= mylattice.dimlengths[dim-1]/2+1;
     vector<double> correlation_function_av = vector<double >(qlimit); // Double check
-    for(int l= 0; l<(N/2); l++)    correlation_function_av[l] = 0;
+    for(int l= 0; l<qlimit; l++)    correlation_function_av[l] = 0;
 
     // Resetting quantities
     double ar_av        = 0;
@@ -500,7 +495,7 @@ void MonteCarlo::runmetropolis(double beta)
                 giveplanforFFT(spins_in_z, qconf);
                 fftw_execute(p);
 
-                for(int l=0; l<(N/2); l++)
+                for(int l=0; l<qlimit; l++)
                 {   // Accumulating the average
                     // Should consider whether I actually want an output array of half the length
                     // of the input array.
@@ -541,7 +536,7 @@ void MonteCarlo::runmetropolis(double beta)
         if(calculatespincorrelationfunction)
         {   // Take the average and print to file
             // Make the averages (is this more efficient than just calculating the average?)
-            for(int l = 0; l<(N/2); l++)
+            for(int l = 0; l<qlimit; l++)
             {
                 correlation_function_av[l] = correlation_function_av[l]/(mcsteps_inbin);
                 spcorFile << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
@@ -912,33 +907,45 @@ void MonteCarlo::debug1d2p()
 }
 
 void MonteCarlo::testFFTW()
-{   // Only for chain... So far...
+{
     vector<double> spins_in_z = vector<double>(N);
+    double spinthing = 0;
     for(int i=0;i<N;i++)
     {
-        // Resetting to a simple spin configuration, so we can calculate it theoretically
-        mylattice.sites[i].spinx = 0; // Maybe we don't need to actually reset these...
-        mylattice.sites[i].spiny = 0;
-        mylattice.sites[i].spinz = 1;
-        spins_in_z[i] = pow(-1.0,i); // or 1.0
-
+        spinthing += 0.1;
+        spins_in_z[i] = spinthing;
+        //spins_in_z[i] = 1.0; // or 1.0
+        //spins_in_z[i] = pow(-1.0,i); // or 1.0
     }
-    // Giving
-    int qlimit = N/2+1;
 
-    cout << "qlimit: " << qlimit << endl;
+    // To check special cases, we want to set the spins manually
+    /*
+    spins_in_z[0] = 1.0;
+    spins_in_z[1] = 1.0;
+    spins_in_z[2] = -1.0;
+    spins_in_z[3] = -1.0;
+    */
+
+    // Giving qlimit
+    int dim = mylattice.dim;
+    vector<int> dimlen = mylattice.dimlengths;
+    int qlimit = 1; // To be multiplied;
+    for(int l=0; l<(dim-1); l++)
+    {    // Looping over all dimensions but the last
+        qlimit *= dimlen[l];
+    }
+    qlimit *= (mylattice.dimlengths[dim-1]/2)+1;
+
+    //cout << "qlimit: " << qlimit << endl;
 
     vector< complex<double> > qconf(N);  // Output array
     vector<double> correlation_function_av = vector<double >(qlimit); // Change this?
-    double time_start = clock();
+    //double time_start = clock();
     giveplanforFFT(spins_in_z, qconf);
     fftw_execute(p);
-    double time_end = clock();
-    double time_realtocomplex = (time_end-time_start)/CLOCKS_PER_SEC;
 
-    cout << "5/2 = " << 5.0/2 << "; int(N)/2= " << int(5)/2 << endl;
-
-
+    //double time_end = clock();
+    //double time_realtocomplex = (time_end-time_start)/CLOCKS_PER_SEC;
 
     cout << "Printing the spin correlation function" << endl;
     for(int l=0; l<qlimit; l++)

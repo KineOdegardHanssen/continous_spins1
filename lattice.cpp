@@ -185,7 +185,7 @@ void Lattice::quadratic_helical_initialize()
     // No of particles in each direction
     dimlengths = vector<int>(dim);
     dimlengths[0] = L;
-    dimlengths[0] = L;
+    dimlengths[1] = L;
 
     // Lattice vectors
     a1 = vector<double>(2);
@@ -573,6 +573,8 @@ void Lattice::fcc_helical_initialize()
         //  /*
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
         // Giving the position of the fcc (when saved in row-major order)
+        // Could change it back, probably. Ordering not important, I guess. The same as rotating
+        // Should probably just choose something and stick with it.
         int n1 = n/(L1*L2);
         int n2 = (int)n/L1 - (int)n/(L1*L2)*L2;
         int n3 = n%L1;

@@ -30,7 +30,7 @@ int main()   // main. Monte Carlo steps here?
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 5; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 2; // The program is going to be slow if we run for many particles on a 3D lattice
 
     // bools to determine system type
     bool isotropic    = true;
@@ -52,7 +52,7 @@ int main()   // main. Monte Carlo steps here?
     bool calculatespincorrelationfunction = true; // test this
 
     // A beta value for one run
-    double beta = 10000.0;
+    double beta = 0.0;
 
     // Run parameters
     int eqsteps = 1000; // Number of steps in the equilibration procedure
@@ -139,7 +139,7 @@ void test_fftw(int L)
     bool calculatespincorrelationfunction = false;
 
     // Set these
-    char type_lattice = 'O';  // Looking at a chain (at least for now)
+    char type_lattice = 'C';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
