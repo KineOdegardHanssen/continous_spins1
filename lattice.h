@@ -45,6 +45,7 @@ public:
     void quadratic_helical_initialize();
     void cubic_helical_initialize();
     void fcc_helical_initialize();
+    void fcc_helical_initialize_extended(); // Work in progress
 
     // Feed interaction functions
     std::vector<double> givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield);
