@@ -4,6 +4,7 @@ Bond::Bond()
 {
 }
 
+// Standard initializer
 Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<double> bondints)
 {
     //std::cout << "Initializing instance of class Bond" << std::endl;
@@ -39,7 +40,7 @@ Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<
     //std::cout << "Interactions unpacked, exiting Bond" << std::endl;
 }
 
-
+// Bond for strong interactions. Should maybe change?
 Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm, std::vector<double> bondints)
 {
     // bool strong should either cause J or the D's to be multiplied by something, or be a class variable to be
@@ -83,20 +84,38 @@ Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm,
     //std::cout << "Interactions unpacked, exiting Bond" << std::endl;
 }
 
-/*
-Bond::Bond(int siteindex1, int siteindex2, double J, double Dx, double Dy, double Dz)
-{ //or std::vector<int> site1indexvec, std::vector<int> site2indexvec)
+// Allowing for interactions of different strengths in different directions
+Bond::Bond(int siteindex1, int siteindex2, double J, bool isotropic, bool dm, std::vector<double> bondints)
+{
     this->J = J;
-    this->Dx = Dx;
-    this->Dy = Dy;
-    this->Dz = Dz;
-    // Or function feed bondints
-
+    this->bondints = bondints;
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
 
-    //this->site1indexvec=site1indexvec; // Or do something else?
-    //this->site2indexvec=site2indexvec; // Have as
-
+    if(isotropic==true)
+    {
+        if(dm==true)
+        {
+            Dx = bondints[1];
+            Dy = bondints[2];
+            Dz = bondints[3];
+        }
+    }
+    else
+    {
+        if(dm==true)
+        {
+            Dx = bondints[0];
+            Dy = bondints[1];
+            Dz = bondints[2];
+        }
+    }
 }
-*/
+
+// Initializing next nearest neighbour Bond
+Bond::Bond(int siteindex1, int siteindex2, double J)
+{
+    this->siteindex1 = siteindex1;
+    this->siteindex2 = siteindex2;
+    this->J = J;
+}

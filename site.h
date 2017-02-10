@@ -21,16 +21,23 @@ public:
     //std::vector<int> bondtype3;
     std::vector<double> siteint; // Array for site interaction
     std::vector<Bond> bonds; // I guess I do have to add a pointer to Bond. But then both classes inherit each other. Weird.
+
+    std::vector<Bond> nextnearesty;  // These are relevant for fcc only. Should they be in Lattice?
+    std::vector<Bond> nextnearestz;
+
+
     // Should I have some bondlength parameter?
 
     // For closed boundary conditions
     int no_of_neighbours_site;
 
-    // Initializer
+    // Initializers
     // For periodic boundary conditions
     Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
-    // For closed boundary conditions
+    // For open boundary conditions
     Site(int n, int no_of_neighbours_site, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    // For including next nearest neighbour interactions
+    Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds, std::vector<Bond> nextnearesty, std::vector<Bond> nextnearestz);
 };
 
 #endif // SITE_H

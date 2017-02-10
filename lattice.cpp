@@ -33,6 +33,8 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
     dimequal    = false;  // Default for this constructor.
 }
 
+// Have a feedparameters-function here?
+
 void Lattice::chain_open_initialize()
 {
     if(!dimequal)    L = L1;   // In case I am really stupid
@@ -562,11 +564,18 @@ void Lattice::fcc_helical_initialize()
     double Dix = 1;
     double Diy = 1;
     double Diz = 1;
-    // And, in the future, have it in the loop.
-    double J =  1;
+
+    //double J =  1;
     double Dx = 1;
     double Dy = 1;
     double Dz = 1;
+
+    // Allowing for different interaction strengths in different direction
+    double Jy = 1;
+    double Jz = 1;
+    double Jxy = 1;
+    double Jxz = 1;
+    double Jyz = 1;
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
@@ -619,6 +628,25 @@ void Lattice::fcc_helical_initialize()
             nmL2mL = (n+N-L2*L3+L3)%N;
         }
 
+        // Should I have some bool that determines whether or not I need these?
+        int nnyp, nnym, nnzp, nnzm;
+        int deltanny, deltannz;
+        if(dimequal)
+        {
+            deltanny = L*L+L-1;
+            deltannz = -L*L+L-1;
+        }
+        else
+        {
+            deltanny = L2*L3+L3-1;
+            deltannz = -L2*L3+L3-1; // This is negative...
+        }
+        nnyp = (n+deltanny)%N;
+        nnym = (n+N-deltanny)%N;  // +N added to ensure it is not negative.
+        nnzp = (n+N+deltannz)%N;  //            --"--
+        nnzm = (n-deltannz)%N;
+
+
         if(DEBUG)
         {
             cout << "np1" << " " << np1 << endl;
@@ -637,46 +665,47 @@ void Lattice::fcc_helical_initialize()
 
         std::vector<Bond> bonds;
 
+        // Should I have some bool that determines whether or not I need these?
+        std::vector<Bond> nextnearesty;
+        std::vector<Bond> nextnearestz;
+
+        nextnearesty.push_back(Bond(n, nnym, Jy));
+        nextnearesty.push_back(Bond(n, nnyp, Jy));
+        nextnearestz.push_back(Bond(n, nnzm, Jz));
+        nextnearestz.push_back(Bond(n, nnzp, Jz));
+
+
         if(DEBUG)    cout << "Setting the bonds" << endl;
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
+        // Should I send in J separately (to easier allow for difference in strength in different directions)
+        bonds.push_back(Bond(n, np1, Jxz, isotropic, dm, bondints));  // Do I really need to send in n?
         if(DEBUG)    cout << "Bond 1 done" << endl;
-        bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nm1, Jxz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 2 done" << endl;
-        bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL, Jyz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 3 done" << endl;
-        bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL, Jyz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 4 done" << endl;
-        bonds.push_back(Bond(n, npL2, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2, Jxy, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 5 done" << endl;
-        bonds.push_back(Bond(n, nmL2, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2, Jxy, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 6 done" << endl;
-        bonds.push_back(Bond(n, npLm1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npLm1, Jyz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 7 done" << endl;
-        bonds.push_back(Bond(n, nmLm1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmLm1, Jyz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 8 done" << endl;
-        bonds.push_back(Bond(n, npL2m1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2m1, Jxz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 9 done" << endl;
-        bonds.push_back(Bond(n, nmL2m1, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2m1, Jxz, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 10 done" << endl;
-        bonds.push_back(Bond(n, npL2mL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2mL, Jxy, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 11 done" << endl;
-        bonds.push_back(Bond(n, nmL2mL, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2mL, Jxy, isotropic, dm, bondints));
         if(DEBUG)    cout << "Bond 12 done" << endl;
 
-        // or
-        //bonds.push_back(Bond(n, np1, bondints));
-
-        // Is it too nested to make Site inherit Bond? ... Seems fair?
-        // Send in bools
         cout << "Done setting the bonds. Setting the sites" << endl;
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
-        // or
-        //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds, nextnearesty, nextnearestz));
 
-        // Listing the positions of the spins:
-
-        //  /*
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
         // Giving the position of the fcc (when saved in row-major order)
         // Could change it back, probably. Ordering not important, I guess. The same as rotating
@@ -717,8 +746,9 @@ void Lattice::fcc_helical_initialize()
     cout << "Done with fcc_helical_initialize" << endl;
 }
 
+/*
 void Lattice::fcc_helical_initialize_extended()
-{
+{   // I guess I didn't do a lot of changes here... Not extended yet.
     bool DEBUG = true;
     // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
@@ -933,11 +963,14 @@ void Lattice::fcc_helical_initialize_extended()
 
         sitepositions.push_back(position_n);
         sitecoordinates.push_back(coord_n);
-        // */
+        // */ /*
 
     }
     cout << "Done with fcc_helical_initialize_extended" << endl;
 }
+
+    */
+
 
 std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)
 {

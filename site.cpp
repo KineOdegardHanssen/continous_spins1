@@ -37,7 +37,7 @@ Site::Site(int n, int no_of_neighbours_site, bool sianisotropy, bool magfield, d
 {
     index = n;
     this->no_of_neighbours_site = no_of_neighbours_site;
-    this->spinx = spinx;   // Have spinx in a new class, State?s
+    this->spinx = spinx;   // Have spinx in a new class, States?
     this->spiny = spiny;
     this->spinz = spinz;
     this->siteint = siteint;
@@ -68,16 +68,39 @@ Site::Site(int n, int no_of_neighbours_site, bool sianisotropy, bool magfield, d
 }
 
 
-/*// This is probably too inefficient
-Site::Site(int n, double hx, double hy, double hz, double Dix, double Diy, double Diz, std::vector<Bond> bonds)
+
+
+Site::Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds, std::vector<Bond> nextnearesty, std::vector<Bond> nextnearestz)
 {
     index = n;
-    this->hx = hx;
-    this->hy = hy;
-    this->hz = hz;
-    this->Dix= Dix;
-    this->Diy= Diy;
-    this->Diz= Diz;
+    this->spinx = spinx;   // Have spinx in a new class, States?
+    this->spiny = spiny;
+    this->spinz = spinz;
+    this->siteint = siteint;
     this->bonds = bonds;
+    this->nextnearesty = nextnearesty;
+    this->nextnearestz = nextnearestz;
+
+    // Only including the relevant terms.
+    if(sianisotropy==true)
+    {
+        Dix = siteint[0];
+        Diy = siteint[1];
+        Diz = siteint[2];
+        if(magfield==true)
+        {
+            hx = siteint[3];
+            hy = siteint[4];
+            hz = siteint[5];
+        }
+    }
+    else
+    {
+        if(magfield==true)
+        {
+            hx = siteint[0];
+            hy = siteint[1];
+            hz = siteint[2];
+        }
+    }
 }
-*/
