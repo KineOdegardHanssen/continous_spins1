@@ -15,8 +15,10 @@ public:
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
     bool notperiodic;            // Bool to keep track of neighbours
+    bool dimequal;               // Bool for specifying whether we have dimensions of equal length, i.e. LxLxL.
 
     int dim, L, N, no_of_neighbours;
+    int L1, L2, L3;              // For when we have unequal dimensions
     long int seed;
 
     // Typedefs
@@ -36,6 +38,7 @@ public:
     // Initialization
     Lattice();
     Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);
+    Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm);
 
 
     //Lattice grid functions
