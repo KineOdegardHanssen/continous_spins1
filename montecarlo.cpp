@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
@@ -24,22 +24,27 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
 
+    //if(sianisotropy)    cout << "Siiiii are the people!" << endl;
+
     // Making the Lattice
     double starttime = clock();
     mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
+    mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
     cout << "Instance of class Lattice initialized" << endl;
 
     // Type of Lattice
     if(periodic)
     {
-        if(type_lattice=='F')      mylattice.fcc_helical_initialize();       // F for fcc
-        else if(type_lattice=='C') mylattice.cubic_helical_initialize();     // C for cubic
-        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize(); // Q for quadratic
-        else if(type_lattice=='O') mylattice.chain_periodic_initialize();    // O for one-dimensional
+        if(type_lattice=='F')      mylattice.fcc_helical_initialize();          // F for fcc
+        if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
+        else if(type_lattice=='C') mylattice.cubic_helical_initialize();        // C for cubic
+        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();    // Q for quadratic
+        else if(type_lattice=='O') mylattice.chain_periodic_initialize();       // O for one-dimensional
     }
     else
     {
         if(type_lattice=='O')      mylattice.chain_open_initialize();
+        else                       cout << "WARNING! type_lattice " << type_lattice << " only periodic. You have asked for open BCs! Failure! Failure!" << endl;
     }
 
     //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
@@ -192,18 +197,20 @@ void MonteCarlo::initialize_energy()
     for(int i=0; i<N; i++)
     {
         if(BEDBUG) cout << "In loop to set initial energy" << endl;
+        // Spin i
+        double sx = mylattice.sites[i].spinx;
+        double sy = mylattice.sites[i].spiny;
+        double sz = mylattice.sites[i].spinz;
         // Contribution from sites
         if(sianisotropy)
         {
+            //cout << "in sianisotropy, init" << endl;
             if(BEDBUG)    cout << "In sianisotropy" << endl;
-            double Dix = mylattice.sites[i].Dix;
+            double Dix = mylattice.sites[i].Dix;   // Should these lie in Lattice instead of in Lattice::site?
             double Diy = mylattice.sites[i].Diy;
-            double Diz = mylattice.sites[i].Diz;
-            double sx = mylattice.sites[i].spinx;
-            double sy = mylattice.sites[i].spiny;
-            double sz = mylattice.sites[i].spinz;
-            energy_contribution_sites -= Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz;
-            //energy_contribution_sites += sianisotropy_energy(i, mylattice);
+            double Diz = mylattice.sites[i].Diz;           
+            energy_contribution_sites += (Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz);
+            //cout << "Energy contribution from sites: " << energy_contribution_sites << endl;
         }
         if(magfield)
         {
@@ -211,9 +218,6 @@ void MonteCarlo::initialize_energy()
             double hx = mylattice.sites[i].hx;
             double hy = mylattice.sites[i].hy;
             double hz = mylattice.sites[i].hz;
-            double sx = mylattice.sites[i].spinx;
-            double sy = mylattice.sites[i].spiny;
-            double sz = mylattice.sites[i].spinz;
             energy_contribution_sites -= hx*sx + hy*sy + hz*sz;
         }
         // Contribution from bonds
@@ -236,22 +240,20 @@ void MonteCarlo::initialize_energy()
                     if(BEDBUG)    cout << "Have set k in loop, k = " << k << "; N = " << N << endl;
                     double J = mylattice.sites[i].bonds[j].J;
                     if(BEDBUG)    cout << "Have accessed J in bond between spins" << endl;
-                    double sx = mylattice.sites[k].spinx;
-                    double sy = mylattice.sites[k].spiny;
-                    double sz = mylattice.sites[k].spinz;
+                    double sxk = mylattice.sites[k].spinx;
+                    double syk = mylattice.sites[k].spiny;
+                    double szk = mylattice.sites[k].spinz;
                     if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
-                    partnerspinx += J*sx;
-                    partnerspiny += J*sy;
-                    partnerspinz += J*sz;
+                    partnerspinx += J*sxk;
+                    partnerspiny += J*syk;
+                    partnerspinz += J*szk;
                     if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
                 }
             }
             if(BEDBUG)   cout << "Done with the loop in isotropic" << endl;
-            double sx = mylattice.sites[i].spinx;
-            double sy = mylattice.sites[i].spiny;
-            double sz = mylattice.sites[i].spinz;
-            energy_contribution_bonds += (partnerspinx*sx + partnerspiny*sy + partnerspinz*sz);///2.0;
-            // half this thing. Or find a reasonable way to not double count.
+            if(BEDBUG)   cout << "partnerspinx = " << partnerspinx << "; partnerspiny = " << partnerspiny << "; partnerspinz = " << partnerspinz << endl;
+            energy_contribution_bonds += (partnerspinx*sx + partnerspiny*sy + partnerspinz*sz);
+            //cout << "Energy contribution from bonds: " << energy_contribution_bonds << endl;
             if(BEDBUG)     cout << "Done with isotropic" << endl;
         }
         if(dm)
@@ -259,9 +261,6 @@ void MonteCarlo::initialize_energy()
             if(BEDBUG)    cout << "In dm" << endl;
             // Double loops and stuff. Could maybe make this more efficient
             int nneighbours;
-            double sxi = mylattice.sites[i].spinx;
-            double syi = mylattice.sites[i].spiny;
-            double szi = mylattice.sites[i].spinz;
             // Determining the number of neighbours of the site
             if(notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
@@ -278,7 +277,7 @@ void MonteCarlo::initialize_energy()
                     double syk = mylattice.sites[k].spiny;
                     double szk = mylattice.sites[k].spinz;
 
-                    energy_contribution_bonds -= Dx*(syi*szk-syk*szi)+Dy*(szi*sxk-szk*sxi)+Dz*(sxi*syk-syi*sxk);
+                    energy_contribution_bonds -= Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
                 }
             }
         }
@@ -291,12 +290,30 @@ void MonteCarlo::initialize_energy()
 void MonteCarlo::reset_energy()
 {  // In case it gets stuck in some region, I guess...
     //cout << "In reset_energy()" << endl;
+    bool randomspins = true;
     double originalvalue = 1/sqrt(3);
     for(int i=0; i<N; i++)
     {   // Reset all spins
         mylattice.sites[i].spinx = originalvalue;
         mylattice.sites[i].spiny = originalvalue;
         mylattice.sites[i].spinz = originalvalue;
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            double spinx = sintheta*cos(phi);
+            double spiny = sintheta*sin(phi);
+            double spinz = cos(theta);
+
+            mylattice.sites[i].spinx = spinx;
+            mylattice.sites[i].spiny = spiny;
+            mylattice.sites[i].spinz = spinz;
+        }
     }
 
     initialize_energy();
@@ -349,21 +366,21 @@ void MonteCarlo::runmetropolis(double beta)
     starttime = clock();
     // Measurable quantities
     std::vector<double> acceptancerates    = std::vector<double>(no_of_bins);
-    std::vector<double> energies    = std::vector<double>(no_of_bins);
-    std::vector<double> energies_sq = std::vector<double>(no_of_bins);
-    std::vector<double> cvs         = std::vector<double>(no_of_bins);
-    std::vector<double> mxs = std::vector<double>(no_of_bins);
-    std::vector<double> mys = std::vector<double>(no_of_bins);
-    std::vector<double> mzs = std::vector<double>(no_of_bins);
-    std::vector<double> mxs_abs = std::vector<double>(no_of_bins);
-    std::vector<double> mys_abs = std::vector<double>(no_of_bins);
-    std::vector<double> mzs_abs = std::vector<double>(no_of_bins);
-    std::vector<double> mxssq   = std::vector<double>(no_of_bins);
-    std::vector<double> myssq   = std::vector<double>(no_of_bins);
-    std::vector<double> mzssq   = std::vector<double>(no_of_bins);
-    std::vector<double> mxsquad = std::vector<double>(no_of_bins);
-    std::vector<double> mysquad = std::vector<double>(no_of_bins);
-    std::vector<double> mzsquad = std::vector<double>(no_of_bins);
+    std::vector<double> energies           = std::vector<double>(no_of_bins);
+    std::vector<double> energies_sq        = std::vector<double>(no_of_bins);
+    std::vector<double> cvs                = std::vector<double>(no_of_bins);
+    std::vector<double> mxs                = std::vector<double>(no_of_bins);
+    std::vector<double> mys                = std::vector<double>(no_of_bins);
+    std::vector<double> mzs                = std::vector<double>(no_of_bins);
+    std::vector<double> mxs_abs            = std::vector<double>(no_of_bins);
+    std::vector<double> mys_abs            = std::vector<double>(no_of_bins);
+    std::vector<double> mzs_abs            = std::vector<double>(no_of_bins);
+    std::vector<double> mxssq              = std::vector<double>(no_of_bins);
+    std::vector<double> myssq              = std::vector<double>(no_of_bins);
+    std::vector<double> mzssq              = std::vector<double>(no_of_bins);
+    std::vector<double> mxsquad            = std::vector<double>(no_of_bins);
+    std::vector<double> mysquad            = std::vector<double>(no_of_bins);
+    std::vector<double> mzsquad            = std::vector<double>(no_of_bins);
     // For the correlation function
     // The spins
     std::vector<double> spins_in_z = std::vector<double>(N);
@@ -678,8 +695,13 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(HUMBUG)    cout << "Inside loop in mcstepf. n = " << n << endl;
         double energy_diff = 0;
 
-        int k = distribution_n(generator_n);
-        if(HUMBUG)    cout << "Random spin k drawn. k = " << k << endl;
+
+        // Is this random enough?
+        int k = distribution_n(generator_n);   // Draw a random site
+        // Or, in case random is inaccurate:
+        //(Tested against 2x2x2 fcc. Yields the same results within the error bars.)
+        //int k = (int)floor(N*ran2(&seed));
+        if(HUMBUG)    cout << "Random site k drawn. k = " << k << endl;
 
         double sx = mylattice.sites[k].spinx;
         double sy = mylattice.sites[k].spiny;
@@ -758,12 +780,13 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
 
         if(sianisotropy)
         {
+
             if(HUMBUG)    cout << "In sianisotropy in mcstepf" << endl;
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
-            energy_diff += Dix*(sx*sx - sx_t*sx_t) + Diy*(sy*sy-sy_t*sy_t)+ Diz*(sz*sz-sz_t*sz_t); // This is - originally
-            //energy_diff -= sianisotropy_energy(k, sx, sy, sz, mylattice);
+            //cout << "Dix : " << Dix << "; Diy : " << Diy << "; Diz : " << Diz << endl;
+            energy_diff -= (Dix*(sx*sx - sx_t*sx_t) + Diy*(sy*sy-sy_t*sy_t)+ Diz*(sz*sz-sz_t*sz_t)); // This is - originally
         }
         if(magfield)
         {
@@ -772,7 +795,6 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             double hy = mylattice.sites[k].hy;
             double hz = mylattice.sites[k].hz;
             energy_diff += hx*(sx-sx_t) + hy*(sy-sy_t) + hz*(sz-sz_t);
-            //energy_diff -= magfield_energy(k, sx, sy, sz, mylattice);
         }
         if(isotropic)
         {
@@ -828,32 +850,28 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             }
 
             if(HUMBUG)    cout << "Finding the energy difference from dm" << endl;
-            //energy_diff -= dm_energy(k, sx, sy, sz, mylattice);
+
         }
         if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
-        //cout << "Contribution from energy before: " << energy_diff << endl;
 
-        // This should work, but there is probably some error here...
         double energy_new = energy_old + energy_diff;
-        //cout << "energy_diff: " << energy_diff << ";  Difference in spin: [" << (sx-sx_t) << "," << (sy-sy_t) << "," << (sz-sz_t) << "]" << endl;
-        // Or should I just test if energy_new < 0? ... May have to find energy_new anyways...
 
         // Updating the energy and the state according to Metropolis
         if(energy_new <= energy_old)
         {
+            // Updating the spin
             mylattice.sites[k].spinx = sx_t;
             mylattice.sites[k].spiny = sy_t;
             mylattice.sites[k].spinz = sz_t;
-            //cout << "Spin normalized?" << (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
-            //cout << "Energy decreased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]." << " deltaE =  " << energy_diff  << endl;
+
+            // Updating the energy
+            energy_old = energy_new;
+
+            // Updating changes to get the acceptance rate
             changes+=1;
-            //if(DEBUG)    cout << "Percentage of hits: " << changes/(n+1)  << endl;
-            //if(DEBUG)    cout << "ENERGY DECREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
-            if(HUMBUG)   cout << "ENERGY DECREASED!" << endl;
-            //cout << "Resetting energy. Energy_old = " << energy_old << "; energy_new = " << energy_new << endl;
-            energy_old = energy_new; // Update energy
-            //cout << "Energy changed. Energy difference = " << energy_diff << endl;
-            //cout << "Energy should be reset now. energy_old = " << energy_old << "; energy_new = " << energy_new << endl;
+
+            // Misc
+            if(HUMBUG)   cout << "ENERGY DECREASED!" << endl;            
             if(MAJORDEBUG)    debug1d2p();
         }
         else
@@ -863,17 +881,20 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             if(HUMBUG)    cout << "Suggesting energy increase. Probability of success: " << prob << "; number drawn: " << drawn << endl;
             if(drawn<prob)
             {
+                // Updating the spin
                 mylattice.sites[k].spinx = sx_t;
                 mylattice.sites[k].spiny = sy_t;
                 mylattice.sites[k].spinz = sz_t;
-                //cout << "Spin normalized?" << (sx_t*sx_t+sy_t*sy_t+sz_t*sz_t) << endl;
-                //if(DEBUG)    cout << "Energy increased. deltaS = [" << mylattice.sites[k].spinx-sx << "," << mylattice.sites[k].spiny-sy << "," << mylattice.sites[k].spinz-sz << "]" << energy_diff << endl;
-                if(HUMBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
+
+                // Updating the energy
+                energy_old = energy_new;
+
+                // Updating changes to get the acceptance rate
                 changes+=1;
+
+                // Misc
+                if(HUMBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;               
                 if(HUMBUG)    cout << "Success" << endl;
-                //cout << "Percentage of hits: " << changes/(n+1)  << endl;
-                energy_old = energy_new;  // Update energy
-                //cout << "Energy changed. Energy difference = " << energy_diff << endl;
                 if(MAJORDEBUG)    debug1d2p();
             }
         }
@@ -912,10 +933,10 @@ void MonteCarlo::testFFTW()
     double spinthing = 0;
     for(int i=0;i<N;i++)
     {
-        spinthing += 0.1;
-        spins_in_z[i] = spinthing;
+        //spinthing += 0.1;
+        //spins_in_z[i] = spinthing;
         //spins_in_z[i] = 1.0; // or 1.0
-        //spins_in_z[i] = pow(-1.0,i); // or 1.0
+        spins_in_z[i] = pow(-1.0,i); // or 1.0
     }
 
     // To check special cases, we want to set the spins manually
