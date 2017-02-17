@@ -12,10 +12,16 @@ using namespace std; // Now, I can remove all std's.
 class Lattice
 {
 public:
+
+    double hx, hy, hz, Dix, Diy, Diz; // Site strengths
+    double J, Jy, Jz, Jxy, Jxz, Jyz;  // Bond strengths, Heisenberg
+    double Dx, Dy, Dz;                // Bond strengths, DM
+
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
     bool notperiodic;            // Bool to keep track of neighbours
     bool dimequal;               // Bool for specifying whether we have dimensions of equal length, i.e. LxLxL.
+    bool systemstrengthsgiven;   // Bool for indicating whether system strengths are given. Actions will be taken if not
 
     int dim, L, N, no_of_neighbours;
     int L1, L2, L3;              // For when we have unequal dimensions
@@ -40,6 +46,10 @@ public:
     Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);
     Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm);
 
+    // Debugging
+    //void setmajordebug();
+
+    int findneighbour(int n, int toi, int toj, int tok);
 
     //Lattice grid functions
     //void chain_2p_periodic_initialize();
@@ -51,6 +61,8 @@ public:
     void fcc_helical_initialize_extended(); // Work in progress
 
     // Feed interaction functions
+    void setstrengths(vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    void givestrengths_automatic();
     std::vector<double> givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield);
     std::vector<double> givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm);
 

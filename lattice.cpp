@@ -15,6 +15,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     dimequal    = true;  // Default for this constructor.
+    systemstrengthsgiven = false;
 }
 
 
@@ -31,9 +32,81 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     dimequal    = false;  // Default for this constructor.
+    systemstrengthsgiven = false;
 }
 
-// Have a feedparameters-function here?
+// Function for feeding in system parameters
+void Lattice::setstrengths(vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    /* The in put arrays are ordered like this:
+    hx, hy, hz, Dix, Diy, Diz; // sitestrengthsin
+    J, Jy, Jz, Jxy, Jxz, Jyz;  // heisenbergin
+    Dx, Dy, Dz;                // dm_in
+    */
+    cout << "In Lattice::setstrengths. Your chosen parameters will now be used" << endl;
+
+    this->hx  = sitestrengthsin[0]; // I already have something similar to this...
+    this->hy  = sitestrengthsin[1];
+    this->hz  = sitestrengthsin[2];
+    this->Dix = sitestrengthsin[3];
+    this->Diy = sitestrengthsin[4];
+    this->Diz = sitestrengthsin[5];
+
+    this->J   = heisenbergin[0];
+    this->Jy  = heisenbergin[1];
+    this->Jz  = heisenbergin[2];
+    this->Jxy = heisenbergin[3];
+    this->Jxz = heisenbergin[4];
+    this->Jyz = heisenbergin[5];
+
+    this->Dx = dm_in[0];
+    this->Dy = dm_in[1];
+    this->Dz = dm_in[2];
+
+    // Just in case we forget to call this one:
+    systemstrengthsgiven = true;
+}
+
+/*
+void Lattice::majordebug()
+{
+    MBUG = true;
+}
+*/
+
+// Default function setting system strengths if the first one is forgotten
+void Lattice::givestrengths_automatic()
+{
+    hx  = 1; // I already have something similar to this...
+    hy  = 1;
+    hz  = 1;
+    Dix = 0;
+    Diy = 1;
+    Diz = 0;
+
+    J   = 1;
+    Jy  = 1;
+    Jz  = 1;
+    Jxy = 1;
+    Jxz = 1;
+    Jyz = 1;
+
+    Dx = 1;
+    Dy = 1;
+    Dz = 1;
+
+    cout << "WARNING!!! System parameters were not given. Parameters set to default value." << endl;
+}
+
+int Lattice::findneighbour(int n, int toi, int toj, int tok)
+{
+    int i = n/(L2*L3);
+    int j = (int)n/L3 - (int)n/(L2*L3)*L2;
+    int k = n%L3;
+
+    return ((L1+i+toi)%L1)*(L2*L3)+((L2+j+toj)%L2)*L2+(L3+k+tok)%L3;
+}
+
 
 void Lattice::chain_open_initialize()
 {
@@ -57,23 +130,7 @@ void Lattice::chain_open_initialize()
     double spiny = a;
     double spinz = a;
 
-    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
-    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
-    // unneccessary calculations.
-    // have some function for doing this:
-    double hx = 1;
-    double hy = 1;
-    double hz = 1;
-    double Dix = 1;
-    double Diy = 1;
-    double Diz = 1;
-
-    // And, in the future, have it in the loop.
-
-    double J =  1; // As in Ising model work
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    if(!systemstrengthsgiven)    givestrengths_automatic();
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
@@ -129,6 +186,7 @@ void Lattice::chain_open_initialize()
 
 void Lattice::chain_periodic_initialize()
 {
+    cout << "In chain_periodic_initialize" << endl;
     if(!dimequal)    L = L1;   // In case I am really stupid
     dim = 1;
     N = L;
@@ -146,23 +204,7 @@ void Lattice::chain_periodic_initialize()
     double spiny = a;
     double spinz = a;
 
-    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
-    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
-    // unneccessary calculations.
-    // have some function for doing this:
-    double hx = 1;
-    double hy = 1;
-    double hz = 1;
-    double Dix = 1;
-    double Diy = 1;
-    double Diz = 1;
-
-    // And, in the future, have it in the loop.
-
-    double J =  1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    if(!systemstrengthsgiven)    givestrengths_automatic();
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
@@ -238,23 +280,7 @@ void Lattice::quadratic_helical_initialize()
     double spiny = a;
     double spinz = a;
 
-    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
-    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
-    // unneccessary calculations.
-    // have some function for doing this:
-    double hx = 1;
-    double hy = 1;
-    double hz = 1;
-    double Dix = 1;
-    double Diy = 1;
-    double Diz = 1;
-
-    // And, in the future, have it in the loop.
-
-    double J =  1; // As in Ising model work
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    if(!systemstrengthsgiven)    givestrengths_automatic();
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
@@ -295,14 +321,11 @@ void Lattice::quadratic_helical_initialize()
         bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
         bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
         bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
-        // or
-        //bonds.push_back(Bond(n, np1, bondints));
 
-        // Is it too nested to make Site inherit Bond? ... Seems fair?
+
         // Send in bools
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
-        // or
-        //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+
         // Positions (row-major order)
         if(dimequal)
         {
@@ -388,23 +411,7 @@ void Lattice::cubic_helical_initialize()
     double spiny = a;
     double spinz = a;
 
-    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
-    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
-    // unneccessary calculations.
-    // have some function for doing this:
-    double hx = 1;
-    double hy = 1;
-    double hz = 1;
-    double Dix = 1;
-    double Diy = 1;
-    double Diz = 1;
-
-    // And, in the future, have it in the loop.
-
-    double J = 1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    if(!systemstrengthsgiven)    givestrengths_automatic();
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
@@ -491,30 +498,29 @@ void Lattice::cubic_helical_initialize()
 
 }
 
-void Lattice::fcc_helical_initialize()
+void Lattice::fcc_helical_initialize_extended()
 {
-    bool DEBUG = true;
+    //cout << "In fcc_helical_initialize_extended" << endl;
+    bool DEBUG = false;
     // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
     dim = 3;
-    if(dimequal)    N = L*L*L;
-    else            N = L1*L2*L3;
+    if(dimequal)
+    {
+        L1 = L;
+        L2 = L;
+        L3 = L;
+    }
+    N = L1*L2*L3;
     no_of_neighbours = 12;
 
     // No of particles in each direction
     dimlengths    = vector<int>(dim);
-    if(dimequal)
-    {
-        dimlengths[0] = L;
-        dimlengths[1] = L;
-        dimlengths[2] = L;
-    }
-    else
-    {
-        dimlengths[0] = L1;
-        dimlengths[1] = L2;
-        dimlengths[2] = L3;
-    }
+
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+    dimlengths[2] = L3;
+
 
     // Lattice vectors
     a1 = vector<double>(3); // Should they be double?
@@ -543,7 +549,7 @@ void Lattice::fcc_helical_initialize()
     b3[1] = 0;
     b3[2] = M_PI;
 
-    cout << "In fcc_helical_initialize" << endl;
+    //cout << "In fcc_helical_initialize_extended!!!!!!!" << endl;
 
     // Setting up the sites
     // We set up the matrix by having all spins in the same direction. Or maybe draw at random?
@@ -552,44 +558,48 @@ void Lattice::fcc_helical_initialize()
     double spiny = a;
     double spinz = a;
 
-    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
-    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
-    // unneccessary calculations.
-    // have some function for doing this:
-    // magfield
-    double hx = 1;
-    double hy = 1;
-    double hz = 1;
-    //sianisotropy
-    double Dix = 1;
-    double Diy = 1;
-    double Diz = 1;
+    if(!systemstrengthsgiven)    givestrengths_automatic();
 
-    //double J =  1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
-
-    // Allowing for different interaction strengths in different direction
-    double Jy = 1;
-    double Jz = 1;
-    double Jxy = 1;
-    double Jxz = 1;
-    double Jyz = 1;
+    if(DEBUG)
+    {
+        cout << "hx : " << hx << "; hy : " << hy << "; hz : " << hz << "; Dix : " << Dix << "; Diy : " << Diy << "; Diz : " << Diz << endl;
+        cout << "J : " << J << "; Jy : " << Jy << "; Jz : " << Jz << "; Jxy : " << Jxy << "; Jxz : " << Jxz << "; Jyz : " << Jyz << endl;
+        cout << " Dx : " << Dx << "; Dy : " << Dy << "; Dz : " << Dz << endl;
+    }
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
+    // This could be simpler, actually:
+    std::vector<double> bondints = std::vector<double>(3);
+    bondints[0] = Dx;
+    bondints[1] = Dy;
+    bondints[2] = Dz;
 
     std::vector<double> position_n = std::vector<double>(3);
-    std::vector<int> coord_n = std::vector<int>(3);
+    std::vector<int> coord_n       = std::vector<int>(3);
 
     // Could have these inside the loop and add randomness.
 
+    bool randomspins = false;
     if(DEBUG)    cout << "Now entering the loop" << endl;
     for(int n=0; n<N; n++)
     {
         if(DEBUG)    cout << "In loop, n = " << n << endl;
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
+
         // Finding the neighbours to n
         // NB!: So far, I have only added neighbours that are a distance 1 apart, 2 being the length of the cell.
         // So no linking two cell corner atoms together as of now.
@@ -599,8 +609,21 @@ void Lattice::fcc_helical_initialize()
         int np1 = (n+1)%N;        // neighbour in positive a3-direction (row-major ordering)        
         int nm1 = (n+N-1)%N;     // neighbour in negative a3-direction (row-major ordering)
 
-
         int npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
+        np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering)
+        nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering)
+        npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering)
+        nmL    = findneighbour(n,0,-1,0); // neighbour in negative a2-direction (row-major ordering)
+        npL2   = findneighbour(n,1,0,0);  // neighbour in positive a1-direction (row-major ordering)
+        nmL2   = findneighbour(n,-1,0,0); // neighbour in negative a3-direction (row-major ordering)
+        npLm1  = findneighbour(n,0,1,-1);
+        nmLm1  = findneighbour(n,0,-1,1);
+        npL2m1 = findneighbour(n,1,0,-1);
+        nmL2m1 = findneighbour(n,-1,0,1);
+        npL2mL = findneighbour(n,1,-1,0);
+        nmL2mL = findneighbour(n,-1,1,0);
+
+        /*
         if(dimequal)
         {
             npL = (n+L)%N;        // neighbour in positive a2-direction (row-major ordering)
@@ -627,6 +650,7 @@ void Lattice::fcc_helical_initialize()
             nmL2m1 = (n+N-L2*L3+1)%N;
             nmL2mL = (n+N-L2*L3+L3)%N;
         }
+        */
 
         // Should I have some bool that determines whether or not I need these?
         int nnyp, nnym, nnzp, nnzm;
@@ -678,32 +702,32 @@ void Lattice::fcc_helical_initialize()
         if(DEBUG)    cout << "Setting the bonds" << endl;
         // Making a lot of bond classes to be added to bonds.
         // Should I send in J separately (to easier allow for difference in strength in different directions)
-        bonds.push_back(Bond(n, np1, Jxz, isotropic, dm, bondints));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, np1, Jxz, bondints));  // Do I really need to send in n?
         if(DEBUG)    cout << "Bond 1 done" << endl;
-        bonds.push_back(Bond(n, nm1, Jxz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nm1, Jxz, bondints));
         if(DEBUG)    cout << "Bond 2 done" << endl;
-        bonds.push_back(Bond(n, npL, Jyz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL, Jyz, bondints));
         if(DEBUG)    cout << "Bond 3 done" << endl;
-        bonds.push_back(Bond(n, nmL, Jyz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL, Jyz, bondints));
         if(DEBUG)    cout << "Bond 4 done" << endl;
-        bonds.push_back(Bond(n, npL2, Jxy, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2, Jxy, bondints));
         if(DEBUG)    cout << "Bond 5 done" << endl;
-        bonds.push_back(Bond(n, nmL2, Jxy, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2, Jxy, bondints));
         if(DEBUG)    cout << "Bond 6 done" << endl;
-        bonds.push_back(Bond(n, npLm1, Jyz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npLm1, Jxy, bondints));
         if(DEBUG)    cout << "Bond 7 done" << endl;
-        bonds.push_back(Bond(n, nmLm1, Jyz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmLm1, Jxy, bondints));
         if(DEBUG)    cout << "Bond 8 done" << endl;
-        bonds.push_back(Bond(n, npL2m1, Jxz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2m1, Jyz, bondints));
         if(DEBUG)    cout << "Bond 9 done" << endl;
-        bonds.push_back(Bond(n, nmL2m1, Jxz, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2m1, Jyz, bondints));
         if(DEBUG)    cout << "Bond 10 done" << endl;
-        bonds.push_back(Bond(n, npL2mL, Jxy, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, npL2mL, Jxz, bondints));
         if(DEBUG)    cout << "Bond 11 done" << endl;
-        bonds.push_back(Bond(n, nmL2mL, Jxy, isotropic, dm, bondints));
+        bonds.push_back(Bond(n, nmL2mL, Jxz, bondints));
         if(DEBUG)    cout << "Bond 12 done" << endl;
 
-        cout << "Done setting the bonds. Setting the sites" << endl;
+        if(DEBUG)    cout << "Done setting the bonds. Setting the sites" << endl;
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds, nextnearesty, nextnearestz));
 
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
@@ -711,24 +735,16 @@ void Lattice::fcc_helical_initialize()
         // Could change it back, probably. Ordering not important, I guess. The same as rotating
         // Should probably just choose something and stick with it.
         int n1, n2, n3;
-        if(dimequal)
-        {
-            n1 = n/(L*L);
-            n2 = (int)n/L - (int)n/(L*L)*L;
-            n3 = n%L;
-        }
-        else
-        {
-            n1 = n/(L1*L2);
-            n2 = (int)n/L1 - (int)n/(L1*L2)*L2;
-            n3 = n%L1;
-        }
+
+        n1 = n/(L1*L2);
+        n2 = (int)n/L3 - (int)n/(L3*L2)*L2;
+        n3 = n%L3;
 
         double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
         double ypos = 0.5*(n1+n2);
         double zpos = 0.5*(n2+n3);
 
-        cout << "[" << xpos << "," << ypos << "," << zpos << "]" << endl;
+       // cout << "[" << xpos << "," << ypos << "," << zpos << "]" << endl;
 
         position_n[0] = xpos;
         position_n[1] = ypos;
@@ -746,32 +762,27 @@ void Lattice::fcc_helical_initialize()
     cout << "Done with fcc_helical_initialize" << endl;
 }
 
-/*
-void Lattice::fcc_helical_initialize_extended()
-{   // I guess I didn't do a lot of changes here... Not extended yet.
-    bool DEBUG = true;
+
+void Lattice::fcc_helical_initialize()
+{
+    bool DEBUG = false;
     // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
     dim = 3;
-    if(dimequal)    N = L*L*L;
-    else            N = L1*L2*L3;
+    if(dimequal)
+    {
+        L1 = L;
+        L2 = L;
+        L3 = L;
+    }
+    N = L1*L2*L3;
     no_of_neighbours = 12;
 
     // No of particles in each direction
-    dimlengths    = vector<int>(dim);
-    if(dimequal)
-    {
-        dimlengths[0] = L;
-        dimlengths[1] = L;
-        dimlengths[2] = L;
-    }
-    else
-    {
-        dimlengths[0] = L1;
-        dimlengths[1] = L2;
-        dimlengths[2] = L3;
-    }
-
+    dimlengths    = vector<int>(dim);       
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+    dimlengths[2] = L3;
 
 
     // Lattice vectors
@@ -810,23 +821,7 @@ void Lattice::fcc_helical_initialize_extended()
     double spiny = a;
     double spinz = a;
 
-    // Interactions. Should have a way of choosing which terms we look at. Maybe different initialization
-    // functions in site? Send in a char for that instead of having all these ones. Quickly get a lot of
-    // unneccessary calculations.
-    // have some function for doing this:
-    // magfield
-    double hx = 1;
-    double hy = 1;
-    double hz = 1;
-    //sianisotropy
-    double Dix = 1;
-    double Diy = 1;
-    double Diz = 1;
-    // And, in the future, have it in the loop.
-    double J =  1;
-    double Dx = 1;
-    double Dy = 1;
-    double Dz = 1;
+    if(!systemstrengthsgiven)    givestrengths_automatic();
 
     // Move these when neccessary
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
@@ -847,11 +842,25 @@ void Lattice::fcc_helical_initialize_extended()
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
         // Verified this bit (against Newman & Barkema [i,j,k]).
-        int np1 = (n+1)%N;        // neighbour in positive a3-direction (row-major ordering)
-        int nm1 = (n+N-1)%N;     // neighbour in negative a3-direction (row-major ordering)
+        int np1 = (n+1)%N;
+        int nm1 = (n+N-1)%N;
 
 
         int npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
+        np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering)
+        nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering)
+        npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering)
+        nmL    = findneighbour(n,0,-1,0); // neighbour in negative a2-direction (row-major ordering)
+        npL2   = findneighbour(n,1,0,0);  // neighbour in positive a1-direction (row-major ordering)
+        nmL2   = findneighbour(n,-1,0,0); // neighbour in negative a3-direction (row-major ordering)
+        npLm1  = findneighbour(n,0,1,-1);
+        nmLm1  = findneighbour(n,0,-1,1);
+        npL2m1 = findneighbour(n,1,0,-1);
+        nmL2m1 = findneighbour(n,-1,0,1);
+        npL2mL = findneighbour(n,1,-1,0);
+        nmL2mL = findneighbour(n,-1,1,0);
+
+        /*
         if(dimequal)
         {
             npL = (n+L)%N;        // neighbour in positive a2-direction (row-major ordering)
@@ -878,6 +887,7 @@ void Lattice::fcc_helical_initialize_extended()
             nmL2m1 = (n+N-L2*L3+1)%N;
             nmL2mL = (n+N-L2*L3+L3)%N;
         }
+        */
 
         if(DEBUG)
         {
@@ -938,20 +948,16 @@ void Lattice::fcc_helical_initialize_extended()
         // However, this way, it is easy to map to the fftw-output.
         // Should probably just choose something and stick with it.
         int n1, n2, n3;
-        if(dimequal)
-        {
-            n1 = n/(L*L);
-            n2 = (int)n/L - (int)n/(L*L)*L;
-            n3 = n%L;
-        }
-        else
-        {
-            n1 = n/(L1*L2);
-            n2 = (int)n/L1 - (int)n/(L1*L2)*L2;
-            n3 = n%L1;
-        }
 
-        cout << "[" << xpos << "," << ypos << "," << zpos << "]" << endl;
+        n1 = n/(L2*L3);
+        n2 = (int)n/L3 - (int)n/(L2*L3)*L2;
+        n3 = n%L3;
+
+        double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
+        double ypos = 0.5*(n1+n2);
+        double zpos = 0.5*(n2+n3);
+
+        //cout << "[" << xpos << "," << ypos << "," << zpos << "]" << endl;
 
         position_n[0] = xpos;
         position_n[1] = ypos;
@@ -969,7 +975,6 @@ void Lattice::fcc_helical_initialize_extended()
     cout << "Done with fcc_helical_initialize_extended" << endl;
 }
 
-    */
 
 
 std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)

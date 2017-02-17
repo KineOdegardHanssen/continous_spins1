@@ -9,6 +9,7 @@
 #include "lattice.h"
 #include "printing.h"
 #include "montecarlo.h"
+//#include "gaussiandeviate.h"
 
 using namespace std;
 using std::ofstream; using std::string;
@@ -26,7 +27,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 2; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 4; // The program is going to be slow if we run for many particles on a 3D lattice
 
     // bools to determine system type
     bool isotropic    = true;
@@ -68,10 +69,9 @@ int main()
     vector<double> dm_in = vector<double>(3);
     dm_in[0] = Dx;              dm_in[1] = Dy;              dm_in[2] = Dz;
 
-
     // Bools to determine printing
     bool printeveryMCstep = false;
-    bool calculatespincorrelationfunction = false; // test this
+    bool calculatespincorrelationfunction = false;
 
     // A beta value for one run
     double beta = 50.0;
@@ -83,26 +83,28 @@ int main()
 
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "comparewithothers_2p_beta0p5Jij1_Dz1";
-    string filenamePrefix = "fcc_8x8x8_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
+    string filenamePrefix = "0fcc_2x2x2_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
     //string filenamePrefix = "test_periodicchain_2p";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
-    //string filenamePrefix = "bigtest2";
+    //string filenamePrefix = "test";
     //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
 
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
-    int beta_n = 5;
+    int beta_n = 100;
     double betamin = 1e-5;
     double betamax = 50;
+    int betanset = 5;
     vector<double> betas = vector<double>(5);
     betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    run_for_several_betas_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    run_for_several_betas_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
+    // Test functions
     //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
 }
@@ -194,9 +196,12 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     Lattice mylattice(L, isotropic, sianisotropy, magfield, dm);
+    mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
     mylattice.fcc_helical_initialize_extended();
 
-    // Test different sites and their neighbour
+    // Test different sites and their neighbours
+    // Neighbours OK
+    /*
     int n = 3;
     int no_of_neighbours = mylattice.no_of_neighbours;
     vector<Bond> neighbours =  mylattice.sites[n].bonds;
@@ -212,6 +217,47 @@ void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, 
         vector<int> sitecoordl = mylattice.sitecoordinates[l];
         cout << "Position , neighbour " << i << " (site " << l << ") : [" <<  siteposl[0] << "," << siteposl[1] << "," << siteposl[2] << "]" << endl;
         cout << "Coordinates , neighbour " << i << "(site " << l << ") [" <<  sitecoordl[0] << "," << sitecoordl[1] << "," << sitecoordl[2] << "]" << endl;
+    }
+    */
+
+    // Testing the implementation of J and the sian terms.
+    /*
+    int no_of_neighbours = mylattice.no_of_neighbours;
+    // n = 5
+    cout << "For n = 5" << endl;
+    vector<Bond> site5bonds = mylattice.sites[5].bonds;
+    cout << "Single-ion anisotropy terms: Dix = " << mylattice.sites[5].Dix << "; Diy = " << mylattice.sites[5].Diy << "; Diz = " << mylattice.sites[5].Diz << endl;
+    for(int i=0; i<no_of_neighbours; i++)        cout << "i = " << i << "; J = " << site5bonds[i].J  << endl;
+
+    int n;
+    if(L<3)    n = 7;
+    else       n = 21;
+    cout << "Now for " << n << endl;
+    vector<Bond> sitebonds = mylattice.sites[n].bonds;
+    cout << "Single-ion anisotropy terms: Dix = " << mylattice.sites[n].Dix << "; Diy = " << mylattice.sites[n].Diy << "; Diz = " << mylattice.sites[n].Diz << endl;
+    for(int i=0; i<no_of_neighbours; i++)        cout << "i = " << i << "; J = " << sitebonds[i].J  << endl;
+    */
+
+    // Testing the position of each point
+    int N = mylattice.N;
+    for(int i=0; i<N;i++)
+    {
+        vector<double> pos = mylattice.sitepositions[i];
+        vector<int>    crd = mylattice.sitecoordinates[i];
+        cout << "Site " << i << endl;
+        cout << "Coordinates: [" << crd[0] << " , " << crd[1] << " , " << crd[2] << "]" << endl;
+        cout << "Position:    [" << pos[0] << " , " << pos[1] << " , " << pos[2] << "]" << endl << endl;
+    }
+
+    // Finding the neighbours of each point:
+    int no_of_neighbours = mylattice.no_of_neighbours;
+    for(int i=0; i<N;i++)
+    {
+        cout << "Site " << i << endl;
+        for(int j=0; j<no_of_neighbours; j++)
+        {
+            cout << "Neighbour " << j << ": " << mylattice.sites[i].bonds[j].siteindex2 << endl;
+        }
     }
 
 
