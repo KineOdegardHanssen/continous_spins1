@@ -8,14 +8,17 @@ Lattice::Lattice()
 Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm)
 {
     this->L = L;
+    this->L1 = L;
+    this->L2 = L;
+    this->L3 = L;
     this->isotropic = isotropic;
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
-    dimequal    = true;  // Default for this constructor.
     systemstrengthsgiven = false;
+    cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
 
@@ -25,14 +28,15 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
     this->L1 = L1;
     this->L2 = L2;
     this->L3 = L3;
+    this->L = L1;
     this->isotropic = isotropic;
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
-    dimequal    = false;  // Default for this constructor.
     systemstrengthsgiven = false;
+    cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
 // Function for feeding in system parameters
@@ -98,28 +102,35 @@ void Lattice::givestrengths_automatic()
     cout << "WARNING!!! System parameters were not given. Parameters set to default value." << endl;
 }
 
+int Lattice::findneighbour2D(int n, int toi, int toj)
+{   // Not tested, should work
+    int i = n/L2;
+    int j = n%L2;
+
+    return ((L1+i+toi)%L1)*L2+((L2+j+toj)%L2);
+}
+
 int Lattice::findneighbour(int n, int toi, int toj, int tok)
-{
+{   // Gives correct output (at least for 2x2x2 fcc)
     int i = n/(L2*L3);
     int j = (int)n/L3 - (int)n/(L2*L3)*L2;
     int k = n%L3;
 
-    return ((L1+i+toi)%L1)*(L2*L3)+((L2+j+toj)%L2)*L2+(L3+k+tok)%L3;
+    return ((L1+i+toi)%L1)*(L2*L3)+((L2+j+toj)%L2)*L3+(L3+k+tok)%L3;
 }
 
 
 void Lattice::chain_open_initialize()
 {
-    if(!dimequal)    L = L1;   // In case I am really stupid
     notperiodic = true;
     bool randomspins = false;  // Adding the option to change the spins
     cout << "NB! Bool notperiodic changed to true. Now operating with closed BCs!" << endl;
     dim = 1;
-    N = L;
+    N = L1;
     no_of_neighbours = 2; // For the most part
 
     dimlengths = vector<int>(1);
-    dimlengths[0] = L;
+    dimlengths[0] = L1;
     a1 = vector<double>(1);
     a1[0] = 1;
     b1 = vector<double>(1);
@@ -159,7 +170,6 @@ void Lattice::chain_open_initialize()
             spinz = cos(theta);
         }
 
-
         // Excluding periodic neighbours
         if(np1>n)
         {
@@ -187,13 +197,12 @@ void Lattice::chain_open_initialize()
 void Lattice::chain_periodic_initialize()
 {
     cout << "In chain_periodic_initialize" << endl;
-    if(!dimequal)    L = L1;   // In case I am really stupid
     dim = 1;
-    N = L;
+    N = L1;
     no_of_neighbours = 2;
 
     dimlengths = vector<int>(1);
-    dimlengths[0] = L;
+    dimlengths[0] = L1;
     a1 = vector<double>(1);
     a1[0] = 1;
     b1 = vector<double>(1);
@@ -242,22 +251,13 @@ void Lattice::quadratic_helical_initialize()
 {   // This one is primarily for testing.
     //N = L*(L+1); // Look this up!
     dim = 2;
-    if(dimequal)    N = L*L;
-    else            N = L1*L2;
+    N = L1*L2;
     no_of_neighbours = 4;
 
     // No of particles in each direction
     dimlengths = vector<int>(dim);
-    if(dimequal)
-    {
-        dimlengths[0] = L;
-        dimlengths[1] = L;
-    }
-    else
-    {
-        dimlengths[0] = L1;
-        dimlengths[1] = L2;
-    }
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
 
     // Lattice vectors
     a1 = vector<double>(2);
@@ -293,56 +293,30 @@ void Lattice::quadratic_helical_initialize()
 
     for(int n=0; n<N; n++)
     {
-        // Finding the neighbours to n
-        // NB!: So far, I have only added neighbours that are a distance 1 apart, 2 being the length of the cell.
-        // So no linking two cell corner atoms together as of now.
-        // This should only be done once. And that is exactly what we are doing.
-        // Doing modulo operations, as suggested in Newman & Barkema
-        // These neighbours are consistent with the sketch in Newman & Barkema
-        int np1 = (n+1)%N;
-        int nm1 = (n+N-1)%N;
-
-        int npL, nmL;
-        if(dimequal)
-        {
-            npL = (n+L)%N;
-            nmL = (n+N-L)%N;
-        }
-        else
-        {
-            npL = (n+L2)%N;
-            nmL = (n+N-L2)%N;
-        }
+        // Finding the neighbours
+        int np1, nm1, npL, nmL;
+        np1 = findneighbour2D(n,0,1);
+        nm1 = findneighbour2D(n,0,-1);
+        npL = findneighbour2D(n,1,0);
+        nmL = findneighbour2D(n,1,0);
 
         std::vector<Bond> bonds;
 
-        // Making a lot of bond classes to be added to bonds.
+        // Making a lot of Bond classes to be added to vector of bonds.
         bonds.push_back(Bond(n, np1, isotropic, dm, bondints));  // Do I really need to send in n?
         bonds.push_back(Bond(n, nm1, isotropic, dm, bondints));
         bonds.push_back(Bond(n, npL, isotropic, dm, bondints));
         bonds.push_back(Bond(n, nmL, isotropic, dm, bondints));
 
-
         // Send in bools
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
 
         // Positions (row-major order)
-        if(dimequal)
-        {
-            position_n[0] = 1.0*((int)n/L); // n1
-            position_n[1] = 1.0*((int)n%L); // n2. Should allow for grid length a.
+        position_n[0] = 1.0*((int)n/L2); // n1
+        position_n[1] = 1.0*((int)n%L2); // n2. Should allow for grid length a.
 
-            coord_n[0] = ((int)n/L); // n1
-            coord_n[1] = ((int)n%L); // n2
-        }
-        else
-        {
-            position_n[0] = 1.0*((int)n/L2); // n1
-            position_n[1] = 1.0*((int)n%L2); // n2. Should allow for grid length a.
-
-            coord_n[0] = ((int)n/L2); // n1
-            coord_n[1] = ((int)n%L2); // n2
-        }
+        coord_n[0] = ((int)n/L2); // n1
+        coord_n[1] = ((int)n%L2); // n2
 
         sitepositions.push_back(position_n);
         sitecoordinates.push_back(coord_n);
@@ -354,24 +328,14 @@ void Lattice::cubic_helical_initialize()
 {
     //N = L*(L+1)*(L+1); // Look this up!
     dim = 3;
-    if(dimequal)    N = L*L*L;
-    else            N = L1*L2*L3;
+    N = L1*L2*L3;
     no_of_neighbours = 6;
 
     // No of particles in each direction
-    dimlengths    = vector<int>(dim);
-    if(dimequal)
-    {
-        dimlengths[0] = L;
-        dimlengths[1] = L;
-        dimlengths[2] = L;
-    }
-    else
-    {
-        dimlengths[0] = L1;
-        dimlengths[1] = L2;
-        dimlengths[2] = L3;
-    }
+    dimlengths    = vector<int>(dim);    
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+    dimlengths[2] = L3;
 
 
     // Lattice vectors
@@ -430,24 +394,14 @@ void Lattice::cubic_helical_initialize()
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
         // These seems correct. However, I should probably find a second source to support this.
-        int np1 = (n+1)%N;                   // Or should I call a function neighbours_xxxtype()?        
-        int nm1 = (n+N-1)%N;
 
-        int npL, npL2, nmL, nmL2;
-        if(dimequal)
-        {
-            npL = (n+L)%N;
-            npL2 = (n+L*L)%N;
-            nmL = (n+N-L)%N;
-            nmL2 = (n+N-L*L)%N;
-        }
-        else
-        {   // Must test these, I guess... Seems correct, however.
-            npL = (n+L3)%N;
-            npL2 = (n+L2*L3)%N;
-            nmL = (n+N-L3)%N;
-            nmL2 = (n+N-L2*L3)%N;
-        }
+        int np1, nm1, npL, nmL, npL2, nmL2;
+        np1  = findneighbour(n,0,0,1);
+        nm1  = findneighbour(n,0,0,-1);
+        npL  = findneighbour(n,0,1,0);
+        nmL  = findneighbour(n,0,-1,0);
+        npL2 = findneighbour(n,1,0,0);
+        nmL2 = findneighbour(n,-1,0,0);
 
         std::vector<Bond> bonds;
 
@@ -470,19 +424,9 @@ void Lattice::cubic_helical_initialize()
 
         // Giving the position (row-major order)
         int n1, n2, n3;
-        if(dimequal)    // Could also set L1 = L, L2 = L, L3 = L at the beginning of this function...
-        {
-            n1 = n/(L*L);
-            n2 = n/L - n/(L*L)*L;
-            n3 = n%L;
-        }
-        else
-        {
-            n1 = n/(L1*L2);
-            n2 = n/L1 - n/(L1*L2)*L2;
-            n3 = n%L1;
-        }
-
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
 
         position_n[0] = 1.0*n1;     // Could possibly multiply by grid length a
         position_n[1] = 1.0*n2;
@@ -505,13 +449,8 @@ void Lattice::fcc_helical_initialize_extended()
     // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
     dim = 3;
-    if(dimequal)
-    {
-        L1 = L;
-        L2 = L;
-        L3 = L;
-    }
     N = L1*L2*L3;
+    cout << "N: " << N << endl;
     no_of_neighbours = 12;
 
     // No of particles in each direction
@@ -601,15 +540,7 @@ void Lattice::fcc_helical_initialize_extended()
         }
 
         // Finding the neighbours to n
-        // NB!: So far, I have only added neighbours that are a distance 1 apart, 2 being the length of the cell.
-        // So no linking two cell corner atoms together as of now.
-        // This should only be done once. And that is exactly what we are doing.
-        // Doing modulo operations, as suggested in Newman & Barkema
-        // Verified this bit (against Newman & Barkema [i,j,k]).
-        int np1 = (n+1)%N;        // neighbour in positive a3-direction (row-major ordering)        
-        int nm1 = (n+N-1)%N;     // neighbour in negative a3-direction (row-major ordering)
-
-        int npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
+        int np1, nm1, npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
         np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering)
         nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering)
         npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering)
@@ -618,57 +549,45 @@ void Lattice::fcc_helical_initialize_extended()
         nmL2   = findneighbour(n,-1,0,0); // neighbour in negative a3-direction (row-major ordering)
         npLm1  = findneighbour(n,0,1,-1);
         nmLm1  = findneighbour(n,0,-1,1);
-        npL2m1 = findneighbour(n,1,0,-1);
-        nmL2m1 = findneighbour(n,-1,0,1);
+        npL2m1 = findneighbour(n,1,0,-1); // Jyz
+        nmL2m1 = findneighbour(n,-1,0,1); // Jyz
         npL2mL = findneighbour(n,1,-1,0);
         nmL2mL = findneighbour(n,-1,1,0);
 
         /*
-        if(dimequal)
-        {
-            npL = (n+L)%N;        // neighbour in positive a2-direction (row-major ordering)
-            npL2 = (n+L*L)%N;     // neighbour in positive a1-direction (row-major ordering)
-            npLm1 = (n+L-1)%N;
-            npL2m1 = (n+L*L-1)%N;
-            npL2mL = (n+L*L-L)%N;
-            nmL = (n+N-L)%N;      // neighbour in negative a2-direction (row-major ordering)
-            nmL2 = (n+N-L*L)%N;   // neighbour in negative a1-direction (row-major ordering)
-            nmLm1 = (n+N-L+1)%N;
-            nmL2m1 = (n+N-L*L+1)%N;
-            nmL2mL = (n+N-L*L+L)%N;
-        }
-        else
-        {   // Test this in some way...
-            npL = (n+L3)%N;        // neighbour in positive a2-direction (row-major ordering)
-            npL2 = (n+L2*L3)%N;     // neighbour in positive a1-direction (row-major ordering)
-            npLm1 = (n+L3-1)%N;
-            npL2m1 = (n+L2*L3-1)%N;
-            npL2mL = (n+L2*L3-L3)%N;
-            nmL = (n+N-L3)%N;      // neighbour in negative a2-direction (row-major ordering)
-            nmL2 = (n+N-L2*L3)%N;   // neighbour in negative a1-direction (row-major ordering)
-            nmLm1 = (n+N-L3+1)%N;
-            nmL2m1 = (n+N-L2*L3+1)%N;
-            nmL2mL = (n+N-L2*L3+L3)%N;
-        }
+        // Test this in some way...
+        npL = (n+L3)%N;        // neighbour in positive a2-direction (row-major ordering)
+        npL2 = (n+L2*L3)%N;     // neighbour in positive a1-direction (row-major ordering)
+        npLm1 = (n+L3-1)%N;
+        npL2m1 = (n+L2*L3-1)%N;
+        npL2mL = (n+L2*L3-L3)%N;
+        nmL = (n+N-L3)%N;      // neighbour in negative a2-direction (row-major ordering)
+        nmL2 = (n+N-L2*L3)%N;   // neighbour in negative a1-direction (row-major ordering)
+        nmLm1 = (n+N-L3+1)%N;
+        nmL2m1 = (n+N-L2*L3+1)%N;
+        nmL2mL = (n+N-L2*L3+L3)%N;
         */
 
         // Should I have some bool that determines whether or not I need these?
+        // This part probably need fixing!!
+        // Finding the next nearest neighbours in the y- and z- direction
+        // (The distance between sites in the x-direction is larger, so this dir can be neglected.)
         int nnyp, nnym, nnzp, nnzm;
+
+        nnyp = findneighbour(n,1,1,-1);
+        nnym = findneighbour(n,-1,-1,1);
+        nnzp = findneighbour(n,-1,1,1);
+        nnzm = findneighbour(n,1,-1,-1);
+
+        /*
         int deltanny, deltannz;
-        if(dimequal)
-        {
-            deltanny = L*L+L-1;
-            deltannz = -L*L+L-1;
-        }
-        else
-        {
-            deltanny = L2*L3+L3-1;
-            deltannz = -L2*L3+L3-1; // This is negative...
-        }
+        deltanny = L2*L3+L3-1;
+        deltannz = -L2*L3+L3-1; // This is negative...
         nnyp = (n+deltanny)%N;
         nnym = (n+N-deltanny)%N;  // +N added to ensure it is not negative.
         nnzp = (n+N+deltannz)%N;  //            --"--
         nnzm = (n-deltannz)%N;
+        */
 
 
         if(DEBUG)
@@ -707,8 +626,10 @@ void Lattice::fcc_helical_initialize_extended()
         bonds.push_back(Bond(n, nm1, Jxz, bondints));
         if(DEBUG)    cout << "Bond 2 done" << endl;
         bonds.push_back(Bond(n, npL, Jyz, bondints));
+        //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 3 done" << endl;
         bonds.push_back(Bond(n, nmL, Jyz, bondints));
+        //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 4 done" << endl;
         bonds.push_back(Bond(n, npL2, Jxy, bondints));
         if(DEBUG)    cout << "Bond 5 done" << endl;
@@ -719,8 +640,10 @@ void Lattice::fcc_helical_initialize_extended()
         bonds.push_back(Bond(n, nmLm1, Jxy, bondints));
         if(DEBUG)    cout << "Bond 8 done" << endl;
         bonds.push_back(Bond(n, npL2m1, Jyz, bondints));
+        //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 9 done" << endl;
         bonds.push_back(Bond(n, nmL2m1, Jyz, bondints));
+        //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 10 done" << endl;
         bonds.push_back(Bond(n, npL2mL, Jxz, bondints));
         if(DEBUG)    cout << "Bond 11 done" << endl;
@@ -736,9 +659,11 @@ void Lattice::fcc_helical_initialize_extended()
         // Should probably just choose something and stick with it.
         int n1, n2, n3;
 
-        n1 = n/(L1*L2);
+        n1 = (int)n/(L2*L3);
         n2 = (int)n/L3 - (int)n/(L3*L2)*L2;
-        n3 = n%L3;
+        n3 = (int)n%L3;
+
+        //cout << "Site " << n << "; [i,j,k] = [" << n1 << "," << n2 << "," << n3 << "]" << endl;
 
         double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
         double ypos = 0.5*(n1+n2);
@@ -769,12 +694,6 @@ void Lattice::fcc_helical_initialize()
     // Should include something saying how the parameters are set.
     //N = L*(L+1)*(L+1); // Look this up!
     dim = 3;
-    if(dimequal)
-    {
-        L1 = L;
-        L2 = L;
-        L3 = L;
-    }
     N = L1*L2*L3;
     no_of_neighbours = 12;
 
@@ -842,11 +761,8 @@ void Lattice::fcc_helical_initialize()
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
         // Verified this bit (against Newman & Barkema [i,j,k]).
-        int np1 = (n+1)%N;
-        int nm1 = (n+N-1)%N;
 
-
-        int npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
+        int np1, nm1, npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
         np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering)
         nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering)
         npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering)
@@ -861,32 +777,17 @@ void Lattice::fcc_helical_initialize()
         nmL2mL = findneighbour(n,-1,1,0);
 
         /*
-        if(dimequal)
-        {
-            npL = (n+L)%N;        // neighbour in positive a2-direction (row-major ordering)
-            npL2 = (n+L*L)%N;     // neighbour in positive a1-direction (row-major ordering)
-            npLm1 = (n+L-1)%N;
-            npL2m1 = (n+L*L-1)%N;
-            npL2mL = (n+L*L-L)%N;
-            nmL = (n+N-L)%N;      // neighbour in negative a2-direction (row-major ordering)
-            nmL2 = (n+N-L*L)%N;   // neighbour in negative a1-direction (row-major ordering)
-            nmLm1 = (n+N-L+1)%N;
-            nmL2m1 = (n+N-L*L+1)%N;
-            nmL2mL = (n+N-L*L+L)%N;
-        }
-        else
-        {   // Test this in some way...
-            npL = (n+L3)%N;        // neighbour in positive a2-direction (row-major ordering)
-            npL2 = (n+L2*L3)%N;     // neighbour in positive a1-direction (row-major ordering)
-            npLm1 = (n+L3-1)%N;
-            npL2m1 = (n+L2*L3-1)%N;
-            npL2mL = (n+L2*L3-L3)%N;
-            nmL = (n+N-L3)%N;      // neighbour in negative a2-direction (row-major ordering)
-            nmL2 = (n+N-L2*L3)%N;   // neighbour in negative a1-direction (row-major ordering)
-            nmLm1 = (n+N-L3+1)%N;
-            nmL2m1 = (n+N-L2*L3+1)%N;
-            nmL2mL = (n+N-L2*L3+L3)%N;
-        }
+        // Test this in some way...
+        npL = (n+L3)%N;        // neighbour in positive a2-direction (row-major ordering)
+        npL2 = (n+L2*L3)%N;     // neighbour in positive a1-direction (row-major ordering)
+        npLm1 = (n+L3-1)%N;
+        npL2m1 = (n+L2*L3-1)%N;
+        npL2mL = (n+L2*L3-L3)%N;
+        nmL = (n+N-L3)%N;      // neighbour in negative a2-direction (row-major ordering)
+        nmL2 = (n+N-L2*L3)%N;   // neighbour in negative a1-direction (row-major ordering)
+        nmLm1 = (n+N-L3+1)%N;
+        nmL2m1 = (n+N-L2*L3+1)%N;
+        nmL2mL = (n+N-L2*L3+L3)%N;
         */
 
         if(DEBUG)

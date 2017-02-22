@@ -50,6 +50,7 @@ public:
     //void setmajordebug();
 
     int findneighbour(int n, int toi, int toj, int tok);
+    int findneighbour2D(int n, int toi, int toj);
 
     //Lattice grid functions
     //void chain_2p_periodic_initialize();

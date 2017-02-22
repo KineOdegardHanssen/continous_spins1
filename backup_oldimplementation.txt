@@ -1,0 +1,135 @@
+/*
+        if(sianisotropy)
+        {
+            if(HUMBUG)    cout << "In sianisotropy in mcstepf" << endl;
+            double Dix = mylattice.sites[k].Dix;
+            double Diy = mylattice.sites[k].Diy;
+            double Diz = mylattice.sites[k].Diz;
+            energy_diff -= Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz; // This is - originally
+        }
+        if(magfield)
+        {
+            if(HUMBUG)    cout << "In magfield in mcstepf" << endl;
+            double hx = mylattice.sites[k].hx;
+            double hy = mylattice.sites[k].hy;
+            double hz = mylattice.sites[k].hz;
+            energy_diff += hx*sx + hy*sy + hz*sz;
+        }
+        if(isotropic)
+        {
+            if(HUMBUG)    cout << "In isotropic in mcstepf" << endl;
+            if(HUMBUG)    cout << "no_of_neighbours = " << no_of_neighbours << endl;
+            double partnerspinx = 0;
+            double partnerspiny = 0;
+            double partnerspinz = 0;
+            int nneighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
+            //cout << nneighbours;
+            for(int j=0; j<nneighbours; j++)
+            {
+                int l = mylattice.sites[k].bonds[j].siteindex2;
+                if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
+                double J = mylattice.sites[k].bonds[j].J;
+                double sx = mylattice.sites[l].spinx;
+                double sy = mylattice.sites[l].spiny;
+                double sz = mylattice.sites[l].spinz;
+                partnerspinx += J*sx;
+                partnerspiny += J*sy;
+                partnerspinz += J*sz;
+                if(HUMBUG)    cout << "Why it no work?!" << endl;
+            }
+            if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
+            energy_diff -= partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+        }
+        if(dm)
+        {
+            if(HUMBUG)    cout << "In dm in mcstepf" << endl;
+            int nneighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
+            //cout << nneighbours;
+            for(int j=0; j<nneighbours; j++)
+            {
+
+                int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
+
+                if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
+
+                double Dx = mylattice.sites[k].bonds[j].Dx;
+                double Dy = mylattice.sites[k].bonds[j].Dy;
+                double Dz = mylattice.sites[k].bonds[j].Dz;
+                if(HUMBUG)    cout << "Bonds accessed" << endl;
+                double sxk = mylattice.sites[l].spinx;
+                double syk = mylattice.sites[l].spiny;
+                double szk = mylattice.sites[l].spinz;
+                if(HUMBUG)    cout << "Components of spin no. " << l << " accessed." << endl;
+                energy_diff += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
+            }
+            if(HUMBUG)    cout << "Done with the loop in dm in mcstepf" << endl;
+        }
+
+        if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
+                // Energy contribution after spin change
+        if(sianisotropy)
+        {
+            if(HUMBUG)    cout << "Finding the energy difference from sianisotropy" << endl;
+            double Dix = mylattice.sites[k].Dix;
+            double Diy = mylattice.sites[k].Diy;
+            double Diz = mylattice.sites[k].Diz;
+            energy_diff += Dix*sx_t*sx_t + Diy*sy_t*sy_t+ Diz*sz_t*sz_t; // This is - originally
+        }
+        if(magfield)
+        {
+
+            if(HUMBUG)    cout << "Finging the energy difference from magfield" << endl;
+            double hx = mylattice.sites[k].hx;
+            double hy = mylattice.sites[k].hy;
+            double hz = mylattice.sites[k].hz;
+            energy_diff -= hx*sx_t + hy*sy_t + hz*sz_t;
+        }
+        if(isotropic)
+        {
+
+            if(HUMBUG)    cout << "Finging the energy difference from isotropic" << endl;
+            double partnerspinx = 0;
+            double partnerspiny = 0;
+            double partnerspinz = 0;
+            int nneighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
+            //cout << nneighbours;
+            for(int j=0; j<nneighbours; j++)
+            {
+                int l = mylattice.sites[k].bonds[j].siteindex2;
+                double J = mylattice.sites[k].bonds[j].J;
+                double sx = mylattice.sites[l].spinx;
+                double sy = mylattice.sites[l].spiny;
+                double sz = mylattice.sites[l].spinz;
+                partnerspinx += J*sx;
+                partnerspiny += J*sy;
+                partnerspinz += J*sz;
+            }
+                energy_diff += partnerspinx*sx_t + partnerspiny*sy_t + partnerspinz*sz_t;
+        }
+        if(dm)
+        {
+            if(HUMBUG)    cout << "Finging the energy difference from dm" << endl;
+            int nneighbours;
+            if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+            else               nneighbours = no_of_neighbours;
+            //cout << nneighbours;
+            for(int j=0; j<nneighbours; j++)
+            {
+                int l = mylattice.sites[k].bonds[j].siteindex2; // Hope I can actually get to this value.
+                double Dx = mylattice.sites[k].bonds[j].Dx;
+                double Dy = mylattice.sites[k].bonds[j].Dy;
+                double Dz = mylattice.sites[k].bonds[j].Dz;
+                double sxk = mylattice.sites[l].spinx;
+                double syk = mylattice.sites[l].spiny;
+                double szk = mylattice.sites[l].spinz;
+
+                energy_diff -= Dx*(sy_t*szk-syk*sz_t)+Dy*(sz_t*sxk-szk*sx_t)+Dz*(sx_t*syk-sy_t*sxk);
+            }
+        }
+        */

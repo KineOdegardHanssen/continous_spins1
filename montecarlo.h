@@ -31,15 +31,16 @@ public:
     ofstream    bigFile;
     ofstream    compareFile;
     ofstream    spcorFile;
+    ofstream    randomtestFile;
     ofstream    qFile;
     string      filenamePrefix;
 
     int N, eqsteps, mcsteps_inbin, no_of_bins, no_of_neighbours;
-    long int seed;
+    long int seed1, seed2, testseed;
     double energy_old, acceptancerate;
     bool isotropic, sianisotropy, magfield, dm;
     bool notperiodic;
-    bool printeveryMCstep, calculatespincorrelationfunction;
+    bool printeveryMCstep, calculatespincorrelationfunction, randomtest;
     bool DEBUG, MAJORDEBUG;
 
     fftw_plan p;
@@ -62,7 +63,8 @@ public:
     //Printing print;
 
     MonteCarlo();
-    MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix);
+    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 
     // Debugging/testing functions
@@ -80,10 +82,10 @@ public:
 
 
     // Standard Metropolis functions
-    void runmetropolis(double beta); // Or should beta be a class variable?
-    void mcstepf_metropolis(double beta); //, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n); //
+    void runmetropolis(double beta);
+    void mcstepf_metropolis(double beta);
 
-    //
+    // Closing the output files
     void endsims();
 };
 

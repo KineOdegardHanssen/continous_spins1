@@ -85,31 +85,16 @@ Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm,
 }
 
 // Allowing for interactions of different strengths in different directions
-Bond::Bond(int siteindex1, int siteindex2, double J, bool isotropic, bool dm, std::vector<double> bondints)
+Bond::Bond(int siteindex1, int siteindex2, double J, std::vector<double> bondints)
 {
-    this->J = J;
+    this->J = J;     //
     this->bondints = bondints;
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
 
-    if(isotropic==true)
-    {
-        if(dm==true)
-        {
-            Dx = bondints[1];
-            Dy = bondints[2];
-            Dz = bondints[3];
-        }
-    }
-    else
-    {
-        if(dm==true)
-        {
-            Dx = bondints[0];
-            Dy = bondints[1];
-            Dz = bondints[2];
-        }
-    }
+    Dx = bondints[0]; // Should have an option to not include all these. But I guess it is not neccessary...
+    Dy = bondints[1]; //
+    Dz = bondints[2]; //
 }
 
 // Initializing next nearest neighbour Bond

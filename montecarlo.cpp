@@ -6,6 +6,7 @@ MonteCarlo::MonteCarlo()
 
 MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
+    randomtest = false;
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
     this->mcsteps_inbin = mcsteps_inbin;
@@ -28,7 +29,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     // Making the Lattice
     double starttime = clock();
-    mylattice = Lattice(L, isotropic, sianisotropy, magfield, dm);
+    mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
     mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
     cout << "Instance of class Lattice initialized" << endl;
 
@@ -69,7 +70,9 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed = 59;  // Seed to start random number generator
+    seed1 = 59;  // Seed to start random number generator
+    seed2 = 61;
+    testseed = 29;
     DEBUG = false;
     MAJORDEBUG = false;
 
@@ -113,7 +116,8 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
             double qy;
             double qz;
 
-            L = mylattice.L; // For now, we only have one input dimension
+            int L1 = mylattice.L1;
+            int L2 = mylattice.L2;
 
             if(mylattice.dim==2)
             {
@@ -125,8 +129,8 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
                     // These must be changed if we change into possibly setting L1, L2, L3 different
                     // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
                     // Could be more general
-                    qx = ns[0]*mylattice.b1[0]/L;
-                    qy = ns[1]*mylattice.b2[1]/L;
+                    qx = ns[0]*mylattice.b1[0]/L1; // Not so sure abour this, just need it to compile
+                    qy = ns[1]*mylattice.b2[1]/L2; // Double check
                     //qz = ns[2]*mylattice.b3[2]/L; // No qz
                     cout << "qvec set" << endl;
                     // Print to file. Site number, qx, qy, qz.
@@ -136,6 +140,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
             }
             else if(mylattice.dim==3)
             {
+                int L3 = mylattice.L3;
                 cout << "For cubic or fcc, in if-test" << endl;
                 for(int i=0; i<N; i++) // Possibly only up to N/2.
                 {
@@ -144,18 +149,192 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
                     // These must be changed if we change into possibly setting L1, L2, L3 different
                     // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
                     // Could be more general, but we don't need to play around with our lattices that much...
-                    qx = (ns[0]*mylattice.b1[0] + ns[2]*mylattice.b3[0])/L;
-                    qy = (ns[0]*mylattice.b1[1] + ns[1]*mylattice.b2[1])/L;
-                    qz = (ns[1]*mylattice.b2[2] + ns[2]*mylattice.b3[2])/L;
+                    qx = (ns[0]*mylattice.b1[0] + ns[2]*mylattice.b3[0])/L1; //Not so sure abour this, just need it to compile
+                    qy = (ns[0]*mylattice.b1[1] + ns[1]*mylattice.b2[1])/L2; // Double check later
+                    qz = (ns[1]*mylattice.b2[2] + ns[2]*mylattice.b3[2])/L3;
                     // Print to file. Site number, qx, qy, qz.
                     qFile << i << " " << qx << " " << qy << " " << qz << endl;
                 }
                 //cout << "Done printing to qFile" << endl;
             }
-
         }
     }
+    if(randomtest)
+    {
+        char *filename = new char[1000];                                     // File name can have max 1000 characters
+        sprintf(filename, "%s_testofrandom.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        randomtestFile.open(filename);
+        delete filename;
+    }
 }
+
+
+
+MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    randomtest = false;
+
+    // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
+    this->eqsteps = eqsteps;
+    this->mcsteps_inbin = mcsteps_inbin;
+    this->no_of_bins = no_of_bins;
+
+    // Setting the bools
+    this->isotropic = isotropic;
+    this->sianisotropy = sianisotropy;
+    this->magfield = magfield;
+    this->dm = dm;
+
+    this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
+    this->printeveryMCstep = printeveryMCstep;
+    this->calculatespincorrelationfunction = calculatespincorrelationfunction;
+
+    if(periodic)    notperiodic = false;
+    else            notperiodic = true;
+
+    //if(sianisotropy)    cout << "Siiiii are the people!" << endl;
+
+    // Making the Lattice
+    double starttime = clock();
+    mylattice = Lattice(L1, L2, L3, isotropic, sianisotropy, magfield, dm);
+    mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
+    cout << "Instance of class Lattice initialized" << endl;
+
+    // Type of Lattice
+    if(periodic)
+    {
+        if(type_lattice=='F')      mylattice.fcc_helical_initialize();          // F for fcc
+        if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
+        else if(type_lattice=='C') mylattice.cubic_helical_initialize();        // C for cubic
+        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();    // Q for quadratic
+        else if(type_lattice=='O') mylattice.chain_periodic_initialize();       // O for one-dimensional
+    }
+    else
+    {
+        if(type_lattice=='O')      mylattice.chain_open_initialize();
+        else                       cout << "WARNING! type_lattice " << type_lattice << " only periodic. You have asked for open BCs! Failure! Failure!" << endl;
+    }
+
+    //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
+    double endtime = clock();
+    double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
+    cout << "Lattice set, time: " << total_time << endl;
+
+    // The lattice  // Could just extract the bools from here...
+    this->N = mylattice.N;
+    this->no_of_neighbours = mylattice.no_of_neighbours;
+    cout << "Number of sites and neighbours retrieved to MonteCarlo." << endl;
+
+    // Random generators
+    // Should clean up in these...
+    distribution_u    = std::uniform_real_distribution<double>(0,1);  // Varies depending on distribution
+    distribution_v    = std::uniform_real_distribution<double>(0,1);  // Varies depending on distribution
+    distribution_prob = std::uniform_real_distribution<double>(0,1);
+    // For index. This is given helical boundary conditions, then I only need one index
+    distribution_n    = std::uniform_int_distribution<int>(0,N-1);
+
+    cout << "Distributions set" << endl;
+
+    // Initializing some other quantities
+    acceptancerate = 0;
+    seed1 = 59;  // Seed to start random number generator
+    seed2 = 63;
+    DEBUG = false;
+    MAJORDEBUG = false;
+
+    // Setting up files to print to. Might want to allow more flexibility here
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_everybeta.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    allFile.open(filename);
+    delete filename;
+
+    cout << "allFile set" << endl;
+    if(printeveryMCstep)
+    {
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_everyMCstep.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        bigFile.open(filename);
+        delete filename;
+    }
+    cout << "Passed if-test printeveryMCstep" << endl;
+    if(calculatespincorrelationfunction)
+    {
+        cout << "In if-test calculatespincorrelationfunction" << endl;
+        // Setting up file to print to
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_spincorrelationfunction.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFile.open(filename);
+        delete filename;
+
+        cout << "File set" << endl;
+
+        if(mylattice.dim>1)  // The chain is trivial
+        {
+            // Printing information about the q-vectors straight away
+            char *filenameq = new char[1000];                                // File name can have max 1000 characters
+            sprintf(filenameq, "%s_qs.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+            qFile.open(filenameq);
+            delete filenameq;
+
+            cout << "File for printing q-vector to file is initiated" << endl;
+
+            double qx;
+            double qy;
+            double qz;
+
+            int L1 = mylattice.L1;
+            int L2 = mylattice.L2;
+
+            if(mylattice.dim==2)
+            {
+                cout << "For quadratic, in if-test" << endl;
+                for(int i=0; i<N; i++) // Possibly only up to N/2.
+                {
+                    vector<int> ns = mylattice.sitecoordinates[i];
+                    cout << "ns retrieved" << endl;
+                    // These must be changed if we change into possibly setting L1, L2, L3 different
+                    // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+                    // Could be more general
+                    qx = ns[0]*mylattice.b1[0]/L1; // Not so sure abour this, just need it to compile
+                    qy = ns[1]*mylattice.b2[1]/L2; // Double check
+                    //qz = ns[2]*mylattice.b3[2]/L; // No qz
+                    cout << "qvec set" << endl;
+                    // Print to file. Site number, qx, qy, qz.
+                    qFile << i << " " << qx << " " << qy << " " << endl;
+                }
+                cout << "Done printing to qFile" << endl;
+            }
+            else if(mylattice.dim==3)
+            {
+                int L3 = mylattice.L3;
+                cout << "For cubic or fcc, in if-test" << endl;
+                for(int i=0; i<N; i++) // Possibly only up to N/2.
+                {
+                    vector<int> ns = mylattice.sitecoordinates[i];
+                    //cout << "ns retrieved" << endl;
+                    // These must be changed if we change into possibly setting L1, L2, L3 different
+                    // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+                    // Could be more general, but we don't need to play around with our lattices that much...
+                    qx = (ns[0]*mylattice.b1[0] + ns[2]*mylattice.b3[0])/L1; //Not so sure abour this, just need it to compile
+                    qy = (ns[0]*mylattice.b1[1] + ns[1]*mylattice.b2[1])/L2; // Double check later
+                    qz = (ns[1]*mylattice.b2[2] + ns[2]*mylattice.b3[2])/L3;
+                    // Print to file. Site number, qx, qy, qz.
+                    qFile << i << " " << qx << " " << qy << " " << qz << endl;
+                }
+                //cout << "Done printing to qFile" << endl;
+            }
+        }
+    }
+    if(randomtest)
+    {
+        char *filename = new char[1000];                                     // File name can have max 1000 characters
+        sprintf(filename, "%s_testofrandom.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        randomtestFile.open(filename);
+        delete filename;
+    }
+}
+
+
 
 /*
 void MonteCarlo::chooseprintfile(string filenamePrefix)
@@ -231,6 +410,7 @@ void MonteCarlo::initialize_energy()
             // Determining the number of neighbours of the site
             if(notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
+            //cout << "Looping over " << nneighbours << " neighbours" << endl;
             for(int j=0; j<nneighbours; j++)
             {
                 if(BEDBUG)    cout << "in loop in isotropic, j = " << j << endl;
@@ -299,8 +479,8 @@ void MonteCarlo::reset_energy()
         mylattice.sites[i].spinz = originalvalue;
         if(randomspins)
         {
-            double u = ran2(&seed);
-            double v = ran2(&seed);
+            double u = ran2(&seed1);
+            double v = ran2(&seed1);
 
             double theta = acos(1.0-2.0*u);
             double phi = 2.0*M_PI*v;
@@ -353,7 +533,7 @@ void MonteCarlo::runmetropolis(double beta)
     {
         if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
         mcstepf_metropolis(beta); //, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
-        if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
+        //if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
     }
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -430,20 +610,34 @@ void MonteCarlo::runmetropolis(double beta)
         mxsquad[i]     = 0;
         mysquad[i]     = 0;
         mzsquad[i]     = 0;
-        if(LADYBUG)    cout << "i = " << i << "; energy_av before loop: " << energy_av << endl;
+        if(LADYBUG)
+        {
+            if(i>0)
+            {
+                cout << "i = " << i << "; Average energy before loop: " << energy_av/(mcsteps_inbin*i) << endl;
+                cout << "i = " << i << "; energies[i]: " << energies[i] << endl;
+            }
+        }
+
         // Setting vectors
 
         for(int j=0; j<mcsteps_inbin; j++)    // Loop over mcsteps in bin
         {   // For each mcstep
-            mcstepf_metropolis(beta); //, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+            mcstepf_metropolis(beta);
+            if(randomtest)
+            {
+                randomtestFile << ran2(&testseed) << endl;
+            }
+
             // acceptancerate
             acceptancerates[i] += acceptancerate;
             ar_av += acceptancerate;
             // energy
-            energies[i]    += energy_old;    // Storing to get the standard deviation // Something odd here
+            energies[i]    += energy_old;    // Storing to get the standard deviation
             energies_sq[i] += energy_old*energy_old;
             energy_av      += energy_old;
             energy_sq_av   += energy_old*energy_old;
+            //cout << "Current energy: " << energy_old << "; Average energy so far: " << energies[i]/(j+1) << endl;
             // Magnetization
             double mx     = 0;
             double my     = 0;
@@ -525,7 +719,7 @@ void MonteCarlo::runmetropolis(double beta)
             //Print to bigFile
             if(printeveryMCstep)
             {
-                bigFile << beta << " " << energy_old << " " << energy_old*energy_old << " " << mx << " " << my << " " << mz << endl;
+                bigFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << energy_old << " " << energy_old*energy_old << " " << mx << " " << my << " " << mz << endl;
             }
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
@@ -549,19 +743,16 @@ void MonteCarlo::runmetropolis(double beta)
         cvs[i]         = cv_bin;
         cv_average    += cv_bin;
 
-
         if(calculatespincorrelationfunction)
         {   // Take the average and print to file
             // Make the averages (is this more efficient than just calculating the average?)
             for(int l = 0; l<qlimit; l++)
             {
                 correlation_function_av[l] = correlation_function_av[l]/(mcsteps_inbin);
-                spcorFile << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
+                spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
             }
             spcorFile << endl; // End line to get ready for new result
         }
-
-
 
     }  // End loops over bins
     //----------------------// Acceptance rate //-----------------------//
@@ -666,20 +857,17 @@ void MonteCarlo::runmetropolis(double beta)
 
     //----------------The correlation function-------------------//
 
-    // Printing
-    allFile << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
+    //-----------------------Printing----------------------------//
+    allFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
     allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
     allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv;
     allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv << endl;
-                                                          // Should I sum them or something?
-    //print.printing_everybin(beta, energy_av, E_stdv, energy_sq_av, Esq_stdv, cv, cv_stdv, mx_av, mx_stdv, my_av, my_stdv, mz_av, mz_stdv);
 
-    // Guess I should have stuff here instead. Print once for every beta.
     endtime = clock();
     total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
     cout << "Time MC steps and measurements: "  << total_time << endl;
-    cout << "Done with the Monte Carlo procedure this time around" << endl;
+    //cout << "Done with the Monte Carlo procedure this time around" << endl;
 }
 
 
@@ -693,8 +881,6 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
     for(int n=0; n<N; n++)
     {
         if(HUMBUG)    cout << "Inside loop in mcstepf. n = " << n << endl;
-        double energy_diff = 0;
-
 
         // Is this random enough?
         int k = distribution_n(generator_n);   // Draw a random site
@@ -708,14 +894,15 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         double sz = mylattice.sites[k].spinz;
 
         if(HUMBUG)    cout << "Components of spin " << k << " accessed" << endl;
+        //cout << "k :" << k << endl;
 
         // Changing the spin (tentatively):
 
         //double u = distribution_u(generator_u);
         //double v = distribution_v(generator_v);
 
-        double u = ran2(&seed);  // Just testing
-        double v = ran2(&seed);
+        double u = ran2(&seed1);
+        double v = ran2(&seed1);
         if(HUMBUG)    cout << "Have drawn random numbers in mcstepf" << endl;
 
         ///*
@@ -725,8 +912,11 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         double sintheta = sin(theta);
         double sx_t = sintheta*cos(phi);
         double sy_t = sintheta*sin(phi);
-        //double sz_t = sqrt(1-sintheta*sintheta);
+        //double sz_t = sqrt(1-sintheta*sintheta); // This produces faulty output...
         double sz_t = cos(theta);
+
+        //cout << "Spin before trial: [" << sx << "," << sy << "," << sz << "]" << endl;
+        //cout << "Spin after trial:  [" << sx_t << "," << sy_t << "," << sz_t << "]" << endl;
 
         //cout << "sx_t = " << sx_t << endl;
         //cout << "sy_t = " << sy_t << endl;
@@ -778,15 +968,16 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(HUMBUG)    cout << "Have made a uniform spherical distribution using them" << endl;
         // Energy contribution after spin change
 
+        double energy_diff = 0; // Resetting the energy difference for every n
         if(sianisotropy)
         {
-
             if(HUMBUG)    cout << "In sianisotropy in mcstepf" << endl;
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
             //cout << "Dix : " << Dix << "; Diy : " << Diy << "; Diz : " << Diz << endl;
-            energy_diff -= (Dix*(sx*sx - sx_t*sx_t) + Diy*(sy*sy-sy_t*sy_t)+ Diz*(sz*sz-sz_t*sz_t)); // This is - originally
+            energy_diff += (Dix*(sx_t*sx_t -sx*sx) + Diy*(sy_t*sy_t-sy*sy)+ Diz*(sz_t*sz_t -sz*sz));
+            //cout << "Contr from sian: " << (Dix*(sx_t*sx_t -sx*sx) + Diy*(sy_t*sy_t-sy*sy)+ Diz*(sz_t*sz_t -sz*sz)) << endl;
         }
         if(magfield)
         {
@@ -804,25 +995,31 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
+            //cout << "Partnerspins before loop: partnerspinx = " << partnerspinx << " " << "; partnerspiny = " << partnerspiny << " " << "; partnerspinz = " << partnerspinz << endl;
             // Determining the number of neighbours
             if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
             //cout << nneighbours;
             for(int j=0; j<nneighbours; j++)
             {
+                // Picking out the neighbour
                 int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
 
+                // Picking out the J each time (may vary depending on bond type)
                 double J = mylattice.sites[k].bonds[j].J;
+                //cout << "j = " << j << "; J = " << J << endl;
                 double sxk = mylattice.sites[l].spinx;
                 double syk = mylattice.sites[l].spiny;
                 double szk = mylattice.sites[l].spinz;
                 partnerspinx += J*sxk;
                 partnerspiny += J*syk;
                 partnerspinz += J*szk;
+                //cout << "j = " << j << "; partnerspinx = " << partnerspinx << " " << "; partnerspiny = " << partnerspiny << " " << "; partnerspinz = " << partnerspinz << endl;
             }
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
             energy_diff += partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz);
+            //cout << "Contr from Heisenberg: " <<  partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz) << endl;
         }
         if(dm)
         {
@@ -855,6 +1052,8 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
 
         double energy_new = energy_old + energy_diff;
+        //cout << "Spin difference in each direction:  [" << sx_t-sx << "," << sy_t-sy << "," << sz_t-sz << "]" << endl;
+        //cout << "Energy_difference: " << energy_diff << endl;
 
         // Updating the energy and the state according to Metropolis
         if(energy_new <= energy_old)
@@ -867,6 +1066,8 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             // Updating the energy
             energy_old = energy_new;
 
+            //cout << "New energy less than old energy. MOVE ACCEPTED!" << endl;
+
             // Updating changes to get the acceptance rate
             changes+=1;
 
@@ -878,24 +1079,28 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         {
             double prob = exp(-beta*(energy_new-energy_old));
             double drawn = distribution_prob(generator_prob);
+            //double drawn = ran2(&seed2);
+
+            //cout << "MCProb: " << prob << "; Number drawn: " << drawn << endl;
             if(HUMBUG)    cout << "Suggesting energy increase. Probability of success: " << prob << "; number drawn: " << drawn << endl;
             if(drawn<prob)
             {
+                //cout << "drawn<prob. MOVE ACCEPTED!" << endl;
                 // Updating the spin
                 mylattice.sites[k].spinx = sx_t;
                 mylattice.sites[k].spiny = sy_t;
                 mylattice.sites[k].spinz = sz_t;
+
+                // Misc
+                if(HUMBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
+                if(HUMBUG)    cout << "Success" << endl;
+                if(MAJORDEBUG)    debug1d2p();
 
                 // Updating the energy
                 energy_old = energy_new;
 
                 // Updating changes to get the acceptance rate
                 changes+=1;
-
-                // Misc
-                if(HUMBUG)    cout << "ENERGY INCREASED! energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;               
-                if(HUMBUG)    cout << "Success" << endl;
-                if(MAJORDEBUG)    debug1d2p();
             }
         }
     }
@@ -920,7 +1125,7 @@ void MonteCarlo::debug1d2p()
     double spin1x = mylattice.sites[1].spinx;
     double spin1y = mylattice.sites[1].spiny;
     double spin1z = mylattice.sites[1].spinz;
-    double homJ = mylattice.sites[0].bonds[0].J;
+    double homJ   = mylattice.sites[0].bonds[0].J;
 
     double test_energy = 2*homJ*(spin0x*spin1x+spin0y*spin1y+spin0z*spin1z);
 

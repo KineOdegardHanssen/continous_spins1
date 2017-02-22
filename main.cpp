@@ -16,10 +16,13 @@ using std::ofstream; using std::string;
 
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-void run_for_several_betas_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_betagenerator(int beta_n, int betamin, int betamax);
 void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 int main()
 {
@@ -28,6 +31,10 @@ int main()
 
     // Input parameters
     int L = 4; // The program is going to be slow if we run for many particles on a 3D lattice
+
+    int L1 = 2;
+    int L2 = 2;
+    int L3 = 2;
 
     // bools to determine system type
     bool isotropic    = true;
@@ -53,7 +60,7 @@ int main()
     double J = 1;
     // Heisenberg terms with varying strengths
     double Jy  = 0;    double Jz  = 0;
-    double Jxy = 0;    double Jxz = 0;    double Jyz = 1;
+    double Jxy = 0;    double Jxz = 0 ;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 0;
 
@@ -77,42 +84,55 @@ int main()
     double beta = 50.0;
 
     // Run parameters
-    int eqsteps = 1000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 1000; // MCsteps per bin. Do I need bins?
-    int no_of_bins = 100;     // The number of bins.
+    int eqsteps = 50000; // Number of steps in the equilibration procedure
+    int mcsteps_inbin = 200000; // MCsteps per bin.
+    int no_of_bins = 1000;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "comparewithothers_2p_beta0p5Jij1_Dz1";
-    string filenamePrefix = "0fcc_2x2x2_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
+    //string filenamePrefix = "0fcc_2x2x2_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
     //string filenamePrefix = "test_periodicchain_2p";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
-    //string filenamePrefix = "test";
-    //string filenamePrefix = "chain2_periodic_iso1_beta0to4";
+    //string filenamePrefix = "0onedimtorulethemall";
+    //string filenamePrefix1 = "0alldimsaregivenequal";
+    //string filenamePrefix = "0testdiffL2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
+    //string filenamePrefix1 = "0testdiffL1L2L3all2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
+    //string filenamePrefix2 = "0testdiffoneLinandthatis2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
+    //string filenamePrefix = "00test_fcc_L13L2L3_is100_2_2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
+    //string filenamePrefix = "0LLLin";
+    //string filenamePrefix1 = "0Lin";
+    string filenamePrefix = "0a_fcc4x4x4_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_200000_no_of_bins1000";
 
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
     int beta_n = 100;
     double betamin = 1e-5;
     double betamax = 50;
-    int betanset = 5;
-    vector<double> betas = vector<double>(5);
-    betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
+    int betanset = 4;
+    vector<double> betas = vector<double>(4);
+    betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; // betas[4] = 50.0;
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    run_for_several_betas_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix2, betas, sitestrengthsin, heisenbergin, dm_in);
+
     //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+
+    //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
     // Test functions
     //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
+    //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
+
 }
 
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.debugmode(true);
     // Run Metropolis algorithm
     mymc.runmetropolis(beta);
@@ -123,7 +143,7 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
 {
     bool calculatespincorrelationfunction = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //mymc.debugmode(true);
     //mymc.majordebugtrue();
 
@@ -139,11 +159,44 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
     mymc.endsims();
 }
 
-void run_for_several_betas_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    bool calculatespincorrelationfunction = false;
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //mymc.debugmode(true);
+    //mymc.majordebugtrue();
+
+    for(int i=0; i<beta_n; i++)
+    {
+        mymc.runmetropolis(betas[i]);
+        mymc.reset_energy();
+        cout << betas[i] << " done" << endl;
+    }
+    mymc.endsims();
+}
+
+void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     bool calculatespincorrelationfunction = false;
     // Initializing Monte Carlo
     MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //mymc.debugmode(true);
+    //mymc.majordebugtrue();
+
+    for(int i=0; i<beta_n; i++)
+    {
+        mymc.runmetropolis(betas[i]);
+        mymc.reset_energy();
+    }
+    mymc.endsims();
+}
+
+void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    bool calculatespincorrelationfunction = false;
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //mymc.debugmode(true);
     //mymc.majordebugtrue();
 
@@ -188,7 +241,7 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.testFFTW(); // Test FFTW
     mymc.endsims();  // Close the file
 }
@@ -260,5 +313,84 @@ void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, 
         }
     }
 
+    for(int i=0; i<N; i++)
+    {
+        for(int j=0; j<no_of_neighbours; j++)
+        {
+            int n1 = mylattice.sites[i].bonds[j].siteindex1;
+            int n2 = mylattice.sites[i].bonds[j].siteindex2;
+            cout << "Spin " << i <<  ", bond no. " << j << endl;
+            cout << "From site " << n1 << " to site " << n2 << endl;
+            cout << "The Heisenberg interaction is: " << mylattice.sites[i].bonds[j].J << endl << endl;
 
+        }
+    }
+}
+
+void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    Lattice mylattice(L1, L2, L3, isotropic, sianisotropy, magfield, dm);
+    mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
+    mylattice.fcc_helical_initialize_extended();
+
+    // Test different sites and their neighbours
+    // Neighbours OK
+    /*
+    int n = 3;
+    int no_of_neighbours = mylattice.no_of_neighbours;
+    vector<Bond> neighbours =  mylattice.sites[n].bonds;
+    vector<double> siteposn = mylattice.sitepositions[n];
+    vector<int> sitecoordn = mylattice.sitecoordinates[n];
+    cout << "Position , site " << n << " : [" <<  siteposn[0] << "," << siteposn[1] << "," << siteposn[2] << "]" << endl;
+    cout << "Coordinates , site " << n << " : [" <<  sitecoordn[0] << "," << sitecoordn[1] << "," << sitecoordn[2] << "]" << endl;
+
+    for(int i=0;i<no_of_neighbours;i++)
+    {
+        int l = neighbours[i].siteindex2;
+        vector<double> siteposl = mylattice.sitepositions[l];
+        vector<int> sitecoordl = mylattice.sitecoordinates[l];
+        cout << "Position , neighbour " << i << " (site " << l << ") : [" <<  siteposl[0] << "," << siteposl[1] << "," << siteposl[2] << "]" << endl;
+        cout << "Coordinates , neighbour " << i << "(site " << l << ") [" <<  sitecoordl[0] << "," << sitecoordl[1] << "," << sitecoordl[2] << "]" << endl;
+    }
+    */
+
+    // Testing the implementation of J and the sian terms.
+    /*
+    int no_of_neighbours = mylattice.no_of_neighbours;
+    // n = 5
+    cout << "For n = 5" << endl;
+    vector<Bond> site5bonds = mylattice.sites[5].bonds;
+    cout << "Single-ion anisotropy terms: Dix = " << mylattice.sites[5].Dix << "; Diy = " << mylattice.sites[5].Diy << "; Diz = " << mylattice.sites[5].Diz << endl;
+    for(int i=0; i<no_of_neighbours; i++)        cout << "i = " << i << "; J = " << site5bonds[i].J  << endl;
+
+    int n;
+    if(L<3)    n = 7;
+    else       n = 21;
+    cout << "Now for " << n << endl;
+    vector<Bond> sitebonds = mylattice.sites[n].bonds;
+    cout << "Single-ion anisotropy terms: Dix = " << mylattice.sites[n].Dix << "; Diy = " << mylattice.sites[n].Diy << "; Diz = " << mylattice.sites[n].Diz << endl;
+    for(int i=0; i<no_of_neighbours; i++)        cout << "i = " << i << "; J = " << sitebonds[i].J  << endl;
+    */
+
+    // Testing the position of each point
+    int N = mylattice.N;
+    for(int i=0; i<N;i++)
+    {
+        vector<double> pos = mylattice.sitepositions[i];
+        vector<int>    crd = mylattice.sitecoordinates[i];
+        cout << "Site " << i << endl;
+        cout << "Coordinates: [" << crd[0] << " , " << crd[1] << " , " << crd[2] << "]" << endl;
+        cout << "Position:    [" << pos[0] << " , " << pos[1] << " , " << pos[2] << "]" << endl << endl;
+    }
+
+    // Finding the neighbours of each point:
+    int no_of_neighbours = mylattice.no_of_neighbours;
+    for(int i=0; i<N;i++)
+    {
+        cout << "Site " << i << endl;
+        for(int j=0; j<no_of_neighbours; j++)
+        {
+            cout << "Neighbour " << j << ": " << mylattice.sites[i].bonds[j].siteindex2 << endl;
+        }
+    }
 }
