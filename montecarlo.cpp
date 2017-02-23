@@ -18,6 +18,11 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->magfield = magfield;
     this->dm = dm;
 
+    if(isotropic)       cout << "bool isotropic true. Heisenberg terms will be considered." << endl;
+    if(sianisotropy)    cout << "bool sianisotropy true" << endl;
+    if(magfield)        cout << "bool magfield true" << endl;
+    if(dm)              cout << "bool dm true" << endl;
+
     this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
     this->printeveryMCstep = printeveryMCstep;
     this->calculatespincorrelationfunction = calculatespincorrelationfunction;
@@ -47,8 +52,6 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
         if(type_lattice=='O')      mylattice.chain_open_initialize();
         else                       cout << "WARNING! type_lattice " << type_lattice << " only periodic. You have asked for open BCs! Failure! Failure!" << endl;
     }
-
-    //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
     cout << "Lattice set, time: " << total_time << endl;
@@ -315,9 +318,9 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
                     // These must be changed if we change into possibly setting L1, L2, L3 different
                     // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
                     // Could be more general, but we don't need to play around with our lattices that much...
-                    qx = (ns[0]*mylattice.b1[0] + ns[2]*mylattice.b3[0])/L1; //Not so sure abour this, just need it to compile
-                    qy = (ns[0]*mylattice.b1[1] + ns[1]*mylattice.b2[1])/L2; // Double check later
-                    qz = (ns[1]*mylattice.b2[2] + ns[2]*mylattice.b3[2])/L3;
+                    qx = ns[0]*mylattice.b1[0]/L1 + ns[2]*mylattice.b3[0]/L3;
+                    qy = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2;
+                    qz = ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
                     // Print to file. Site number, qx, qy, qz.
                     qFile << i << " " << qx << " " << qy << " " << qz << endl;
                 }
@@ -518,9 +521,12 @@ void MonteCarlo::runmetropolis(double beta)
     if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
     bool HUMBUG  = false;
     bool LADYBUG = false;
+    bool bincout = true;
 
     // Header for spcorFile
     if(calculatespincorrelationfunction)    spcorFile << beta << " " << N << endl;
+    allFile << "N: " << N << "; Jxz: " << mylattice.sites[0].bonds[0].J << "; Jyz: " << mylattice.sites[0].bonds[2].J << "; Jxy: " << mylattice.sites[0].bonds[4].J << "; Dix: " << mylattice.sites[0].Dix << "; Diy: " << mylattice.sites[0].Diy << "; Diz: " << mylattice.sites[0].Diz << endl;
+    allFile << "eqsteps: " << eqsteps << "; mcsteps_inbin: " << mcsteps_inbin << "; no_of_bins: " << no_of_bins << endl;
 
     // Initializing the energy
     initialize_energy();
@@ -710,10 +716,44 @@ void MonteCarlo::runmetropolis(double beta)
                 {   // Accumulating the average
                     // Should consider whether I actually want an output array of half the length
                     // of the input array.
-                    correlation_function_av[l] =  correlation_function_av[l] + (qconf[l]*conj(qconf[l])).real()/(N*N);
+                    // Test this, it is changed slightly
+                    correlation_function_av[l] = (qconf[l]*conj(qconf[l])).real()/(N*N);
                     // Multiplying a complex number by its complex conjugate should yield a real number.
                     // but I call .real() to get the right data type.
+                    spcorFile << correlation_function_av[l] << " ";
                 }
+                spcorFile << endl;
+
+                // Alternative implementation:
+                // (Not storing the arrays)
+                if(mylattice.dim==3)
+                {
+                    int L1 = mylattice.L1;
+                    int L2 = mylattice.L2;
+                    int L3 = mylattice.L3;
+                    int elinar = 0; // For retrieving the elements residing in the output array
+                    for(int n=0; n<N; n++)
+                    {
+                        vector<int> cord = mylattice.sitecoordinates[n];
+                        int n1 = cord[0];
+                        int n2 = cord[1];
+                        int n3 = cord[2];
+                        int index;
+                        if(n3<=(int)L3/2)
+                        {   // If our element is stored in the output array, we retrieve it
+                            index = elinar;
+                            elinar++;        // We move one index forward in the output array
+                        }
+                        else
+                        {   // If our element is not stored in the output array, we retrieve its
+                            // complex conjugate. We needn't do anything with it as the result is a
+                            // complex number times its complex conjugate
+                            index = L2*((int)L3/2+1)*(L1-n1)+(int)L3/2*(L2-n2)+L3-n3;
+                        } // End if-tests
+                        spcorFile << (qconf[index]*conj(qconf[index])).real()/(N*N);
+                    } // End loop over n
+                }
+
             }
 
             //Print to bigFile
@@ -742,6 +782,8 @@ void MonteCarlo::runmetropolis(double beta)
         double cv_bin  = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
         cvs[i]         = cv_bin;
         cv_average    += cv_bin;
+
+        if(bincout)    allFile << "Average energy, bin " << i << ": " << energies[i] << endl;
 
         if(calculatespincorrelationfunction)
         {   // Take the average and print to file
@@ -1047,9 +1089,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             }
 
             if(HUMBUG)    cout << "Finding the energy difference from dm" << endl;
-
+            if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
         }
-        if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
+
 
         double energy_new = energy_old + energy_diff;
         //cout << "Spin difference in each direction:  [" << sx_t-sx << "," << sy_t-sy << "," << sz_t-sz << "]" << endl;

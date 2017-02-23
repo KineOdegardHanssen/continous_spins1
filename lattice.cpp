@@ -36,7 +36,7 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
-    cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
+    cout << "In L1, L2, L3 Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
 // Function for feeding in system parameters

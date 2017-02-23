@@ -30,7 +30,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 4; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 2; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
@@ -81,11 +81,11 @@ int main()
     bool calculatespincorrelationfunction = false;
 
     // A beta value for one run
-    double beta = 50.0;
+    double beta = 1.0;
 
     // Run parameters
     int eqsteps = 50000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 200000; // MCsteps per bin.
+    int mcsteps_inbin = 10000000; // MCsteps per bin.
     int no_of_bins = 1000;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
@@ -102,7 +102,8 @@ int main()
     //string filenamePrefix = "00test_fcc_L13L2L3_is100_2_2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
     //string filenamePrefix = "0LLLin";
     //string filenamePrefix1 = "0Lin";
-    string filenamePrefix = "0a_fcc4x4x4_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_200000_no_of_bins1000";
+    string filenamePrefix = "0aa2_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
+    //string filenamePrefix = "0aa_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
 
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
@@ -115,10 +116,10 @@ int main()
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix2, betas, sitestrengthsin, heisenbergin, dm_in);
 
-    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
