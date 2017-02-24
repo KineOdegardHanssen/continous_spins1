@@ -152,9 +152,9 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
                     // These must be changed if we change into possibly setting L1, L2, L3 different
                     // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
                     // Could be more general, but we don't need to play around with our lattices that much...
-                    qx = (ns[0]*mylattice.b1[0] + ns[2]*mylattice.b3[0])/L1; //Not so sure abour this, just need it to compile
-                    qy = (ns[0]*mylattice.b1[1] + ns[1]*mylattice.b2[1])/L2; // Double check later
-                    qz = (ns[1]*mylattice.b2[2] + ns[2]*mylattice.b3[2])/L3;
+                    qx = ns[0]*mylattice.b1[0]/L1 + ns[2]*mylattice.b3[0]/L3; //Not so sure abour this, just need it to compile
+                    qy = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2; // Double check later
+                    qz = ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
                     // Print to file. Site number, qx, qy, qz.
                     qFile << i << " " << qx << " " << qy << " " << qz << endl;
                 }
@@ -579,8 +579,13 @@ void MonteCarlo::runmetropolis(double beta)
         qlimit *= mylattice.dimlengths[l];
     }
     qlimit *= mylattice.dimlengths[dim-1]/2+1;
-    vector<double> correlation_function_av = vector<double >(qlimit); // Double check
-    for(int l= 0; l<qlimit; l++)    correlation_function_av[l] = 0;
+
+    // Typedefs
+
+    vector<double> correlation_function_av_bin    = vector<double>(N);
+    vector<double> correlation_function_av        = vector<double>(N);
+    for(int i=0; i<N; i++)    correlation_function_av[i] = 0;
+    vector<vector<double> > correlation_function_store;
 
     // Resetting quantities
     double ar_av        = 0;
@@ -708,6 +713,7 @@ void MonteCarlo::runmetropolis(double beta)
             // Should I do this here? The manual said that we can reuse the plan.
             if(calculatespincorrelationfunction)
             {
+                /*
                 vector< complex<double> > qconf(N);  // Output array
                 giveplanforFFT(spins_in_z, qconf);
                 fftw_execute(p);
@@ -723,14 +729,17 @@ void MonteCarlo::runmetropolis(double beta)
                     spcorFile << correlation_function_av[l] << " ";
                 }
                 spcorFile << endl;
+                */
 
                 // Alternative implementation:
                 // (Not storing the arrays)
+
                 if(mylattice.dim==3)
                 {
                     int L1 = mylattice.L1;
                     int L2 = mylattice.L2;
                     int L3 = mylattice.L3;
+                    for(int k=0; k<N; k++)    correlation_function_av_bin[k] = 0;
                     int elinar = 0; // For retrieving the elements residing in the output array
                     for(int n=0; n<N; n++)
                     {
@@ -750,7 +759,7 @@ void MonteCarlo::runmetropolis(double beta)
                             // complex number times its complex conjugate
                             index = L2*((int)L3/2+1)*(L1-n1)+(int)L3/2*(L2-n2)+L3-n3;
                         } // End if-tests
-                        spcorFile << (qconf[index]*conj(qconf[index])).real()/(N*N);
+                        correlation_function_av_bin[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
                     } // End loop over n
                 }
 
@@ -788,12 +797,15 @@ void MonteCarlo::runmetropolis(double beta)
         if(calculatespincorrelationfunction)
         {   // Take the average and print to file
             // Make the averages (is this more efficient than just calculating the average?)
-            for(int l = 0; l<qlimit; l++)
+            for(int l = 0; l<N; l++)
             {
-                correlation_function_av[l] = correlation_function_av[l]/(mcsteps_inbin);
-                spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
+                correlation_function_av_bin[l] = correlation_function_av_bin[l]/(mcsteps_inbin);
+                correlation_function_av[l]    += correlation_function_av_bin[l];
+                // Could print for every bin, but is that really neccessary?
+                //spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
             }
-            spcorFile << endl; // End line to get ready for new result
+            //spcorFile << endl; // End line to get ready for new result
+            correlation_function_store.push_back(correlation_function_av_bin);
         }
 
     }  // End loops over bins
@@ -910,6 +922,32 @@ void MonteCarlo::runmetropolis(double beta)
 
 
     //----------------The correlation function-------------------//
+    if(calculatespincorrelationfunction)
+    {
+        // Completing the average over the spin correlation function
+        for(int k=0; k<N; k++)    correlation_function_av[k] = correlation_function_av[k]/no_of_bins;
+
+        vector<double> spinncorrstdv = vector<double>(N);
+        //energy += (energies[l]-energy_av)*(energies[l]-energy_av);
+        // Finding the standard deviation
+        for(int l=0; l<no_of_bins; l++)
+        {   // For every bin
+            vector<double> corrfunc_thisbin = correlation_function_store[l];
+            for(int k=0; k<N; k++)
+            {   // For every particle
+                double little = corrfunc_thisbin[k]-correlation_function_av;
+                spinncorrstdv[k] += little*little;
+            }
+        }
+        for(int k=0; k<N; k++)    spinncorrstdv[k] = sqrt(spinncorrstdv[k]/(no_of_bins*(no_of_bins-1)));
+
+
+        for(int k=0; k<N; k++)
+        {
+            spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[k] << " " << spinncorrstdv[k] << " ";
+        }
+        spcorFile << endl;
+    }
 
     //-----------------------Printing----------------------------//
     allFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;

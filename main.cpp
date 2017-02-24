@@ -30,7 +30,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 2; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 3; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
@@ -91,18 +91,10 @@ int main()
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "comparewithothers_2p_beta0p5Jij1_Dz1";
     //string filenamePrefix = "0fcc_2x2x2_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
-    //string filenamePrefix = "test_periodicchain_2p";
+    string filenamePrefix = "test";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
-    //string filenamePrefix = "0onedimtorulethemall";
-    //string filenamePrefix1 = "0alldimsaregivenequal";
-    //string filenamePrefix = "0testdiffL2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
-    //string filenamePrefix1 = "0testdiffL1L2L3all2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
-    //string filenamePrefix2 = "0testdiffoneLinandthatis2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
-    //string filenamePrefix = "00test_fcc_L13L2L3_is100_2_2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
-    //string filenamePrefix = "0LLLin";
-    //string filenamePrefix1 = "0Lin";
-    string filenamePrefix = "0aa3_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
+    //string filenamePrefix = "0aa3_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
     //string filenamePrefix = "0aa_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
 
     //test_betagenerator(10, 0, 4);
@@ -119,12 +111,12 @@ int main()
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix2, betas, sitestrengthsin, heisenbergin, dm_in);
 
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
     // Test functions
-    //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
+    test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
 
@@ -235,10 +227,10 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
 
     // These we want to turn off
     bool printeveryMCstep = false;
-    bool calculatespincorrelationfunction = false;
+    bool calculatespincorrelationfunction = true; // To get the q-file
 
     // Set these
-    char type_lattice = 'O';
+    char type_lattice = 'E';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
