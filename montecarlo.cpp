@@ -521,7 +521,7 @@ void MonteCarlo::runmetropolis(double beta)
     if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
     bool HUMBUG  = false;
     bool LADYBUG = false;
-    bool bincout = true;
+    bool bincout = false;
 
     // Header for spcorFile
     if(calculatespincorrelationfunction)    spcorFile << beta << " " << N << endl;
@@ -641,8 +641,8 @@ void MonteCarlo::runmetropolis(double beta)
             // energy
             energies[i]    += energy_old;    // Storing to get the standard deviation
             energies_sq[i] += energy_old*energy_old;
-            energy_av      += energy_old;
-            energy_sq_av   += energy_old*energy_old;
+            //energy_av      += energy_old;
+            //energy_sq_av   += energy_old*energy_old;
             //cout << "Current energy: " << energy_old << "; Average energy so far: " << energies[i]/(j+1) << endl;
             // Magnetization
             double mx     = 0;
@@ -806,8 +806,20 @@ void MonteCarlo::runmetropolis(double beta)
     ar_stdv = sqrt(ar_stdv/(no_of_bins*(no_of_bins-1)));
 
     //----------------------// Energy //-----------------------//
-    energy_av = energy_av/(mcsteps_inbin*no_of_bins);
-    energy_sq_av = energy_sq_av/(mcsteps_inbin*no_of_bins);
+    //energy_av = energy_av/(mcsteps_inbin*no_of_bins);
+    //energy_sq_av = energy_sq_av/(mcsteps_inbin*no_of_bins);
+
+    energy_av = 0; // May choose to set this here. Then I need to prefix with double
+
+    // Average energy
+    for(int l=0; l<no_of_bins; l++)    energy_av += energies[l];
+    energy_av = energy_av/no_of_bins;
+
+    // Average squared energy
+    for(int l=0; l<no_of_bins; l++)    energy_sq_av += energies_sq[l];
+    energy_sq_av = energy_sq_av/no_of_bins;
+
+    // May do the same with the spins.
 
     // Error in the energy //
     double E_stdv = 0;

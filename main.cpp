@@ -102,7 +102,7 @@ int main()
     //string filenamePrefix = "00test_fcc_L13L2L3_is100_2_2_fcc_Jyz1_Diz1_mcs1000_bins100_eqsteps10000";
     //string filenamePrefix = "0LLLin";
     //string filenamePrefix1 = "0Lin";
-    string filenamePrefix = "0aa2_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
+    string filenamePrefix = "0aa3_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
     //string filenamePrefix = "0aa_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
 
     //test_betagenerator(10, 0, 4);
