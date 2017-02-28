@@ -574,10 +574,10 @@ void Lattice::fcc_helical_initialize_extended()
         // (The distance between sites in the x-direction is larger, so this dir can be neglected.)
         int nnyp, nnym, nnzp, nnzm;
 
-        nnyp = findneighbour(n,1,1,-1);
-        nnym = findneighbour(n,-1,-1,1);
-        nnzp = findneighbour(n,-1,1,1);
-        nnzm = findneighbour(n,1,-1,-1);
+        nnyp = findneighbour(n, 1, 1,-1);
+        nnym = findneighbour(n,-1,-1, 1);
+        nnzp = findneighbour(n,-1, 1, 1);
+        nnzm = findneighbour(n, 1,-1,-1);
 
         /*
         int deltanny, deltannz;
@@ -669,7 +669,7 @@ void Lattice::fcc_helical_initialize_extended()
         double ypos = 0.5*(n1+n2);
         double zpos = 0.5*(n2+n3);
 
-       // cout << "[" << xpos << "," << ypos << "," << zpos << "]" << endl;
+        //cout << "n : " << n <<  " Position: [" << xpos << "," << ypos << "," << zpos << "]" << endl;
 
         position_n[0] = xpos;
         position_n[1] = ypos;
@@ -876,6 +876,24 @@ void Lattice::fcc_helical_initialize()
     cout << "Done with fcc_helical_initialize_extended" << endl;
 }
 
+std::vector<int> Lattice::fccyline()
+{
+    // Should this be written to file instead?
+    int n = 0;
+    int length = 0; // Length of the loop
+    int nprev = -1; // To start the loop
+    vector<int> yline;
+    while(nprev<n)  // This should fix it, I think...
+    {
+        nprev = n;
+        yline.push_back(n);
+        n = findneighbour(n, 1, 1, -1);
+        cout << n << " ";
+    }
+    cout << endl;
+    // I hope this doesn't run forever.
+    return yline;
+}
 
 
 std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)

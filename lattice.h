@@ -32,6 +32,7 @@ public:
     typedef vector<vecint> intmatrix;
 
     vector<int> dimlengths;
+    vector<int> yline;
     vector<double> a1, a2, a3; // primitive vectors. Mainly double because of the fcc
     vector<double> b1, b2, b3; // Primitive vectors of the reciprocal lattice
 
@@ -67,6 +68,8 @@ public:
     std::vector<double> givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield);
     std::vector<double> givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm);
 
+    // Line of points in the (0,y,0)-direction:
+    std::vector<int> fccyline();
 };
 
 #endif // LATTICE_H
