@@ -5,7 +5,7 @@ Bond::Bond()
 }
 
 // Standard initializer
-Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<double> bondints)
+Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, bool increasing, std::vector<double> bondints)
 {
     //std::cout << "Initializing instance of class Bond" << std::endl;
     this->bondints = bondints; // Do I really need this?
@@ -15,6 +15,8 @@ Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<
 
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
+
+    this->increasing = increasing;
 
     //std::cout << "Siteindex set" << std::endl;
 
@@ -41,7 +43,7 @@ Bond::Bond(int siteindex1, int siteindex2, bool isotropic, bool dm, std::vector<
 }
 
 // Bond for strong interactions. Should maybe change?
-Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm, std::vector<double> bondints)
+Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm, bool increasing, std::vector<double> bondints)
 {
     // bool strong should either cause J or the D's to be multiplied by something, or be a class variable to be
     // tested. Probably more efficient to implement the former.
@@ -53,6 +55,8 @@ Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm,
 
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
+
+    this->increasing = increasing;
 
     //std::cout << "Siteindex set" << std::endl;
 
@@ -85,12 +89,13 @@ Bond::Bond(int siteindex1, int siteindex2, bool strong, bool isotropic, bool dm,
 }
 
 // Allowing for interactions of different strengths in different directions
-Bond::Bond(int siteindex1, int siteindex2, double J, std::vector<double> bondints)
+Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing, std::vector<double> bondints)
 {
     this->J = J;     //
     this->bondints = bondints;
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
+    this->increasing = increasing;
 
     Dx = bondints[0]; // Should have an option to not include all these. But I guess it is not neccessary...
     Dy = bondints[1]; //
@@ -98,9 +103,10 @@ Bond::Bond(int siteindex1, int siteindex2, double J, std::vector<double> bondint
 }
 
 // Initializing next nearest neighbour Bond
-Bond::Bond(int siteindex1, int siteindex2, double J)
+Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing)
 {
     this->siteindex1 = siteindex1;
     this->siteindex2 = siteindex2;
     this->J = J;
+    this->increasing = increasing; // Is this neccessary here?
 }

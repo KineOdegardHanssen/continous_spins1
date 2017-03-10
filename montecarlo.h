@@ -72,6 +72,7 @@ public:
     void majordebugtrue();
     void debug1d2p();
     void testFFTW();
+    double check_the_energy(); // Function that finds the energy by going through every spin
 
     // Other initialization procedures
     void initialize_energy();
@@ -85,6 +86,8 @@ public:
     void runmetropolis(double beta);
     void mcstepf_metropolis(double beta);
 
+    // Printing functions
+    void writeallqstofile();
     // Closing the output files
     void endsims();
 };
