@@ -1,0 +1,22 @@
+
+HOMEDIR = $(HOME)
+INCDIR = -I$(HOMEDIR)/include -I/usr/include -I$(HOMEDIR)/Master/Continuous_spins/Program
+LIBDIR = -L$(HOMEDIR)/lib     -L/usr/lib
+
+LIBS   = -lfftw3 -lm -lstdc++ 
+
+# C++ compiler
+CCC= g++
+
+CCOPTS=  -O3 -DNDEBUG -g -std=gnu++11
+
+
+LINKOPTS =  -O3 
+
+CCFLAGS = $(CCOPTS) $(INCDIR) 
+
+
+
+
+
+
