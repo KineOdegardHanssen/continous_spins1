@@ -1451,3 +1451,138 @@ void MonteCarlo::testFFTW()
     */
 
 }
+
+void MonteCarlo::compareFFTW_withmanual(double beta)
+{
+    // For FFTW:
+    // Making the plan
+    std::vector<double> spins_in_z = std::vector<double>(N);
+    vector< complex<double> > qconf(N);  // Output array
+    giveplanforFFT(spins_in_z, qconf);
+
+    // Making an array for the correlation function, one for each value of q
+    vector<double> correlation_function        = vector<double>(N);
+    for(int i=0; i<N; i++)    correlation_function[i] = 0;
+
+    // For manual calculation:
+    double q = 0;
+    double q1 = 0;
+    double q2 = 0;
+    double q3 = 0;
+    double relfac = 0;
+    double cplfac = 0;
+    double spincorr_manual_rel;
+    double spincorr_manual_cpl;
+
+
+    // Equilibration steps
+    for(int i=0; i<eqsteps; i++)        mcstepf_metropolis(beta);
+
+    for(int i=0; i<2; i++) // A small number of Monte Carlo steps
+    {
+        spinncorr_manual_rel = 0;
+        spinncorr_manual_cpl = 0;
+        // Update the spin array
+        for(int j=0; j<N; j++)    spins_in_z[j] = mylattice.sites[j].spinz;
+        fftw_execute(p);
+        if(mylattice.dim==1) // Chain
+        {
+            int L = mylattice.L;
+            for(int n=0; n<N; n++) // Loop over the q-values
+            {   // FFTW procedure
+                int index;
+                if(n<(int)N/2)    index = n;
+                else              index = N-n;
+                correlation_function[n] = (qconf[index]*conj(qconf[index])).real()/(N*N);
+                cout << "By FFTW: n = " << n << "; correlation function = " << correlation_function[n] << endl;
+
+                // Manual procedure
+                for(int k=0; k<N; k++) // Loop over r'
+                {
+                    for(int l=0; l<N; l++) // Loop over r
+                    {   // Something similar for cubic/fcc, but need to get indices.
+                        q = 2*M_PI*(k-l)*n/L;
+                        relfac = cos(q);
+                        cplfac = sin(q);
+                        spinzk = mylattice.sites[k].spinz;
+                        spinzl = mylattice.sites[l].spinz;
+                        spincorr_manual_rel += relfac*spinzk*spinzl;
+                        spincorr_manual_cpl += relfac*spinzk*spinzl;
+                    }
+                    spincorr_manual_rel = spincorr_manual_rel/(N*N);
+                    spincorr_manual_cpl = spincorr_manual_cpl/(N*N);
+                }
+                cout << "'Manually': n = " << n << "; correlation function = ( " << spincorr_manual_rel << " , " << spincorr_manual_cpl << " )" << endl;
+
+            }
+        }
+        if(mylattice.dim==3) // Simple cubic or fcc
+        {
+            // FFTW procedure
+            //cout << "Our dimension is 3" << endl;
+            int L1 = mylattice.L1;
+            int L2 = mylattice.L2;
+            int L3 = mylattice.L3;
+            //for(int k=0; k<N; k++)    correlation_function_av_bin[k] = 0;
+            int elinar = 0; // For retrieving the elements residing in the output array
+            for(int n=0; n<N; n++)
+            {
+                vector<int> cord = mylattice.sitecoordinates[n];
+                int n1 = cord[0];
+                int n2 = cord[1];
+                int n3 = cord[2];
+                int index;
+                if(n3<=(int)L3/2)
+                {   // If our element is stored in the output array, we retrieve it
+                    index = elinar;
+                    elinar++;        // We move one index forward in the output array
+                }
+                else
+                {   // If our element is not stored in the output array, we retrieve its
+                    // complex conjugate. We needn't do anything with it as the result is a
+                    // complex number times its complex conjugate
+                    index = L2*((int)L3/2+1)*(L1-n1)+(int)L3/2*(L2-n2)+L3-n3;
+                    //cout << "Retrieving the index of the cc" << endl;
+                } // End if-tests
+                correlation_function[n] = (qconf[index]*conj(qconf[index])).real()/(N*N);
+                cout << "By FFTW: n = " << n << "; correlation function = " << correlation_function[n] << endl;
+
+                // Manual procedure
+                for(int k=0; k<N; k++) // Loop over r'
+                {
+                    vector<int> cord = mylattice.sitecoordinates[k];
+                    int k1 = cord[0]; // Number in the a1-direction
+                    int k2 = cord[1]; // Number in the a2-direction
+                    int k3 = cord[2]; // Number in the a3-direction
+                    for(int l=0; l<N; l++) // Loop over r
+                    {   // Something similar for cubic/fcc, but need to get indices.
+                        vector<int> cord = mylattice.sitecoordinates[k];
+                        int l1 = cord[0]; // Number in the a1-direction
+                        int l2 = cord[1]; // Number in the a2-direction
+                        int l3 = cord[2]; // Number in the a3-direction
+
+                        q1 = 2*M_PI*(k1-l1)*n1/L1;
+                        q2 = 2*M_PI*(k2-l2)*n2/L2;
+                        q3 = 2*M_PI*(k3-l3)*n3/L3;
+                        q =  q1 + q2 + q3;
+                        relfac = cos(q);
+                        cplfac = sin(q);
+                        spinzk = mylattice.sites[k].spinz;
+                        spinzl = mylattice.sites[l].spinz;
+                        spincorr_manual_rel += relfac*spinzk*spinzl;
+                        spincorr_manual_cpl += relfac*spinzk*spinzl;
+                    }
+                    spincorr_manual_rel = spincorr_manual_rel/(N*N);
+                    spincorr_manual_cpl = spincorr_manual_cpl/(N*N);
+                }
+                cout << "'Manually': n = " << n << "; correlation function = ( " << spincorr_manual_rel << " , " << spincorr_manual_cpl << " )" << endl;
+
+
+            } // End loop over n
+    }
+
+    // A couple of MonteCarlo steps? or just random spins? - Probably a couple of MonteCarlo steps
+    // Overwrite mcsteps_inbin and bins?
+    // Should probably have equilibration steps first.
+
+}

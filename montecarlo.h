@@ -46,6 +46,7 @@ public:
     fftw_plan p;
 
     // Random generators
+    // A lot of these I don't use anymore
     std::default_random_engine generator_u;                       // I asked the internet, and it replied
     std::uniform_real_distribution<double> distribution_u; //(-1,1)
 
@@ -72,6 +73,7 @@ public:
     void majordebugtrue();
     void debug1d2p();
     void testFFTW();
+    void compareFFTW_withmanual(double beta);
     double check_the_energy(); // Function that finds the energy by going through every spin
 
     // Other initialization procedures

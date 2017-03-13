@@ -48,7 +48,7 @@ int main()
     bool isotropic    = true;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
-    bool dm           = true;
+    bool dm           = false;
 
     // Bool to determine periodicity
     bool periodic     = false; // To determine whether we have periodic boundary conditions or not
@@ -65,7 +65,7 @@ int main()
     // Single-ion anisotropy terms
     double Dix = 2;    double Diy = 2;    double Diz = 0;
     // Heisenberg term
-    double J = 1;
+    double J = -1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jy  = 0;    double Jz  = 0;
     double Jxy = -1;    double Jxz = -1;    double Jyz = -1;
@@ -89,7 +89,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 5.0;
+    double beta = 1.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -99,11 +99,12 @@ int main()
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "0spincorrtest_fcc10x10x10_Dix2Diy2_DxDyDz1_Jyz1_beta0p5_eqsteps50000_mcsteps_inbin_1000_no_of_bins1000";
     //string filenamePrefix = "0fcc_2x2x2_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
-    string filenamePrefix = "2pchainopen_J1Dz100_mcsteps_inbin100000_no_of_bins_100";
+    //string filenamePrefix = "2pchainopen_J1Dz100_mcsteps_inbin100000_no_of_bins_100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
-    //string filenamePrefix = "0aa_fcc2x2x2_Dix2Diy2_Jyz1_eqsteps50000_mcsteps_inbin_10000000_no_of_bins1000";
+    //string filenamePrefix = "0aa0_openchain2_beta1_Jsm1_eqsteps10000_mcsteps_inbin_100000_no_of_bins100";
+    string filenamePrefix = "0aa0_chain2x2x2_beta1_Jsm1_eqsteps10000_mcsteps_inbin_10000000_no_of_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta1em6and7000_10000eqsteps_1e6mcsteps_1000bins";
     //string filenamePrefix = "000aa_test_somethingwrongwithcorrfunc_mcstepsinbin100000_bins1000";
     //test_betagenerator(10, 0, 4);
@@ -117,10 +118,10 @@ int main()
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
-    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
