@@ -22,10 +22,10 @@ void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcstep
 // Special functions
 void extract_yline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
 
-
 // Test functions
 void test_betagenerator(int beta_n, int betamin, int betamax);
 void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void test_fftw_againstsims(int L, int eqsteps, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
@@ -51,7 +51,7 @@ int main()
     bool dm           = false;
 
     // Bool to determine periodicity
-    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
+    bool periodic     = true; // To determine whether we have periodic boundary conditions or not
 
     // Selecting the lattice type
     // F: face-centered cubic (fcc); E: fcc with different directions C: cubic; Q:quadratic; O: chain;
@@ -89,7 +89,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 1.0;
+    double beta = 0.1;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -117,16 +117,19 @@ int main()
     betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
+    //--------------------------------Running for several betas--------------------------------------//
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
-
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
-    // Test functions
+    //----------------------------------Running for one beta-----------------------------------------//
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+
+
+    //-------------------------------------Test functions--------------------------------------------//
     //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
+    test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
@@ -264,15 +267,34 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
 
     // These we want to turn off
     bool printeveryMCstep = false;
-    bool calculatespincorrelationfunction = true; // To get the q-file
+    bool calculatespincorrelationfunction = false;
 
     // Set these
-    char type_lattice = 'E';
+    char type_lattice = 'C';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
     MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.testFFTW(); // Test FFTW
+    mymc.endsims();  // Close the file
+}
+
+void test_fftw_againstsims(int L, int eqsteps, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    // Input irrelevant for this test
+    int mcsteps_inbin = 1;
+    int no_of_bins    = 1;
+
+    // These we want to turn off
+    bool printeveryMCstep = false;
+    bool calculatespincorrelationfunction = false; // We don't need this for the testing function
+
+    // So it's easy to throw it away afterwards
+    string filenamePrefix = "discard"; // Want to know that this file is unimportant
+
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    mymc.compareFFTW_withmanual(beta); // Test FFTW
     mymc.endsims();  // Close the file
 }
 
