@@ -38,7 +38,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 2; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 5; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
@@ -55,7 +55,7 @@ int main()
 
     // Selecting the lattice type
     // F: face-centered cubic (fcc); E: fcc with different directions C: cubic; Q:quadratic; O: chain;
-    char type_lattice = 'O';
+    char type_lattice = 'E';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -270,7 +270,7 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
     bool calculatespincorrelationfunction = false;
 
     // Set these
-    char type_lattice = 'C';
+    char type_lattice = 'O';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
