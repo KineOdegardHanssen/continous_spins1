@@ -463,6 +463,20 @@ void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q) 
                           FFTW_ESTIMATE);
 }
 
+void MonteCarlo::giveplanforFFT_inverse(vector<double>& rout, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
+{
+    int rank = mylattice.dim;               // Dimension of lattice
+    vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
+                                            // depending on the lattice
+    // p declared as a class variable
+    pinv = fftw_plan_dft_r2c(rank,
+                          &Ls[0],
+                          reinterpret_cast<fftw_complex*>(&q[0]),
+                          &rout[0],
+                          FFTW_ESTIMATE);
+}
+
+
 void MonteCarlo::runmetropolis(double beta)
 {
     if(DEBUG)    cout << "In runmetropolis in MonteCarlo" << endl;
@@ -523,6 +537,9 @@ void MonteCarlo::runmetropolis(double beta)
     // Declare qconf and set the plan
     vector< complex<double> > qconf(N);  // Output array
     giveplanforFFT(spins_in_z, qconf);
+    // Do the inverse
+    std::vector<double> rout = std::vector<double>(N);
+    giveplanforFFT_inverse(rout, qconf);
     // Array for the results
     // Determining the length of the array
     int dim = mylattice.dim;
@@ -539,6 +556,14 @@ void MonteCarlo::runmetropolis(double beta)
     vector<double> correlation_function_av        = vector<double>(N);
     for(int i=0; i<N; i++)    correlation_function_av[i] = 0;
     vector<vector<double> > correlation_function_store;
+
+    // For the inverse Fourier transform (after we have taken fftw)
+    // This should probably be done to the correlation function, not spins_in_z...
+    // Because otherwise we would just get the same result back (though not normalized...)
+    vector<double> ftcorrelation_function_av_bin    = vector<double>(N);
+    vector<double> ftcorrelation_function_av        = vector<double>(N);
+    for(int i=0; i<N; i++)    ftcorrelation_function_av[i] = 0;
+    vector<vector<double> > ftcorrelation_function_store;
 
     // Resetting quantities
     double ar_av        = 0;
@@ -558,9 +583,9 @@ void MonteCarlo::runmetropolis(double beta)
     double myquad_av    = 0;
     double mzquad_av    = 0;
     for(int i=0; i<no_of_bins; i++)  // Loop over the bins
-    {
+    {   // For every bin
         if(SCBUG)    cout << "Starting bin " << i << endl;
-        // For each bin
+        // Reset quantities
         energies[i]    = 0;
         energies_sq[i] = 0;
         cvs[i]         = 0;
@@ -576,6 +601,8 @@ void MonteCarlo::runmetropolis(double beta)
         mxsquad[i]     = 0;
         mysquad[i]     = 0;
         mzsquad[i]     = 0;
+        // Resetting the correlation function bin average for every bin
+        for(int k=0; k<N; k++)    correlation_function_av_bin[k] = 0;
         if(LADYBUG)
         {
             if(i>0)
@@ -707,7 +734,6 @@ void MonteCarlo::runmetropolis(double beta)
                     int L1 = mylattice.L1;
                     int L2 = mylattice.L2;
                     int L3 = mylattice.L3;
-                    for(int k=0; k<N; k++)    correlation_function_av_bin[k] = 0;
                     int elinar = 0; // For retrieving the elements residing in the output array
                     for(int n=0; n<N; n++)
                     {
@@ -786,7 +812,7 @@ void MonteCarlo::runmetropolis(double beta)
                 //cout << "calculating the average of the spin correlation function in this bin" << endl;
                 correlation_function_av_bin[l] = correlation_function_av_bin[l]/(mcsteps_inbin);
                 //cout << "Average for this bin, particle " << l << ": " << correlation_function_av_bin[l] << endl;
-                correlation_function_av[l]    += correlation_function_av_bin[l];
+                correlation_function_av[l]    += correlation_function_av_bin[l]; // I divide by the number of bins later
                 //cout << "Done calculating average of the spin correlation function over every bin" << endl;
                 // Could print for every bin, but is that really neccessary?
                 //spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[l] << " ";  // Should I include a beta, just in case?

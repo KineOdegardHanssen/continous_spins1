@@ -44,6 +44,7 @@ public:
     bool DEBUG, MAJORDEBUG;
 
     fftw_plan p;
+    fftw_plan pinv;
 
     // Random generators
     // A lot of these I don't use anymore
@@ -82,6 +83,7 @@ public:
 
     // Function making a plan for the FFT
     void giveplanforFFT(vector<double> &r, vector<complex<double> > &q);
+    void giveplanforFFT_inverse(vector<double>& rout, vector<complex<double> >& q);
 
 
     // Standard Metropolis functions
