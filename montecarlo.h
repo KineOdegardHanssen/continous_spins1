@@ -31,6 +31,7 @@ public:
     ofstream    bigFile;
     ofstream    compareFile;
     ofstream    spcorFile;
+    ofstream    ftspcorFile;
     ofstream    randomtestFile;
     ofstream    qFile;
     string      filenamePrefix;

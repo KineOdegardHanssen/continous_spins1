@@ -65,10 +65,10 @@ int main()
     // Single-ion anisotropy terms
     double Dix = 1;    double Diy = 1;    double Diz = 0;
     // Heisenberg term
-    double J = -1;
+    double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jy  = 0;    double Jz  = 0;
-    double Jxy = -1;    double Jxz = -1;    double Jyz = -1;
+    double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -90,7 +90,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 0.21;
+    double beta = 1.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -106,7 +106,7 @@ int main()
     //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxy1_Jyz1_sianDx1_sianDy1_beta1p025_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
-    string filenamePrefix = "0aa0_fcc6x6x6_Jsm1_beta0p21_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
+    string filenamePrefix = "0aa0_fcc6x6x6_Js1_beta1_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta1em6and7000_10000eqsteps_1e6mcsteps_1000bins";
     //string filenamePrefix = "000aa_test_somethingwrongwithcorrfunc_mcstepsinbin100000_bins1000";
     //test_betagenerator(10, 0, 4);
@@ -126,12 +126,12 @@ int main()
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
 
     //-------------------------------------Test functions--------------------------------------------//
     //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
-    //test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
+    test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
@@ -284,7 +284,7 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
 void test_fftw_againstsims(int L, int eqsteps, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     // Input irrelevant for this test
-    int mcsteps_inbin = 1;
+    int mcsteps_inbin = 20000;
     int no_of_bins    = 1;
 
     // These we want to turn off
