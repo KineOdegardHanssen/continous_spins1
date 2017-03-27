@@ -68,8 +68,11 @@ public:
     std::vector<double> givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield);
     std::vector<double> givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm);
 
-    // Line of points in the (0,y,0)-direction:
-    std::vector<int> fccyline();
+    std::vector<double> giveposition_fcc_lines(int i, int j, int k, char letter);
+    std::vector<double> giveqvector_fcc_lines(int i, int j, int k, char letter);
+    std::vector<int> fccyline(); // Line of points in the (0,y,0)-direction
+    std::vector<int> fccxline(); // Line of points in the (x,0,0)-direction
+    std::vector<int> fcczline(); // Line of points in the (0,0,z)-direction
 };
 
 #endif // LATTICE_H

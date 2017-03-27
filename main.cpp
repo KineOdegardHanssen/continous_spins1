@@ -19,8 +19,17 @@ void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, i
 void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
-// Special functions
+// Lattice functions
 void extract_yline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
+void extract_xline(int L, string ylinefilenamePrefix);
+void extract_zline(int L, string ylinefilenamePrefix);
+void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix);
+void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);
+void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
+void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix);
+//void lattice_coordinates_generatingys(int L, string latticefilenamePrefix);
+
+
 
 // Test functions
 void test_betagenerator(int beta_n, int betamin, int betamax);
@@ -31,6 +40,14 @@ void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sia
 void test_dm();
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J);
+
+// Find out if points are on a plane
+vector<double> cross(vector<double> vec1, vector<double> vec2);
+vector<double> vecdiffforcross(vector<double> vec1, vector<double> vec2);
+void isitonplane(string latticefilenamePrefix);
+void isitonline(string latticefilenamePrefix);
+void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix);
+
 
 int main()
 {
@@ -68,7 +85,7 @@ int main()
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jy  = 0;    double Jz  = 0;
-    double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
+    double Jxy = -1;    double Jxz = 0;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -90,7 +107,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 1.0;
+    double beta = 5.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -106,7 +123,7 @@ int main()
     //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxy1_Jyz1_sianDx1_sianDy1_beta1p025_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
-    string filenamePrefix = "0aa0_fcc6x6x6_Js1_beta1_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
+    string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta1em6and7000_10000eqsteps_1e6mcsteps_1000bins";
     //string filenamePrefix = "000aa_test_somethingwrongwithcorrfunc_mcstepsinbin100000_bins1000";
     //test_betagenerator(10, 0, 4);
@@ -126,20 +143,34 @@ int main()
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
 
     //-------------------------------------Test functions--------------------------------------------//
+    //L = 2;
     //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
-    test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
+    //test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
-    //string ylinefilenamePrefix = "fcc2x2x2";
+    //L = 6;
+    string latticefilenamePrefix = "fcc6x6x6";
+    //string latticefilenamePrefix = "test";
     // Special functions
-    //extract_yline(L, ylinefilenamePrefix);
+    //extract_yline(L, latticefilenamePrefix);
+    //extract_xline(L, latticefilenamePrefix);
+    //extract_zline(L, latticefilenamePrefix);
+    //lattice_coordinates_straightforward(L, type_lattice, latticefilenamePrefix);
+    //reciprocallattice_coordinates(L, type_lattice, latticefilenamePrefix);
+    //lattice_coordinates_xyz_lines(L, latticefilenamePrefix);
+    //reciprocallattice_coordinates_xyzline(L, type_lattice, latticefilenamePrefix);
+    //isitonplane(filenamePrefix);
+    //isitonline(filenamePrefix);
+    string indexfilenamePrefix = "fcc6x6x6_index27";
+    int maxindex = 27;
+    //findlinethroughmax(L, maxindex, indexfilenamePrefix);
 
 }
 
@@ -151,6 +182,7 @@ void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta,
     // Run Metropolis algorithm
     mymc.runmetropolis(beta);
     mymc.endsims();
+    //mymc.test_couplings_strengths(); // Just to test it. Can remove later
     //cout << "L = " << L << endl;
 }
 
@@ -243,6 +275,46 @@ void extract_yline(int L, string ylinefilenamePrefix)
     }
 }
 
+void extract_xline(int L, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    vector<int> xsites = mylattice.fccxline();
+
+    ofstream xlineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_xline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xlineFile.open(filename);
+    delete filename;
+
+    int N = xsites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        xlineFile << xsites[i]  << endl;
+    }
+}
+
+void extract_zline(int L, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    vector<int> zsites = mylattice.fcczline();
+
+    ofstream zlineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_zline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    zlineFile.open(filename);
+    delete filename;
+
+    int N = zsites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        zlineFile << zsites[i]  << endl;
+    }
+}
+
 
 void test_betagenerator(int beta_n,  int betamin, int betamax)
 {
@@ -259,6 +331,281 @@ void test_betagenerator(int beta_n,  int betamin, int betamax)
     }
 }
 
+void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+
+    Lattice mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+
+    // Type of Lattice
+    if(type_lattice=='F')           mylattice.fcc_helical_initialize();          // F for fcc
+    else if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
+    else if(type_lattice=='C')      mylattice.cubic_helical_initialize();        // C for cubic
+    else if(type_lattice=='Q')      mylattice.quadratic_helical_initialize();    // Q for quadratic
+    else if(type_lattice=='O')      mylattice.chain_periodic_initialize();       // O for one-dimensional
+
+    // Printing information about the q-vectors straight away
+    ofstream xyzFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_xyz.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFile.open(filename);
+    delete filename;
+
+    xyzFile << "xyz-positions are listed units of grid lengths" << endl;
+
+    cout << "File for printing xyz-coord to file is initiated" << endl;
+
+    double x;
+    double y;
+    double z;
+
+    int N  = mylattice.N;
+
+    if(mylattice.dim==1) // Not really neccessary. Not double tested, either
+    {
+        for(int i=0; i<N; i++)    xyzFile << "Running index: " << i << "; Index : i: " << i << "; Position : x = " << i << endl;
+    }
+    if(mylattice.dim==2)
+    {
+
+        cout << "For quadratic, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns = mylattice.sitecoordinates[i];
+            vector<double> pos = mylattice.sitepositions[i];
+            x = ns[0];
+            y = ns[1];
+            xyzFile << "Running index: " << i << "; Index : i = " << x << ";   j = " << y << ";   Position : x = ";
+            x = pos[0];
+            y = pos[1];
+            xyzFile << x << ";   y = " << y << endl;
+        }
+        cout << "Done printing to xyzFile" << endl;
+
+    }
+
+    else if(mylattice.dim==3)
+    {
+        cout << "For cubic or fcc, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns     = mylattice.sitecoordinates[i];
+            vector<double> pos = mylattice.sitepositions[i];
+            //cout << "ns retrieved" << endl;
+            // These must be changed if we change into possibly setting L1, L2, L3 different
+            // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+            // Could be more general, but we don't need to play around with our lattices that much...
+            x = ns[0];
+            y = ns[1];
+            z = ns[2];
+            // Print to file. Site number, qx, qy, qz.
+            xyzFile << "Running index: " << i << ";  Index :   i = " << x << ";   j = " << y <<  ";   k = " << z <<"; Position :   x = ";
+            x = pos[0];
+            y = pos[1];
+            z = pos[2];
+            xyzFile << x << ";   y = " << y << ";   z = " << z << endl;
+        }
+        //cout << "Done printing to qFile" << endl;
+    }
+    xyzFile.close();
+}
+
+void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+    Lattice mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+    mylattice.fcc_helical_initialize_extended();
+
+    ofstream xyzFilex;
+    char *filenamex = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamex, "%s_xyzxline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFilex.open(filenamex);
+    delete filenamex;
+
+    ofstream xyzFiley;
+    char *filenamey = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamey, "%s_xyzyline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFiley.open(filenamey);
+    delete filenamey;
+
+    ofstream xyzFilez;
+    char *filenamez = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamez, "%s_xyzzline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFilez.open(filenamez);
+    delete filenamez;
+
+    xyzFilex << "xyz-positions are listed units of grid lengths" << endl;
+    xyzFiley << "xyz-positions are listed units of grid lengths" << endl;
+    xyzFilez << "xyz-positions are listed units of grid lengths" << endl;
+
+    cout << "File for printing xyz-coord a la x-, y- and z-line to file is initiated" << endl;
+
+    int N  = mylattice.N;
+
+    int i,j,k;
+    for(int n=0; n<N; n++)
+    {
+        vector<int> ns = mylattice.sitecoordinates[n];
+        i = ns[0];
+        j = ns[1];
+        k = ns[2];
+
+        vector<double> posx = mylattice.giveposition_fcc_lines(i,j,k,'x');
+        vector<double> posy = mylattice.giveposition_fcc_lines(i,j,k,'y');
+        vector<double> posz = mylattice.giveposition_fcc_lines(i,j,k,'z');
+
+        // Print to file. Site number, qx, qy, qz.
+        double xlx = posx[0];    double ylx = posy[0];    double zlx = posz[0];
+        double xly = posx[1];    double yly = posy[1];    double zly = posz[1];
+        double xlz = posx[2];    double ylz = posz[2];    double zlz = posz[2];
+
+        xyzFilex << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        xyzFilex << "; Position: x = " << xlx << "; y = " << xly << "; z = " << xlz << endl;
+        xyzFiley << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        xyzFiley << "; Position: x = " << ylx << "; y = " << yly << "; z = " << ylz << endl;
+        xyzFilez << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        xyzFilez << "; Position: x = " << zlx << "; y = " << zly << "; z = " << zlz << endl;
+    }
+    xyzFilex.close();
+    xyzFiley.close();
+    xyzFilez.close();
+}
+
+void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+
+    Lattice mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+
+    if(type_lattice=='F')           mylattice.fcc_helical_initialize();          // F for fcc
+    else if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
+    else if(type_lattice=='C')      mylattice.cubic_helical_initialize();        // C for cubic
+    else if(type_lattice=='Q')      mylattice.quadratic_helical_initialize();    // Q for quadratic
+    else if(type_lattice=='O')      mylattice.chain_periodic_initialize();       // O for one-dimensional
+
+    // Printing information about the q-vectors straight away
+    ofstream qFile;
+    char *filenameq = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenameq, "%s_verbose_qs.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    qFile.open(filenameq);
+    delete filenameq;
+
+    cout << "File for printing q-vector to file is initiated" << endl;
+
+    double qx;
+    double qy;
+    double qz;
+
+    int L1 = mylattice.L1;
+    int L2 = mylattice.L2;
+    int L3 = mylattice.L3;
+    int N  = mylattice.N;
+
+    if(mylattice.dim==1) // Not really neccessary. Not double tested, either
+    {
+        for(int i=0; i<N; i++)    qFile << "Running index = " << i << ";  qx = " << 2*M_PI/L1*i << endl;
+    }
+    if(mylattice.dim==2)
+    {
+
+        cout << "For quadratic, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns = mylattice.sitecoordinates[i];
+            cout << "ns retrieved" << endl;
+            qx = ns[0]*mylattice.b1[0]/L1; // Not so sure about this, just need it to compile
+            qy = ns[1]*mylattice.b2[1]/L2; // Double check
+            cout << "qvec set" << endl;
+            qFile << "Running index = " << i << "; Indices: i = " << ns[0] << "; j =  " << ns[1] << "; Positions in q-space:  qx = " << qx << ";  qy =  " << qy << " " << endl;
+
+        }
+        cout << "Done printing to qFile" << endl;
+
+    }
+
+    else if(mylattice.dim==3)
+    {
+        cout << "For cubic or fcc, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns = mylattice.sitecoordinates[i];
+            //cout << "ns retrieved" << endl;
+            // These must be changed if we change into possibly setting L1, L2, L3 different
+            // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+            // Could be more general, but we don't need to play around with our lattices that much...
+            qx = ns[0]*mylattice.b1[0]/L1 + ns[2]*mylattice.b3[0]/L3;
+            qy = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2;
+            qz = ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
+            // Print to file. Site number, qx, qy, qz.
+            qFile << "Running index = " << i << "; Indices: i = " << ns[0] << ";  j = " << ns[1] << "; k = " << ns[2] << "; Positions in q-space:   qx = " << qx << ";   qy  = " << qy << ";    qz = " << qz << endl;
+        }
+        //cout << "Done printing to qFile" << endl;
+    }
+    qFile.close();
+}
+
+void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+    Lattice mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+    mylattice.fcc_helical_initialize_extended(); // We default this as well.
+
+    ofstream qFilex;
+    char *filenamex = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamex, "%s_xlineq_verbose.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    qFilex.open(filenamex);
+    delete filenamex;
+
+    ofstream qFiley;
+    char *filenamey = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamey, "%s_ylineq_verbose.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    qFiley.open(filenamey);
+    delete filenamey;
+
+    ofstream qFilez;
+    char *filenamez = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamez, "%s_zlineq_verbose.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    qFilez.open(filenamez);
+    delete filenamez;
+
+    qFilex << "q-vectors are listed units of grid lengths" << endl;
+    qFiley << "q-vectors are listed units of grid lengths" << endl;
+    qFilez << "q-vectors are listed units of grid lengths" << endl;
+
+    cout << "Files for printing q-vector a la x-, y- and z-line to file are initiated" << endl;
+
+    int N  = mylattice.N;
+
+    int i, j, k;
+    for(int n=0; n<N; n++)
+    {
+        vector<int> ns = mylattice.sitecoordinates[n];
+        i = ns[0];
+        j = ns[1];
+        k = ns[2];
+
+        vector<double> qvecx = mylattice.giveqvector_fcc_lines(i,j,k,'x');
+        vector<double> qvecy = mylattice.giveqvector_fcc_lines(i,j,k,'y');
+        vector<double> qvecz = mylattice.giveqvector_fcc_lines(i,j,k,'z');
+
+        // Print to file. Site number, qx, qy, qz.
+        double qxlx = qvecx[0];    double qylx = qvecy[0];    double qzlx = qvecz[0];
+        double qxly = qvecx[1];    double qyly = qvecy[1];    double qzly = qvecz[1];
+        double qxlz = qvecx[2];    double qylz = qvecy[2];    double qzlz = qvecz[2];
+
+        qFilex << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        qFilex << "; Vector: qx = " << qxlx << "; qy = " << qxly << "; qz = " << qxlz << endl;
+        qFiley << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        qFiley << "; Vector: qx = " << qylx << "; qy = " << qyly << "; qz = " << qylz << endl;
+        qFilez << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        qFilez << "; Vector: qx = " << qzlx << "; qy = " << qzly << "; qz = " << qzlz << endl;
+    }
+    qFilex.close();
+    qFiley.close();
+    qFilez.close();
+
+}
+
 
 void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
@@ -272,7 +619,7 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
     bool calculatespincorrelationfunction = false;
 
     // Set these
-    char type_lattice = 'O';
+    char type_lattice = 'C';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
@@ -537,4 +884,289 @@ double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, doubl
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J)
 {
     return J*(x1*x2+y1*y2+z1*z2);
+}
+
+// Plane test function
+vector<double> cross(vector<double> vec1, vector<double> vec2)
+{
+    vector<double> returnvec(4);
+    returnvec[0] = 0; // To give it the same dimension as the others
+    returnvec[1] = vec1[2]*vec2[3]-vec2[2]*vec1[3];
+    returnvec[2] = vec1[3]*vec2[1]-vec2[3]*vec1[1];
+    returnvec[3] = vec1[1]*vec2[2]-vec2[1]*vec1[2];
+    return returnvec;
+}
+
+vector<double> vecdiffforcross(vector<double> vec1, vector<double> vec2)
+{
+    vector<double> returnvec(4);
+    returnvec[0] = 0; // To give it the same dimension as the others
+    for(int i=1; i<4; i++)
+    {
+        returnvec[1] = vec1[1]-vec2[1];
+        returnvec[2] = vec1[2]-vec2[2];
+        returnvec[3] = vec1[3]-vec2[3];
+    }
+    return returnvec;
+}
+
+void isitonplane(string latticefilenamePrefix)
+{
+    ofstream Fileforplanes;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_investigateplanes.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    Fileforplanes.open(filename);
+    delete filename;
+
+    vector<vector<double> > storage;
+    // Specify q-vectors here.
+    vector<double> v1(4), v2(4), v3(4), v4(4), v5(4), v6(4), v7(4), v8(4), v9(4), v10(4), v11(4), v12(4), v13(4), v14(4), v15(4);
+    v1[0] = 21;   v1[1] = -1./6*M_PI;  v1[2] = 1./6*M_PI;  v1[3] =          0;
+    v2[0] = 58;   v2[1] = -1./6*M_PI;  v2[2] = 2./3*M_PI;  v2[3] =  1./6*M_PI;
+    v3[0] = 63;   v3[1] = -1./3*M_PI;  v3[2] = 5./6*M_PI;  v3[3] =  1./6*M_PI;
+    v4[0] = 95;   v4[1] =  1./6*M_PI;  v4[2] = 5./6*M_PI;  v4[3] =  1./3*M_PI;
+    v5[0] = 105;  v5[1] = -1./6*M_PI;  v5[2] = 7./6*M_PI;  v5[3] =  1./3*M_PI;
+    v6[0] = 111;  v6[1] =          0;  v6[2] = 1./2*M_PI;  v6[3] = -1./2*M_PI;
+    v7[0] = 118;  v7[1] =  1./6*M_PI;  v7[2] = 2./3*M_PI;  v7[3] = -1./6*M_PI;
+    v8[0] = 125;  v8[1] =  1./3*M_PI;  v8[2] = 5./6*M_PI;  v8[3] =  1./6*M_PI;
+    v9[0] = 126;  v9[1] =  1./2*M_PI;  v9[2] =      M_PI;  v9[3] =  1./2*M_PI;
+    v10[0] = 133; v10[1] = -1./3*M_PI; v10[2] = 7./6*M_PI; v10[3] = -1./6*M_PI;
+    v11[0] = 140; v11[1] = -1./6*M_PI; v11[2] = 4./3*M_PI; v11[3] =  1./6*M_PI;
+    v12[0] = 153; v12[1] =  1./6*M_PI; v12[2] = 5./6*M_PI; v12[3] = -1./3*M_PI;
+    v13[0] = 163; v13[1] = -1./2*M_PI; v13[2] = 7./6*M_PI; v13[3] = -1./3*M_PI;
+    v14[0] = 195; v14[1] =  1./3*M_PI; v14[2] = 7./6*M_PI; v14[3] = -1./6*M_PI;
+    v15[0] = 200; v15[1] =  1./6*M_PI; v15[2] = 4./3*M_PI; v15[3] = -1./6*M_PI;
+
+    storage.push_back(v1);
+    storage.push_back(v2);
+    storage.push_back(v3);
+    storage.push_back(v4);
+    storage.push_back(v5);
+    storage.push_back(v6);
+    storage.push_back(v7);
+    storage.push_back(v8);
+    storage.push_back(v9);
+    storage.push_back(v10);
+    storage.push_back(v11);
+    storage.push_back(v12);
+    storage.push_back(v13);
+    storage.push_back(v14);
+    storage.push_back(v15);
+
+    for(int i=1; i<15; i++)
+    {
+        for(int j=0; j<i; j++)
+        {
+            for(int k=1; k<15; k++)
+            {
+                for(int l=0; l<k; l++)
+                {
+                    if(k!=i && k!=j && l!=i && l!=j)
+                    {
+                        vector<double> vdfc1 = vecdiffforcross(storage[i], storage[j]);
+                        vector<double> vdfc2 = vecdiffforcross(storage[k], storage[l]);
+
+                        vector<double> thenormal = cross(vdfc1, vdfc2);
+                        vector<double> pinp1 = storage[i];
+                        vector<double> pinp2 = storage[j];
+                        vector<double> pinp3 = storage[k];
+                        vector<double> pinp4 = storage[l];
+                        double a = thenormal[1]; // zero is for the index number
+                        double b = thenormal[2];
+                        double c = thenormal[3];
+                        double d = a*pinp1[1]+b*pinp1[2]+c*pinp1[3];
+                        // Shouls probably print to file.
+                        Fileforplanes << "Plane spanned by points " << pinp1[0]<< " , " << pinp2[0] << " , " << pinp3[0]<< " , " << pinp4[0] << ":" << endl;
+                        for(int m=0; m<15;m++)
+                        {
+                            if(m!=i && m!=j && m!=k && m!=l)
+                            {
+                                vector<double> snake = storage[m];
+                                double phew = a*snake[1]+b*snake[2]+c*snake[3]-d;
+                                if(abs(phew)<1e-14)    Fileforplanes << "Point " << snake[0] << " on plane. Diff from 0: " << phew << endl;
+                            } // End if-test "must be a point we haven't tried yet"
+                        } // End check all points
+                    } // End "all points in the vectors must be different"
+                    Fileforplanes << endl;
+                } // End loop over l
+            } // End loop over k
+        } // End loop over j
+    } // End loop over i
+    Fileforplanes.close();
+}
+
+void isitonline(string latticefilenamePrefix)
+{
+    ofstream Fileforlines;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_investigatelines.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    Fileforlines.open(filename);
+    delete filename;
+
+    vector<vector<double> > storage;
+    // Specify q-vectors here.
+    // There is a factor of pi everywhere, but we drop it to ease computations
+    vector<double> v1(4), v2(4), v3(4), v4(4), v5(4), v6(4), v7(4), v8(4), v9(4), v10(4), v11(4), v12(4), v13(4), v14(4), v15(4);
+    v1[0] = 21;   v1[1] = -1./6;  v1[2] = 1./6;  v1[3] =     0;
+    v2[0] = 58;   v2[1] = -1./6;  v2[2] = 2./3;  v2[3] =  1./6;
+    v3[0] = 63;   v3[1] = -1./3;  v3[2] = 5./6;  v3[3] =  1./6;
+    v4[0] = 95;   v4[1] =  1./6;  v4[2] = 5./6;  v4[3] =  1./3;
+    v5[0] = 105;  v5[1] = -1./6;  v5[2] = 7./6;  v5[3] =  1./3;
+    v6[0] = 111;  v6[1] =     0;  v6[2] = 1./2;  v6[3] = -1./2;
+    v7[0] = 118;  v7[1] =  1./6;  v7[2] = 2./3;  v7[3] = -1./6;
+    v8[0] = 125;  v8[1] =  1./3;  v8[2] = 5./6;  v8[3] =  1./6;
+    v9[0] = 126;  v9[1] =  1./2;  v9[2] =    1;  v9[3] =  1./2;
+    v10[0] = 133; v10[1] = -1./3; v10[2] = 7./6; v10[3] = -1./6;
+    v11[0] = 140; v11[1] = -1./6; v11[2] = 4./3; v11[3] =  1./6;
+    v12[0] = 153; v12[1] =  1./6; v12[2] = 5./6; v12[3] = -1./3;
+    v13[0] = 163; v13[1] = -1./2; v13[2] = 7./6; v13[3] = -1./3;
+    v14[0] = 195; v14[1] =  1./3; v14[2] = 7./6; v14[3] = -1./6;
+    v15[0] = 200; v15[1] =  1./6; v15[2] = 4./3; v15[3] = -1./6;
+
+    storage.push_back(v1);
+    storage.push_back(v2);
+    storage.push_back(v3);
+    storage.push_back(v4);
+    storage.push_back(v5);
+    storage.push_back(v6);
+    storage.push_back(v7);
+    storage.push_back(v8);
+    storage.push_back(v9);
+    storage.push_back(v10);
+    storage.push_back(v11);
+    storage.push_back(v12);
+    storage.push_back(v13);
+    storage.push_back(v14);
+    storage.push_back(v15);
+
+
+    vector<double> vec1(4);
+    vector<double> vec2(4);
+    vector<double> linevec(3);
+    vector<double> drawnvec(3);
+    vector<double> comparevec(4);
+
+    for(int i=1; i<15;i++)
+    {
+        vec1 = storage[i];
+        for(int j=0; j<i; j++)
+        {
+            vec2 = storage[j];
+            // Making linevec:
+            for(int k=1; k<4;k++)    linevec[k-1] = vec1[k]-vec2[k];
+
+            Fileforlines << "Points on the same line as point " << vec2[0] << " and " << vec1[0] << ":";
+            for(int k=0; k<15; k++)
+            {
+                comparevec = storage[k];
+                if(k!=i && k!=j)
+                {
+                    for(int k=1; k<4;k++)    drawnvec[k-1] = comparevec[k]-vec1[k];
+
+                    double yo = drawnvec[0]/linevec[0];
+                    double ya = drawnvec[1]/linevec[1];
+                    double yi = drawnvec[2]/linevec[2];
+                    if(abs(yo-ya)<1e-14)
+                    {
+                        if(abs(yo-yi)<1e-14)
+                        {
+                            if(abs(yi-ya)<1e-14)
+                            {
+                                Fileforlines << " " << comparevec[0] << " ,";
+                                //cout << "abs(yo-ya): " << abs(yo-ya) << "; abs(yo-yi): " << abs(yo-yi) << "; abs(yi-ya): " << abs(yi-ya) << endl;
+                            } // End iftest yiya
+                        } // End if-test yoyi
+                    } // End if-test yoya
+                } // End if-test to check if k is already drawn
+            } // End loop over points k that my be on the line
+            Fileforlines << endl;
+        } // End loop over j
+    } // End loop over i
+
+    Fileforlines.close();
+}
+
+void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
+{   // This function is only for 3D lattices (Made with fcc in mind)
+    ofstream linethroughmaxFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_linesthroughmax.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    linethroughmaxFile.open(filename);
+    delete filename;
+
+    Lattice mylattice = Lattice(L, false, false, false, false);
+    mylattice.fcc_helical_initialize_extended();
+
+    int N = mylattice.N;
+    /*
+    int L1 = mylattice.L1;
+    int L2 = mylattice.L2;
+    int L3 = mylattice.L3;
+    */
+
+    vector<vector<double> > storage;
+    vector<double> qs(3);
+    for(int i=0; i<N; i++)
+    {   // Finding all points
+        // Unshifted lattice:
+
+        vector<int> ns = mylattice.sitecoordinates[i];
+        /*
+        qs[0] = ns[0]*mylattice.b1[0]/L1 + ns[2]*mylattice.b3[0]/L3;
+        qs[1] = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2;
+        qs[2] = ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
+        */
+
+        // Or we could use the shifted lattice:
+        qs = mylattice.giveqvector_fcc_lines(ns[0], ns[1], ns[2], 'y');
+
+        storage.push_back(qs);
+        // Print to file. Site number, qx, qy, qz.
+    }
+
+    vector<double> vec1(3);
+    vector<double> vec2(3);
+    vector<double> linevec(3);
+    vector<double> vec3(3);
+    vector<double> comparevec(3);
+    vec1 = storage[maxindex];
+    for(int i=0; i<N; i++)
+    {
+        // Making a line of all the points with our max value point.
+        if(i!=maxindex)
+        {
+            vec2 = storage[i];
+
+            // Making linevec:
+            for(int k=0; k<3;k++)    linevec[k] = vec1[k]-vec2[k];
+
+            linethroughmaxFile << "Points on the same line as point " << maxindex << " and " << i << ":";
+            for(int k=0; k<N; k++)
+            {
+                vec3 = storage[k];
+                if(k!=i && k!=maxindex)
+                {
+                    for(int k=0; k<3;k++)    comparevec[k] = vec3[k]-vec1[k];
+
+                    double yo = comparevec[0]/linevec[0];
+                    double ya = comparevec[1]/linevec[1];
+                    double yi = comparevec[2]/linevec[2];
+                    if(abs(yo-ya)<1e-14)
+                    {
+                        if(abs(yo-yi)<1e-14)
+                        {
+                            if(abs(yi-ya)<1e-14)
+                            {
+                                linethroughmaxFile << " " << k << " ,";
+                                cout << "abs(yo-ya): " << abs(yo-ya) << "; abs(yo-yi): " << abs(yo-yi) << "; abs(yi-ya): " << abs(yi-ya) << endl;
+                            } // End iftest yiya
+                        } // End if-test yoyi
+                    } // End if-test yoya
+                } // End if-test to check if k is already drawn
+            } // End loop over points k that my be on the line
+            linethroughmaxFile << endl;
+        }
+    }
+    linethroughmaxFile.close();
+
 }

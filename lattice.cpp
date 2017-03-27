@@ -317,7 +317,7 @@ void Lattice::quadratic_helical_initialize()
 
         // Positions (row-major order)
         position_n[0] = 1.0*((int)n/L2); // n1
-        position_n[1] = 1.0*((int)n%L2); // n2. Should allow for grid length a.
+        position_n[1] = 1.0*((int)n%L2); // n2. Grid length a set to one, regulate by strength of interactions
 
         coord_n[0] = ((int)n/L2); // n1
         coord_n[1] = ((int)n%L2); // n2
@@ -880,11 +880,56 @@ void Lattice::fcc_helical_initialize()
     cout << "Done with fcc_helical_initialize_extended" << endl;
 }
 
+std::vector<double> Lattice::giveposition_fcc_lines(int i, int j, int k, char letter)
+{
+    // Our permutations
+    if(letter=='x')         if(j>0)    j-=L2;
+    if(letter=='y')         if(k>0)    k-=L3;
+    if(letter=='z')         if(i>0)    i-=L1;
+
+    vector<double> position(3);
+    position[0] = 0.5*(i+k);
+    position[1] = 0.5*(i+j);
+    position[2] = 0.5*(j+k);
+
+    // Do something similar for the reciprocal lattice?
+    return position;
+}
+
+std::vector<double> Lattice::giveqvector_fcc_lines(int i, int j, int k, char letter)
+{
+    // So we don't need to call fcc_initalize(_extended)
+    // Reciprocal lattice vectors
+    b1 = vector<double>(3); // Should they be double?
+    b2 = vector<double>(3);
+    b3 = vector<double>(3);
+    b1[0] = M_PI;
+    b1[1] = M_PI;
+    b1[2] = 0;
+    b2[0] = 0;
+    b2[1] = M_PI;
+    b2[2] = M_PI;
+    b3[0] = M_PI;
+    b3[1] = 0;
+    b3[2] = M_PI;
+
+    // Our permutations
+    if(letter=='x')         if(j>0)    j-=L2;
+    if(letter=='y')         if(k>0)    k-=L3;
+    if(letter=='z')         if(i>0)    i-=L1;
+
+    vector<double> qvector(3);
+    qvector[0] = i*b1[0]/L1 + k*b3[0]/L3;
+    qvector[1] = i*b1[1]/L1 + j*b2[1]/L2;
+    qvector[2] = j*b2[2]/L2 + k*b3[2]/L3;
+
+    return qvector;
+}
+
 std::vector<int> Lattice::fccyline()
 {
     // Should this be written to file instead?
     int n = 0;
-    int length = 0; // Length of the loop
     int nprev = -1; // To start the loop
     vector<int> yline;
     while(nprev<n)  // This should fix it, I think...
@@ -897,6 +942,55 @@ std::vector<int> Lattice::fccyline()
     cout << endl;
     // I hope this doesn't run forever.
     return yline;
+}
+
+std::vector<int> Lattice::fccxline()
+{
+    // Should this be written to file instead?
+    int n = 0;
+    int nprev = -1; // To start the loop
+    vector<int> xline;
+    while(nprev<n)  // This should fix it, I think...
+    {
+        nprev = n;
+        xline.push_back(n);
+        n = findneighbour(n, 1, -1, 1);
+        cout << n << " ";
+    }
+    cout << endl;
+    // I hope this doesn't run forever.
+    return xline;
+}
+
+std::vector<int> Lattice::fcczline()
+{
+    // Should this be written to file instead?
+    int n = 0;
+    int nprev = -1; // To start the loop
+    vector<int> zline;
+
+    /*zline.push_back(n);
+    // Something odd
+    while(nprev<n)  // This should fix it, I think...
+    {
+        nprev = n;
+        n = findneighbour(n, -1, 1, 1);
+        zline.push_back(n);
+        cout << n << " ";
+    }
+    */
+
+    int counter = 0;
+    while(counter<L)  // Kind of a hack-y solution
+    {
+        zline.push_back(n);
+        n = findneighbour(n, -1, 1, 1);
+        cout << n << " ";
+        counter++;
+    }
+    cout << endl;
+    // I hope this doesn't run forever.
+    return zline;
 }
 
 
