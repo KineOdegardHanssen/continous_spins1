@@ -73,6 +73,11 @@ public:
     std::vector<int> fccyline(); // Line of points in the (0,y,0)-direction
     std::vector<int> fccxline(); // Line of points in the (x,0,0)-direction
     std::vector<int> fcczline(); // Line of points in the (0,0,z)-direction
+    std::vector<int> cubicyline(); // Line of points in the (0,y,0)-direction
+    std::vector<int> cubicxline(); // Line of points in the (x,0,0)-direction
+    std::vector<int> cubiczline(); // Line of points in the (0,0,z)-direction
+    std::vector<int> quadrxline(); // Line of points in the (x,0)-direction
+    std::vector<int> quadryline(); // Line of points in the (0,y)-direction
 };
 
 #endif // LATTICE_H

@@ -76,6 +76,7 @@ public:
     void debug1d2p();
     void testFFTW();
     void compareFFTW_withmanual(double beta);
+    void compareFFTW_withmanual_av(double beta);
     double check_the_energy(); // Function that finds the energy by going through every spin
     void test_couplings_strengths();
 

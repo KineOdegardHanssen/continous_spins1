@@ -20,21 +20,26 @@ void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, 
 void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 // Lattice functions
+// fcc or flexible
 void extract_yline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
-void extract_xline(int L, string ylinefilenamePrefix);
-void extract_zline(int L, string ylinefilenamePrefix);
+void extract_xline(int L, string ylinefilenamePrefix); // fcc only
+void extract_zline(int L, string ylinefilenamePrefix); // fcc only
 void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix);
-void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);
+void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);  // Only for fcc
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
-void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix);
+void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix); // Only for fcc
+// cubic
+void cubic_extract_xyzlines(int L, string latticefilenamePrefix);
+// quadratic
+void quadratic_extract_xylines(int L, string latticefilenamePrefix);
 //void lattice_coordinates_generatingys(int L, string latticefilenamePrefix);
-
 
 
 // Test functions
 void test_betagenerator(int beta_n, int betamin, int betamax);
 void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fftw_againstsims(int L, int eqsteps, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
@@ -72,7 +77,7 @@ int main()
 
     // Selecting the lattice type
     // F: face-centered cubic (fcc); E: fcc with different directions C: cubic; Q:quadratic; O: chain;
-    char type_lattice = 'E';
+    char type_lattice = 'Q';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -85,7 +90,7 @@ int main()
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jy  = 0;    double Jz  = 0;
-    double Jxy = -1;    double Jxz = 0;    double Jyz = 1;
+    double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -111,21 +116,17 @@ int main()
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 10000; //100000; // MCsteps per bin.
+    int mcsteps_inbin = 1000; //100000; // MCsteps per bin.
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    //string filenamePrefix = "000aa_test";
-    //string filenamePrefix = "0spincorrtest_fcc10x10x10_Dix2Diy2_DxDyDz1_Jyz1_beta0p5_eqsteps50000_mcsteps_inbin_1000_no_of_bins1000";
-    //string filenamePrefix = "0fcc_2x2x2_thecomparebetas_eqsteps1000_mcstepsinbin1000_bins100_Jyz1_DixDiy2Diz0";
-    //string filenamePrefix = "2pchainopen_J1Dz100_mcsteps_inbin100000_no_of_bins_100";
+    //string filenamePrefix = "test";
+    string filenamePrefix = "quadr6x6_Js1_beta5_eq10000_mc1000_bins100";
+    //string filenamePrefix = "cubic6x6x6_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
-    //string filenamePrefix = "bigtest_openchain_5p_beta1em5and4000_10000eqsteps_10000mcsteps_100bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxy1_Jyz1_sianDx1_sianDy1_beta1p025_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
-    string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
-    //string filenamePrefix = "bigtest_periodicchain_2p_beta1em6and7000_10000eqsteps_1e6mcsteps_1000bins";
-    //string filenamePrefix = "000aa_test_somethingwrongwithcorrfunc_mcstepsinbin100000_bins1000";
+    //string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
     int beta_n = 2;
@@ -143,20 +144,22 @@ int main()
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
 
     //-------------------------------------Test functions--------------------------------------------//
     //L = 2;
     //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
     //test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
+    //test_fftw_againstsims_av(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
     //L = 6;
-    string latticefilenamePrefix = "fcc6x6x6";
+    type_lattice = 'Q';
+    string latticefilenamePrefix = "quadratic6x6";
     //string latticefilenamePrefix = "test";
     // Special functions
     //extract_yline(L, latticefilenamePrefix);
@@ -171,6 +174,8 @@ int main()
     string indexfilenamePrefix = "fcc6x6x6_index27";
     int maxindex = 27;
     //findlinethroughmax(L, maxindex, indexfilenamePrefix);
+    cubic_extract_xyzlines(L, latticefilenamePrefix);
+    //quadratic_extract_xylines(L, latticefilenamePrefix);
 
 }
 
@@ -313,6 +318,99 @@ void extract_zline(int L, string ylinefilenamePrefix)
     {
         zlineFile << zsites[i]  << endl;
     }
+}
+
+void cubic_extract_xyzlines(int L, string latticefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.cubic_helical_initialize();
+    vector<int> xsites = mylattice.cubicxline();
+    vector<int> ysites = mylattice.cubicyline();
+    vector<int> zsites = mylattice.cubiczline();
+
+    ofstream xlineFile;
+    char *filenamex = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamex, "%s_xline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xlineFile.open(filenamex);
+    delete filenamex;
+
+    ofstream ylineFile;
+    char *filenamey = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamey, "%s_yline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    ylineFile.open(filenamey);
+    delete filenamey;
+
+    ofstream zlineFile;
+    char *filenamez = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamez, "%s_zline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    zlineFile.open(filenamez);
+    delete filenamez;
+
+    cout << "All the files are created" << endl;
+
+    int Nx = xsites.size(); // Just in case we aren't considering a quadratic lattice
+
+    cout << "And the dim size x extracted" << endl;
+
+    for(int i=0; i<Nx; i++)
+    {
+        cout << "In loop over x-dim. i = " << i << endl;
+        xlineFile << xsites[i] << endl;
+    }
+
+    int Ny = ysites.size();
+
+    for(int i=0; i<Ny; i++)
+    {
+        cout << "In loop over y-dim. i = " << i << endl;
+        ylineFile << ysites[i] << endl;
+    }
+
+    int Nz = zsites.size();
+
+    for(int i=0; i<Nz; i++)
+    {
+        cout << "In loop over z-dim. i = " << i << endl;
+        zlineFile << zsites[i] << endl;
+    }
+    xlineFile.close();
+    ylineFile.close();
+    zlineFile.close();
+}
+
+void quadratic_extract_xylines(int L, string latticefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.quadratic_helical_initialize();
+    vector<int> xsites = mylattice.quadrxline();
+    vector<int> ysites = mylattice.quadryline();
+
+    ofstream xlineFile;
+    char *filenamex = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamex, "%s_xline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xlineFile.open(filenamex);
+    delete filenamex;
+
+    ofstream ylineFile;
+    char *filenamey = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamey, "%s_yline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    ylineFile.open(filenamey);
+    delete filenamey;
+
+    cout << "All the files are created" << endl;
+
+    // The sizes of the lines
+    int Nx = xsites.size(); // Just in case we aren't considering a quadratic lattice
+    int Ny = ysites.size();
+
+    // Printing indices to file
+    for(int i=0; i<Nx; i++)        xlineFile << xsites[i] << endl;
+    for(int i=0; i<Ny; i++)        ylineFile << ysites[i] << endl;
+
+    xlineFile.close();
+    ylineFile.close();
 }
 
 
@@ -512,10 +610,10 @@ void reciprocallattice_coordinates(int L, char type_lattice, string latticefilen
         for(int i=0; i<N; i++) // Possibly only up to N/2.
         {
             vector<int> ns = mylattice.sitecoordinates[i];
-            cout << "ns retrieved" << endl;
+            //cout << "ns retrieved" << endl;
             qx = ns[0]*mylattice.b1[0]/L1; // Not so sure about this, just need it to compile
             qy = ns[1]*mylattice.b2[1]/L2; // Double check
-            cout << "qvec set" << endl;
+            //cout << "qvec set" << endl;
             qFile << "Running index = " << i << "; Indices: i = " << ns[0] << "; j =  " << ns[1] << "; Positions in q-space:  qx = " << qx << ";  qy =  " << qy << " " << endl;
 
         }
@@ -644,6 +742,25 @@ void test_fftw_againstsims(int L, int eqsteps, double beta, bool isotropic, bool
     // Initializing Monte Carlo
     MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.compareFFTW_withmanual(beta); // Test FFTW
+    mymc.endsims();  // Close the file
+}
+
+void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, char type_lattice, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    // Input irrelevant for this test
+    int mcsteps_inbin = 20;
+    int no_of_bins    = 1;
+
+    // These we want to turn off
+    bool printeveryMCstep = false;
+    bool calculatespincorrelationfunction = false; // We don't need this for the testing function
+
+    // So it's easy to throw it away afterwards
+    string filenamePrefix = "discard"; // Want to know that this file is unimportant
+
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    mymc.compareFFTW_withmanual_av(beta); // Test FFTW
     mymc.endsims();  // Close the file
 }
 
@@ -1168,5 +1285,5 @@ void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
         }
     }
     linethroughmaxFile.close();
-
 }
+

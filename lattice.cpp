@@ -392,13 +392,6 @@ void Lattice::cubic_helical_initialize()
 
     for(int n=0; n<N; n++)
     {
-        // Finding the neighbours to n
-        // NB!: So far, I have only added neighbours that are a distance 1 apart, 2 being the length of the cell.
-        // So no linking two cell corner atoms together as of now.
-        // This should only be done once. And that is exactly what we are doing.
-        // Doing modulo operations, as suggested in Newman & Barkema
-        // These seems correct. However, I should probably find a second source to support this.
-
         int np1, nm1, npL, nmL, npL2, nmL2;
         np1  = findneighbour(n,0,0,1);
         nm1  = findneighbour(n,0,0,-1);
@@ -993,6 +986,88 @@ std::vector<int> Lattice::fcczline()
     return zline;
 }
 
+std::vector<int> Lattice::cubicyline()
+{
+    cout << "In cubicyline" << endl;
+    int n1, n2, n3;
+
+    vector<int> yline;
+    for(int n=0; n<N; n++)  // This should fix it, I think...
+    {
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+        if(n1==0 && n3==0)        yline.push_back(n);
+    }
+    return yline;
+}
+
+std::vector<int> Lattice::cubicxline()
+{
+    cout << "In cubicxline" << endl;
+    int n1, n2, n3;
+
+    vector<int> xline;
+    for(int n=0; n<N; n++)  // This should fix it, I think...
+    {
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+        cout << "n1 = " << n1 << "; n2 = " << n2 << "; n3 = " << n3 << endl;
+        if(n2==0 && n3==0)
+        {
+            cout << "And we are in the loop" << endl;
+            xline.push_back(n);
+        }
+    }
+    return xline;
+}
+
+std::vector<int> Lattice::cubiczline()
+{
+    cout << "In cubiczline" << endl;
+    int n1, n2, n3;
+
+    vector<int> zline;
+    for(int n=0; n<N; n++)  // This should fix it, I think...
+    {
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+        if(n1==0 && n2==0)        zline.push_back(n);
+    }
+    return zline;
+}
+
+std::vector<int> Lattice::quadrxline()
+{
+    cout << "In quadrxline" << endl;
+    int n1, n2;
+
+    vector<int> xline;
+    for(int n=0; n<N; n++)  // This should fix it, I think...
+    {
+        n1 = ((int)n/L2); // n1
+        n2 = ((int)n%L2);
+        if(n2==0)        xline.push_back(n);
+    }
+    return xline;
+}
+
+std::vector<int> Lattice::quadryline()
+{
+    cout << "In quadryline" << endl;
+    int n1, n2;
+
+    vector<int> yline;
+    for(int n=0; n<N; n++)  // This should fix it, I think...
+    {
+        n1 = ((int)n/L2); // n1
+        n2 = ((int)n%L2);
+        if(n1==0)        yline.push_back(n);
+    }
+    return yline;
+}
 
 std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)
 {
