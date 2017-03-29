@@ -510,6 +510,7 @@ void MonteCarlo::runmetropolis(double beta)
 
     if(DEBUG)    cout << "Done with initialize_energy()" << endl << "Starting equilibration steps" << endl;
     cout << "Initial energy: " << energy_old << endl;
+    cout << "Initial energy, check: " << check_the_energy() << endl;
 
     // Equilibration steps
     double starttime = clock();
@@ -518,6 +519,7 @@ void MonteCarlo::runmetropolis(double beta)
         if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
         mcstepf_metropolis(beta); //, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
         if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
+        if(i<11)      cout << "Hardcoded energy, step " << i << ": " << check_the_energy() << endl;
     }
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -852,7 +854,7 @@ void MonteCarlo::runmetropolis(double beta)
         cv_average    += cv_bin;
 
 
-        cout << "Average energy, bin " << i << ": " << energies[i] << endl;
+        //cout << "Average energy, bin " << i << ": " << energies[i] << endl;
         if(SCBUG)    cout << "Have calculated all bin quantities, now doing the spin correlation function" << endl;
 
         if(bincout)    allFile << "Average energy, bin " << i << ": " << energies[i] << endl;
@@ -1078,8 +1080,9 @@ void MonteCarlo::runmetropolis(double beta)
 void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
 
-    bool HUMBUG = false;  // The humbug is defeated.
-    bool MINIBUG = false;  // For very little output. Couts the probs and/or the energies at each step
+    bool HUMBUG   = false;  // The humbug is defeated.
+    bool MINIBUG  = false;  // For very little output. Couts the probs and/or the energies at each step
+    bool CONTRBUG = false;
     if(HUMBUG)    cout << "In mcstepf_metropolis" << endl;
     double changes = 0;
     if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
@@ -1174,9 +1177,11 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         // Energy contribution after spin change
 
         double energy_diff = 0; // Resetting the energy difference for every n
+        //cout << "energy_diff reset: " << energy_diff << endl;
         if(sianisotropy)
         {
             if(HUMBUG)    cout << "In sianisotropy in mcstepf" << endl;
+            if(CONTRBUG)  cout << "In sianisotropy in mcstepf" << endl;
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
@@ -1187,6 +1192,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(magfield)
         {
             if(HUMBUG)    cout << "In magfield in mcstepf" << endl;
+            if(CONTRBUG)  cout << "In magfield in mcstepf" << endl;
             double hx = mylattice.sites[k].hx;
             double hy = mylattice.sites[k].hy;
             double hz = mylattice.sites[k].hz;
@@ -1195,7 +1201,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         if(isotropic)
         {
             if(HUMBUG)    cout << "In isotropic in mcstepf" << endl;
-            if(HUMBUG)    cout << "no_of_neighbours = " << no_of_neighbours << endl;
+            if(CONTRBUG)  cout << "In isotropic in mcstepf" << endl;
             int nneighbours;
             double partnerspinx = 0;
             double partnerspiny = 0;
@@ -1204,6 +1210,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             // Determining the number of neighbours
             if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
+            if(HUMBUG)    cout << "no_of_neighbours, spin " << k << ": " << nneighbours << endl;
             //cout << nneighbours;
             for(int j=0; j<nneighbours; j++)
             {
@@ -1213,8 +1220,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
 
                 // Picking out the J each time (may vary depending on bond type)
                 double J = mylattice.sites[k].bonds[j].J;
-                //cout << "j = " << j << "; J = " << J << endl;
-                double sxk = mylattice.sites[l].spinx;
+                if(HUMBUG)    cout << "Neighbour no. " << j << "; J = " << J << endl;
+                if(CONTRBUG)  cout << "Neighbour no. " << j << ", i.e. spin " << l << "; J = " << J << endl;
+                double sxk = mylattice.sites[l].spinx;  // The neighbours does not change
                 double syk = mylattice.sites[l].spiny;
                 double szk = mylattice.sites[l].spinz;
                 partnerspinx += J*sxk;
@@ -1224,11 +1232,12 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             }
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
             energy_diff += partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz);
-            //cout << "Contr from Heisenberg: " <<  partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz) << endl;
+            if(CONTRBUG)  cout << "Contr from Heisenberg: " <<  partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz) << endl;
         }
         if(dm)
         {
             if(HUMBUG)    cout << "In dm in mcstepf" << endl;
+            if(CONTRBUG)  cout << "In dm in mcstepf" << endl;
             // Determining the number of neighbours
             //double dmcontrib = 0;
             double detsign;
@@ -1263,7 +1272,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
             //cout << "Contribution from DM: " << dmcontrib << endl;
         }
-
+        //cout << "energy_diff = " << energy_diff << endl;
 
         double energy_new = energy_old + energy_diff;
         //cout << "Spin difference in each direction:  [" << sx_t-sx << "," << sy_t-sy << "," << sz_t-sz << "]" << endl;
@@ -1319,6 +1328,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 changes+=1;
             }
         }
+        //if(n<10)    cout << "Energy, algorithm: " << energy_old << "; energy, hardcoded: " << check_the_energy() << endl;
     } // End loop over n. MCstep done
     acceptancerate = changes/N; // Write the percentage of hits to file.
 }
@@ -1339,7 +1349,7 @@ void MonteCarlo::endsims()
 // Debugging/testing functions
 double MonteCarlo::check_the_energy()
 { // Really similar to initialize_energy, but does not overwrite energy_old
-    if(DEBUG)    cout << "In MonteCarlo_check_the_energy" << endl;
+    //if(DEBUG)    cout << "In MonteCarlo_check_the_energy" << endl;
     double energy_out = 0;
     double energy_contribution_sites = 0;
     double energy_contribution_bonds = 0;

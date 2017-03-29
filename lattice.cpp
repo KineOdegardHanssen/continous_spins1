@@ -302,7 +302,7 @@ void Lattice::quadratic_helical_initialize()
         np1 = findneighbour2D(n,0,1);
         nm1 = findneighbour2D(n,0,-1);
         npL = findneighbour2D(n,1,0);
-        nmL = findneighbour2D(n,1,0);
+        nmL = findneighbour2D(n,-1,0);
 
         std::vector<Bond> bonds;
 

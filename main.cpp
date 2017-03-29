@@ -43,6 +43,7 @@ void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, b
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
+void checkneighbours(int L, char type_lattice);
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J);
 
@@ -121,6 +122,7 @@ int main()
 
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "test";
+    //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
     string filenamePrefix = "quadr6x6_Js1_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "cubic6x6x6_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
@@ -144,7 +146,7 @@ int main()
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
 
     //-------------------------------------Test functions--------------------------------------------//
@@ -155,11 +157,12 @@ int main()
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
+    //checkneighbours(L, type_lattice);
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
     //L = 6;
     type_lattice = 'Q';
-    string latticefilenamePrefix = "quadratic6x6";
+    string latticefilenamePrefix = "cubic6x6x6_pxy";
     //string latticefilenamePrefix = "test";
     // Special functions
     //extract_yline(L, latticefilenamePrefix);
@@ -174,7 +177,7 @@ int main()
     string indexfilenamePrefix = "fcc6x6x6_index27";
     int maxindex = 27;
     //findlinethroughmax(L, maxindex, indexfilenamePrefix);
-    cubic_extract_xyzlines(L, latticefilenamePrefix);
+    //cubic_extract_xyzlines(L, latticefilenamePrefix);
     //quadratic_extract_xylines(L, latticefilenamePrefix);
 
 }
@@ -1285,5 +1288,29 @@ void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
         }
     }
     linethroughmaxFile.close();
+}
+
+void checkneighbours(int L, char type_lattice)
+{
+    Lattice mylattice = Lattice(L, false, false, false, false); // We only look at the neighbours
+
+    // We only look at periodic functions here
+    if(type_lattice=='E')         mylattice.fcc_helical_initialize_extended();
+    else if(type_lattice=='F')    mylattice.fcc_helical_initialize();
+    else if(type_lattice=='C')    mylattice.cubic_helical_initialize();
+    else if(type_lattice=='Q')    mylattice.quadratic_helical_initialize();
+    else if(type_lattice=='O')    mylattice.chain_periodic_initialize();
+
+    int n = 150;
+    int neighbour;
+    cout << "n = " << n << endl << "Neighbours: ";
+    int no_of_neighbours = mylattice.no_of_neighbours;
+    //int N = mylattice.N;
+    for(int i=0; i<no_of_neighbours; i++)
+    {
+        neighbour = mylattice.sites[n].bonds[i].siteindex2;
+        cout << "Neighbour " << i << ": " << neighbour << endl;
+    }
+
 }
 
