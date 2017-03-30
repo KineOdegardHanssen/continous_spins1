@@ -97,10 +97,28 @@ Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing, std::vecto
     this->siteindex2 = siteindex2;
     this->increasing = increasing;
 
+    // These must have been set manually in Lattice!
     Dx = bondints[0]; // Should have an option to not include all these. But I guess it is not neccessary...
     Dy = bondints[1]; //
     Dz = bondints[2]; //
 }
+
+Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing, string direction, std::vector<double> bondints)
+{
+    cout << "In the difficult thing..." << endl;
+    this->J = J;     //
+    this->bondints = bondints;
+    this->siteindex1 = siteindex1;
+    this->siteindex2 = siteindex2;
+    this->increasing = increasing;
+    this->direction = direction;
+
+    // These must have been set manually in Lattice!
+    Dx = bondints[0]; // Should have an option to not include all these. But I guess it is not neccessary...
+    Dy = bondints[1]; //
+    Dz = bondints[2]; //
+}
+
 
 // Initializing next nearest neighbour Bond
 Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing)

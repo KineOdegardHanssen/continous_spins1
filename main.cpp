@@ -94,7 +94,7 @@ int main()
     // Heisenberg term
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jx = 0; double Jy  = 0;    double Jz  = 0;
+    double Jx = 1; double Jy  = 0;    double Jz  = 0;
     double Jxy = -1;    double Jxz = 0;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
@@ -125,9 +125,9 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    string filenamePrefix = "test";
+    string filenamePrefix = "test2";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
-    //string filenamePrefix = "quadr6x6_Js1_beta0p01_eq10000_mc1000_bins100";
+    //string filenamePrefix = "quadr6x6_Jx1_Jy0_beta10_eq10000_mc1000_bins100";
     //string filenamePrefix = "cubic6x6x6_Js1_beta0p05_eq10000_mc1000_bins100";
     ////string filenamePrefix = "fcc6x6x6_Js1_beta2p5_eq10000_mc1000_bins100";
     ////string filenamePrefix = "fcc6x6x6_Jxym1_Jxz0_Jyz1_sianDx1Dy1Dz0_beta1_eq10000_mc10000_bins100";

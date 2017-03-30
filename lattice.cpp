@@ -387,10 +387,10 @@ void Lattice::quadratic_helical_initialize_extended()
         std::vector<Bond> bonds;
 
         // Making a lot of Bond classes to be added to vector of bonds.
-        bonds.push_back(Bond(n, np1, Jy, true, bondints));
-        bonds.push_back(Bond(n, np1, Jy, true, bondints));
-        bonds.push_back(Bond(n, np1, Jx, true, bondints));
-        bonds.push_back(Bond(n, np1, Jx, true, bondints));
+        bonds.push_back(Bond(n, np1, Jy, true, 'y', bondints)); // Not sure there is much point of this...
+        bonds.push_back(Bond(n, nm1, Jy, false, 'y', bondints));
+        bonds.push_back(Bond(n, npL, Jx, true, 'x', bondints));
+        bonds.push_back(Bond(n, nmL, Jx, false, 'x', bondints));
 
         // Send in bools
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
@@ -594,13 +594,15 @@ void Lattice::cubic_helical_initialize_extended()
 
         std::vector<Bond> bonds;
 
+
+        //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, Jz, true, bondints));
-        bonds.push_back(Bond(n, nm1, Jz, true, bondints));
-        bonds.push_back(Bond(n, npL, Jy, true, bondints));
-        bonds.push_back(Bond(n, nmL, Jy, true, bondints));
-        bonds.push_back(Bond(n, npL2, Jx, true, bondints));
-        bonds.push_back(Bond(n, nmL2, Jx, true, bondints));
+        bonds.push_back(Bond(n, np1, Jz, true, 'z', bondints));
+        bonds.push_back(Bond(n, nm1, Jz, true, 'z', bondints));
+        bonds.push_back(Bond(n, npL, Jy, true, 'y', bondints));
+        bonds.push_back(Bond(n, nmL, Jy, true, 'y', bondints));
+        bonds.push_back(Bond(n, npL2, Jx, true, 'x', bondints));
+        bonds.push_back(Bond(n, nmL2, Jx, true, 'x', bondints));
 
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
 
@@ -697,8 +699,11 @@ void Lattice::fcc_helical_initialize_extended()
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n       = std::vector<int>(3);
 
-    // Could have these inside the loop and add randomness.
+    string xy = "xy";
+    string xz = "xz";
+    string yz = "yz";
 
+    // Could have these inside the loop and add randomness.
     bool randomspins = false;
     if(DEBUG)    cout << "Now entering the loop" << endl;
     for(int n=0; n<N; n++)
@@ -734,20 +739,6 @@ void Lattice::fcc_helical_initialize_extended()
         npL2mL = findneighbour(n,1,-1,0); // Jxz
         nmL2mL = findneighbour(n,-1,1,0); // Jxz
 
-        /*
-        // Test this in some way...
-        npL = (n+L3)%N;        // neighbour in positive a2-direction (row-major ordering)
-        npL2 = (n+L2*L3)%N;     // neighbour in positive a1-direction (row-major ordering)
-        npLm1 = (n+L3-1)%N;
-        npL2m1 = (n+L2*L3-1)%N;
-        npL2mL = (n+L2*L3-L3)%N;
-        nmL = (n+N-L3)%N;      // neighbour in negative a2-direction (row-major ordering)
-        nmL2 = (n+N-L2*L3)%N;   // neighbour in negative a1-direction (row-major ordering)
-        nmLm1 = (n+N-L3+1)%N;
-        nmL2m1 = (n+N-L2*L3+1)%N;
-        nmL2mL = (n+N-L2*L3+L3)%N;
-        */
-
         // Should I have some bool that determines whether or not I need these?
         // This part probably need fixing!!
         // Finding the next nearest neighbours in the y- and z- direction
@@ -758,17 +749,6 @@ void Lattice::fcc_helical_initialize_extended()
         nnym = findneighbour(n,-1,-1, 1);
         nnzp = findneighbour(n,-1, 1, 1);
         nnzm = findneighbour(n, 1,-1,-1);
-
-        /*
-        int deltanny, deltannz;
-        deltanny = L2*L3+L3-1;
-        deltannz = -L2*L3+L3-1; // This is negative...
-        nnyp = (n+deltanny)%N;
-        nnym = (n+N-deltanny)%N;  // +N added to ensure it is not negative.
-        nnzp = (n+N+deltannz)%N;  //            --"--
-        nnzm = (n-deltannz)%N;
-        */
-
 
         if(DEBUG)
         {
@@ -799,35 +779,38 @@ void Lattice::fcc_helical_initialize_extended()
 
 
         if(DEBUG)    cout << "Setting the bonds" << endl;
+
+        //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
+
         // Making a lot of bond classes to be added to bonds.
         // Should I send in J separately (to easier allow for difference in strength in different directions)
-        bonds.push_back(Bond(n, np1, Jxz, true, bondints));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, np1, Jxz,  true, xz, bondints));  // Do I really need to send in n?
         if(DEBUG)    cout << "Bond 1 done" << endl;
-        bonds.push_back(Bond(n, nm1, Jxz, false, bondints));
+        bonds.push_back(Bond(n, nm1, Jxz, false, xz, bondints));
         if(DEBUG)    cout << "Bond 2 done" << endl;
-        bonds.push_back(Bond(n, npL, Jyz, true, bondints));
+        bonds.push_back(Bond(n, npL, Jyz, true, yz, bondints));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 3 done" << endl;
-        bonds.push_back(Bond(n, nmL, Jyz, false, bondints));
+        bonds.push_back(Bond(n, nmL, Jyz, false, yz, bondints));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 4 done" << endl;
-        bonds.push_back(Bond(n, npL2, Jxy, true, bondints));
+        bonds.push_back(Bond(n, npL2, Jxy, true, xy, bondints));
         if(DEBUG)    cout << "Bond 5 done" << endl;
-        bonds.push_back(Bond(n, nmL2, Jxy, false, bondints));
+        bonds.push_back(Bond(n, nmL2, Jxy, false, xy, bondints));
         if(DEBUG)    cout << "Bond 6 done" << endl;
-        bonds.push_back(Bond(n, npLm1, Jxy, true, bondints));
+        bonds.push_back(Bond(n, npLm1, Jxy, true, xy, bondints));
         if(DEBUG)    cout << "Bond 7 done" << endl;
-        bonds.push_back(Bond(n, nmLm1, Jxy, false, bondints));
+        bonds.push_back(Bond(n, nmLm1, Jxy, false, xy, bondints));
         if(DEBUG)    cout << "Bond 8 done" << endl;
-        bonds.push_back(Bond(n, npL2m1, Jyz, true, bondints));
+        bonds.push_back(Bond(n, npL2m1, Jyz, true, yz, bondints));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 9 done" << endl;
-        bonds.push_back(Bond(n, nmL2m1, Jyz, false, bondints));
+        bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz, bondints));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 10 done" << endl;
-        bonds.push_back(Bond(n, npL2mL, Jxz, true, bondints));
+        bonds.push_back(Bond(n, npL2mL, Jxz, true, xz, bondints));
         if(DEBUG)    cout << "Bond 11 done" << endl;
-        bonds.push_back(Bond(n, nmL2mL, Jxz, false, bondints));
+        bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz, bondints));
         if(DEBUG)    cout << "Bond 12 done" << endl;
 
         if(DEBUG)    cout << "Done setting the bonds. Setting the sites" << endl;
