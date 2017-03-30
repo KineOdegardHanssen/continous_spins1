@@ -57,11 +57,12 @@ void Lattice::setstrengths(vector<double> sitestrengthsin, vector<double> heisen
     this->Diz = sitestrengthsin[5];
 
     this->J   = heisenbergin[0];
-    this->Jy  = heisenbergin[1];
-    this->Jz  = heisenbergin[2];
-    this->Jxy = heisenbergin[3];
-    this->Jxz = heisenbergin[4];
-    this->Jyz = heisenbergin[5];
+    this->Jx  = heisenbergin[1];
+    this->Jy  = heisenbergin[2];
+    this->Jz  = heisenbergin[3];
+    this->Jxy = heisenbergin[4];
+    this->Jxz = heisenbergin[5];
+    this->Jyz = heisenbergin[6];
 
     this->Dx = dm_in[0];
     this->Dy = dm_in[1];
@@ -89,6 +90,7 @@ void Lattice::givestrengths_automatic()
     Diz = 0;
 
     J   = 1;
+    Jx  = 1;
     Jy  = 1;
     Jz  = 1;
     Jxy = 1;
@@ -328,6 +330,84 @@ void Lattice::quadratic_helical_initialize()
     } // End of loop over all sites ( = loop over n)
 }
 
+void Lattice::quadratic_helical_initialize_extended()
+{
+    dim = 2;
+    N = L1*L2;
+    no_of_neighbours = 4;
+
+    // No of particles in each direction
+    dimlengths = vector<int>(dim);
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+
+    // Lattice vectors
+    a1 = vector<double>(2);
+    a2 = vector<double>(2);
+    a1[0] = 1;
+    a1[1] = 0;
+    a2[0] = 0;
+    a2[1] = 1;
+    // Reciprocal lattice vectors
+    b1 = vector<double>(2);
+    b2 = vector<double>(2);
+    b1[0] = 2*M_PI;
+    b1[1] = 0;
+    b2[0] = 0;
+    b2[1] = 2*M_PI;
+
+    double a = 1/sqrt(3);
+    double spinx = a;
+    double spiny = a;
+    double spinz = a;
+
+    if(!systemstrengthsgiven)    givestrengths_automatic();
+
+    // Move these when neccessary
+    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
+    std::vector<double> bondints = std::vector<double>(3);
+    bondints[0] = Dx;
+    bondints[1] = Dy;
+    bondints[2] = Dz;
+
+    std::vector<double> position_n = std::vector<double>(2);
+    std::vector<int> coord_n = std::vector<int>(2);
+
+    // Could have these inside the loop and add randomness.
+
+    for(int n=0; n<N; n++)
+    {
+        // Finding the neighbours
+        int np1, nm1, npL, nmL;
+        np1 = findneighbour2D(n,0,1);
+        nm1 = findneighbour2D(n,0,-1);
+        npL = findneighbour2D(n,1,0);
+        nmL = findneighbour2D(n,-1,0);
+
+        std::vector<Bond> bonds;
+
+        // Making a lot of Bond classes to be added to vector of bonds.
+        bonds.push_back(Bond(n, np1, Jy, true, bondints));
+        bonds.push_back(Bond(n, np1, Jy, true, bondints));
+        bonds.push_back(Bond(n, np1, Jx, true, bondints));
+        bonds.push_back(Bond(n, np1, Jx, true, bondints));
+
+        // Send in bools
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+
+        // Positions (row-major order)
+        position_n[0] = 1.0*((int)n/L2); // n1
+        position_n[1] = 1.0*((int)n%L2); // n2. Grid length a set to one, regulate by strength of interactions
+
+        coord_n[0] = ((int)n/L2); // n1
+        coord_n[1] = ((int)n%L2); // n2
+
+        sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
+
+    } // End of loop over all sites ( = loop over n)
+}
+
 void Lattice::cubic_helical_initialize()
 {
     //N = L*(L+1)*(L+1); // Look this up!
@@ -439,12 +519,115 @@ void Lattice::cubic_helical_initialize()
 
 }
 
+void Lattice::cubic_helical_initialize_extended()
+{
+    dim = 3;
+    N = L1*L2*L3;
+    no_of_neighbours = 6;
+
+    // No of particles in each direction
+    dimlengths    = vector<int>(dim);
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+    dimlengths[2] = L3;
+
+    // Lattice vectors
+    a1 = vector<double>(3); // Should they be double?
+    a2 = vector<double>(3);
+    a3 = vector<double>(3);
+    a1[0] = 1;
+    a1[1] = 0;
+    a1[2] = 0;
+    a2[0] = 0;
+    a2[1] = 1;
+    a2[2] = 0;
+    a3[0] = 0;
+    a3[1] = 0;
+    a3[2] = 1;
+    // Reciprocal lattice vectors
+    b1 = vector<double>(3); // Should they be double?
+    b2 = vector<double>(3);
+    b3 = vector<double>(3);
+    b1[0] = 2*M_PI;
+    b1[1] = 0;
+    b1[2] = 0;
+    b2[0] = 0;
+    b2[1] = 2*M_PI;
+    b2[2] = 0;
+    b3[0] = 0;
+    b3[1] = 0;
+    b3[2] = 2*M_PI;
+
+    // Temporary fix. May want to send in L1, L2 and L3 to Lattice and deal with a 'rectangular' crystal
+    //int L1 = L;
+    //int L2 = L;
+
+    //cout << "Do not use cubib_helical_initialize() yet. Not implemented" << endl;
+    double a = 1/sqrt(3);
+    double spinx = a;
+    double spiny = a;
+    double spinz = a;
+
+    if(!systemstrengthsgiven)    givestrengths_automatic();
+
+    // Move these when neccessary
+    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
+    std::vector<double> bondints = std::vector<double>(3);
+    bondints[0] = Dx;
+    bondints[1] = Dy;
+    bondints[2] = Dz;
+
+    std::vector<double> position_n = std::vector<double>(3);
+    std::vector<int> coord_n = std::vector<int>(3);
+
+    // Could have these inside the loop and add randomness.
+
+    for(int n=0; n<N; n++)
+    {
+        int np1, nm1, npL, nmL, npL2, nmL2;
+        np1  = findneighbour(n,0,0,1);
+        nm1  = findneighbour(n,0,0,-1);
+        npL  = findneighbour(n,0,1,0);
+        nmL  = findneighbour(n,0,-1,0);
+        npL2 = findneighbour(n,1,0,0);
+        nmL2 = findneighbour(n,-1,0,0);
+
+        std::vector<Bond> bonds;
+
+        // Making a lot of bond classes to be added to bonds.
+        bonds.push_back(Bond(n, np1, Jz, true, bondints));
+        bonds.push_back(Bond(n, nm1, Jz, true, bondints));
+        bonds.push_back(Bond(n, npL, Jy, true, bondints));
+        bonds.push_back(Bond(n, nmL, Jy, true, bondints));
+        bonds.push_back(Bond(n, npL2, Jx, true, bondints));
+        bonds.push_back(Bond(n, nmL2, Jx, true, bondints));
+
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+
+        // Giving the position (row-major order)
+        int n1, n2, n3;
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+
+        position_n[0] = 1.0*n1;     // Could possibly multiply by grid length a
+        position_n[1] = 1.0*n2;
+        position_n[2] = 1.0*n3;
+
+        coord_n[0] = n1;     // Could possibly multiply by grid length a
+        coord_n[1] = n2;
+        coord_n[2] = n3;
+
+        sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
+    } // End loop over n (all sites)
+}
+
+
 void Lattice::fcc_helical_initialize_extended()
 {
-    //cout << "In fcc_helical_initialize_extended" << endl;
+    cout << "In fcc_helical_initialize_extended" << endl;
     bool DEBUG = false;
-    // Should include something saying how the parameters are set.
-    //N = L*(L+1)*(L+1); // Look this up!
     dim = 3;
     N = L1*L2*L3;
     cout << "N: " << N << endl;
@@ -538,18 +721,18 @@ void Lattice::fcc_helical_initialize_extended()
 
         // Finding the neighbours to n
         int np1, nm1, npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
-        np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering)
-        nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering)
-        npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering)
-        nmL    = findneighbour(n,0,-1,0); // neighbour in negative a2-direction (row-major ordering)
-        npL2   = findneighbour(n,1,0,0);  // neighbour in positive a1-direction (row-major ordering)
-        nmL2   = findneighbour(n,-1,0,0); // neighbour in negative a3-direction (row-major ordering)
-        npLm1  = findneighbour(n,0,1,-1);
-        nmLm1  = findneighbour(n,0,-1,1);
+        np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering). Jxz
+        nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering). Jxz
+        npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering). Jyz
+        nmL    = findneighbour(n,0,-1,0); // neighbour in negative a2-direction (row-major ordering). Jyz
+        npL2   = findneighbour(n,1,0,0);  // neighbour in positive a1-direction (row-major ordering). Jxy
+        nmL2   = findneighbour(n,-1,0,0); // neighbour in negative a1-direction (row-major ordering). Jxy
+        npLm1  = findneighbour(n,0,1,-1); // Jxy
+        nmLm1  = findneighbour(n,0,-1,1); // Jxy
         npL2m1 = findneighbour(n,1,0,-1); // Jyz
         nmL2m1 = findneighbour(n,-1,0,1); // Jyz
-        npL2mL = findneighbour(n,1,-1,0);
-        nmL2mL = findneighbour(n,-1,1,0);
+        npL2mL = findneighbour(n,1,-1,0); // Jxz
+        nmL2mL = findneighbour(n,-1,1,0); // Jxz
 
         /*
         // Test this in some way...
@@ -876,14 +1059,20 @@ void Lattice::fcc_helical_initialize()
 std::vector<double> Lattice::giveposition_fcc_lines(int i, int j, int k, char letter)
 {
     // Our permutations
+    //cout << "in giveposition_fcc_lines" << endl;
+
     if(letter=='x')         if(j>0)    j-=L2;
     if(letter=='y')         if(k>0)    k-=L3;
     if(letter=='z')         if(i>0)    i-=L1;
+
+    //cout << "Gonna give'm positions" << endl;
 
     vector<double> position(3);
     position[0] = 0.5*(i+k);
     position[1] = 0.5*(i+j);
     position[2] = 0.5*(j+k);
+
+    //cout << "Have set the positions" << endl;
 
     // Do something similar for the reciprocal lattice?
     return position;
@@ -984,6 +1173,28 @@ std::vector<int> Lattice::fcczline()
     cout << endl;
     // I hope this doesn't run forever.
     return zline;
+}
+
+std::vector<int> Lattice::fccyline_shifted(double xshift, double zshift)
+{
+    cout << "In fccyline_shifted" << endl;
+    int n1, n2, n3;
+    double xc, yc, zc;
+
+    vector<int> yline;
+    for(int n=0; n<N; n++)  // This should fix it, I think...
+    {
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+
+        xc = 0.5*(n1+n3);
+        yc = 0.5*(n1+n2);
+        zc = 0.5*(n2+n3);
+        cout << "x: " << xc << "; y: " << yc << "; z:" << zc << endl;
+        if(xc==xshift && zc==zshift)        yline.push_back(n);
+    }
+    return yline;
 }
 
 std::vector<int> Lattice::cubicyline()

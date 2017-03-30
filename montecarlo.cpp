@@ -494,6 +494,7 @@ void MonteCarlo::runmetropolis(double beta)
     bool LADYBUG = false;
     bool SCBUG   = false; // For finding out what's wrong with the spin correlation function
     bool DMEBUG  = false;
+    bool ENGYBUG = true; // For checking that our two ways of computing the energy agrees (somewhat)
     bool bincout = false;
 
     // Header for spcorFiles
@@ -649,10 +650,19 @@ void MonteCarlo::runmetropolis(double beta)
             //cout << "Current energy: " << energy_old << endl;
             energies[i]    += energy_old;    // Storing to get the standard deviation
             energies_sq[i] += energy_old*energy_old;
-            if(DMEBUG) // Test to fix DM energy problem
+            if(DMEBUG) // Test to fix DM energy problem.
             {
                 double energy_hardcoded = check_the_energy();
                 cout << "Energy, MC routine: " << energy_old << "; energy, read off the spins: " << energy_hardcoded << endl;
+            }
+            if(ENGYBUG)
+            {
+                double energy_hardcoded = check_the_energy();
+                double endiff = energy_hardcoded-energy_old;
+                // Choose when I would like to be notified
+                if(abs(endiff)>1e-10)    cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
+                //cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
+
             }
             //energy_av      += energy_old;
             //energy_sq_av   += energy_old*energy_old;
@@ -829,7 +839,6 @@ void MonteCarlo::runmetropolis(double beta)
 
             // Some sort of measurement of the magnetization... How to do this when we have a continuous spin?
         }  // End loop over mcsteps
-        //cout << "Done with the MCsteps" << endl;
         if(SCBUG)    cout << "Done with mcsteps, bin " << i << endl;
 
         //cout << "Sum energies, bin " << i << ": " << energies[i] << endl;
@@ -880,6 +889,14 @@ void MonteCarlo::runmetropolis(double beta)
             ftcorrelation_function_store.push_back(ftcorrelation_function_av_bin);
         } // End if-test calculatecorrelationfunction
         if(SCBUG)    cout << "Have made correlation_function_store, bin " << i << endl;
+        endtime = clock();
+        total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
+        if((double)(i+1)/no_of_bins==0.10)    cout << "10% done. Time elapsed :" << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.25)    cout << "25% done. Time elapsed :" << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.50)    cout << "50% done. time elapsed :" << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.75)    cout << "75% done. Time elapsed :" << total_time << endl;
+        if((double)(i+1)/no_of_bins==1.00)    cout << "100% done. Time elapsed :" << total_time<< endl;
+
 
     }  // End loops over bins
     //cout << "Done with the bins" << endl;
@@ -1074,6 +1091,11 @@ void MonteCarlo::runmetropolis(double beta)
     // Destroy plan
     fftw_destroy_plan(p);
     fftw_destroy_plan(pinv);
+
+    // Print to terminal if desired
+    bool printenergytoterminal = false;
+    if(printenergytoterminal)    cout << "Energy for beta = " << beta << ": " << energy_av;
+    if(printenergytoterminal)    cout << ";  Standard deviation: " << E_stdv << endl;
 }
 
 
@@ -1185,6 +1207,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             double Dix = mylattice.sites[k].Dix;
             double Diy = mylattice.sites[k].Diy;
             double Diz = mylattice.sites[k].Diz;
+            if(CONTRBUG)  cout << "Dix: " << Dix << "; Diy: " << Diy << "; Diz = " << Diz << endl;
             //cout << "Dix : " << Dix << "; Diy : " << Diy << "; Diz : " << Diz << endl;
             energy_diff += (Dix*(sx_t*sx_t -sx*sx) + Diy*(sy_t*sy_t-sy*sy)+ Diz*(sz_t*sz_t -sz*sz));
             //cout << "Contr from sian: " << (Dix*(sx_t*sx_t -sx*sx) + Diy*(sy_t*sy_t-sy*sy)+ Diz*(sz_t*sz_t -sz*sz)) << endl;

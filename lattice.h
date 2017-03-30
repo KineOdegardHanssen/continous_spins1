@@ -7,15 +7,15 @@
 #include "gaussiandeviate.h"
 //#include <armadillo>  // in this case, enter LIBS += -larmadillo -llapack -lblas in .pro-file
 
-using namespace std; // Now, I can remove all std's.
+using namespace std; // Now, I can remove all stds.
 
 class Lattice
 {
 public:
 
-    double hx, hy, hz, Dix, Diy, Diz; // Site strengths
-    double J, Jy, Jz, Jxy, Jxz, Jyz;  // Bond strengths, Heisenberg
-    double Dx, Dy, Dz;                // Bond strengths, DM
+    double hx, hy, hz, Dix, Diy, Diz;     // Site strengths
+    double J, Jx, Jy, Jz, Jxy, Jxz, Jyz;  // Bond strengths, Heisenberg
+    double Dx, Dy, Dz;                    // Bond strengths, DM
 
     bool isotropic,  dm;         // Bools for n.n. terms
     bool sianisotropy, magfield; // Bools for site terms
@@ -58,7 +58,9 @@ public:
     void chain_periodic_initialize();
     void chain_open_initialize();
     void quadratic_helical_initialize();
+    void quadratic_helical_initialize_extended();
     void cubic_helical_initialize();
+    void cubic_helical_initialize_extended();
     void fcc_helical_initialize();
     void fcc_helical_initialize_extended(); // Work in progress
 
@@ -78,6 +80,7 @@ public:
     std::vector<int> cubiczline(); // Line of points in the (0,0,z)-direction
     std::vector<int> quadrxline(); // Line of points in the (x,0)-direction
     std::vector<int> quadryline(); // Line of points in the (0,y)-direction
+    std::vector<int> fccyline_shifted(double xshift, double zshift); //Line (0,y,0)+(a,b,c)
 };
 
 #endif // LATTICE_H

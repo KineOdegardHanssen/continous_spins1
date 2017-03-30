@@ -24,6 +24,7 @@ void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcstep
 void extract_yline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
 void extract_xline(int L, string ylinefilenamePrefix); // fcc only
 void extract_zline(int L, string ylinefilenamePrefix); // fcc only
+void extract_yline_shifted(int L, double xshift, double zshift, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
 void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix);
 void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);  // Only for fcc
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
@@ -90,7 +91,7 @@ int main()
     // Heisenberg term
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jy  = 0;    double Jz  = 0;
+    double Jx = 0; double Jy  = 0;    double Jz  = 0;
     double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
@@ -100,10 +101,10 @@ int main()
     sitestrengthsin[3] = Dix;
     sitestrengthsin[4] = Diy;   sitestrengthsin[5] = Diz;
 
-    vector<double> heisenbergin = vector<double>(6);
+    vector<double> heisenbergin = vector<double>(7);
     heisenbergin[0] = J;
-    heisenbergin[1] = Jy;       heisenbergin[2] = Jz;
-    heisenbergin[3] = Jxy;      heisenbergin[4] = Jxz;      heisenbergin[5] = Jyz;
+    heisenbergin[1] = Jx;       heisenbergin[2] = Jy;       heisenbergin[3] = Jz;
+    heisenbergin[4] = Jxy;      heisenbergin[5] = Jxz;      heisenbergin[6] = Jyz;
 
     vector<double> dm_in = vector<double>(3);
     dm_in[0] = Dx;              dm_in[1] = Dy;              dm_in[2] = Dz;
@@ -113,7 +114,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 5.0;
+    double beta = 0.05;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -121,10 +122,12 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    //string filenamePrefix = "test";
+    string filenamePrefix = "test";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
-    string filenamePrefix = "quadr6x6_Js1_beta5_eq10000_mc1000_bins100";
-    //string filenamePrefix = "cubic6x6x6_beta5_eq10000_mc1000_bins100";
+    //string filenamePrefix = "quadr6x6_Js1_beta0p01_eq10000_mc1000_bins100";
+    //string filenamePrefix = "cubic6x6x6_Js1_beta0p05_eq10000_mc1000_bins100";
+    ////string filenamePrefix = "fcc6x6x6_Js1_beta2p5_eq10000_mc1000_bins100";
+    ////string filenamePrefix = "fcc6x6x6_Jxym1_Jxz0_Jyz1_sianDx1Dy1Dz0_beta1_eq10000_mc10000_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxy1_Jyz1_sianDx1_sianDy1_beta1p025_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
@@ -143,7 +146,7 @@ int main()
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
-    //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix1, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
     one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
@@ -161,13 +164,18 @@ int main()
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
     //L = 6;
-    type_lattice = 'Q';
-    string latticefilenamePrefix = "cubic6x6x6_pxy";
+    type_lattice = 'E';
+    double xshift = 2;
+    double zshift = 1;
+    string latticefilenamePrefix = "fcc6x6x6";
     //string latticefilenamePrefix = "test";
     // Special functions
+    // fcc only:
     //extract_yline(L, latticefilenamePrefix);
     //extract_xline(L, latticefilenamePrefix);
     //extract_zline(L, latticefilenamePrefix);
+    //extract_yline_shifted(L, xshift, zshift, latticefilenamePrefix);
+    //Others
     //lattice_coordinates_straightforward(L, type_lattice, latticefilenamePrefix);
     //reciprocallattice_coordinates(L, type_lattice, latticefilenamePrefix);
     //lattice_coordinates_xyz_lines(L, latticefilenamePrefix);
@@ -190,7 +198,7 @@ void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta,
     // Run Metropolis algorithm
     mymc.runmetropolis(beta);
     mymc.endsims();
-    //mymc.test_couplings_strengths(); // Just to test it. Can remove later
+    mymc.test_couplings_strengths(); // Just to test it. Can remove later
     //cout << "L = " << L << endl;
 }
 
@@ -320,6 +328,27 @@ void extract_zline(int L, string ylinefilenamePrefix)
     for(int i=0; i<N; i++)
     {
         zlineFile << zsites[i]  << endl;
+    }
+}
+
+void extract_yline_shifted(int L, double xshift, double zshift, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.fcc_helical_initialize_extended();
+    vector<int> ysites = mylattice.fccyline_shifted(xshift, zshift);
+
+    ofstream ylineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_yline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    ylineFile.open(filename);
+    delete filename;
+
+    int N = ysites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        ylineFile << ysites[i]  << endl;
     }
 }
 
@@ -558,7 +587,7 @@ void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix)
         // Print to file. Site number, qx, qy, qz.
         double xlx = posx[0];    double ylx = posy[0];    double zlx = posz[0];
         double xly = posx[1];    double yly = posy[1];    double zly = posz[1];
-        double xlz = posx[2];    double ylz = posz[2];    double zlz = posz[2];
+        double xlz = posx[2];    double ylz = posy[2];    double zlz = posz[2];
 
         xyzFilex << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
         xyzFilex << "; Position: x = " << xlx << "; y = " << xly << "; z = " << xlz << endl;
@@ -570,6 +599,7 @@ void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix)
     xyzFilex.close();
     xyzFiley.close();
     xyzFilez.close();
+    cout << "Done!" << endl;
 }
 
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix)
@@ -1301,16 +1331,34 @@ void checkneighbours(int L, char type_lattice)
     else if(type_lattice=='Q')    mylattice.quadratic_helical_initialize();
     else if(type_lattice=='O')    mylattice.chain_periodic_initialize();
 
-    int n = 150;
+
     int neighbour;
-    cout << "n = " << n << endl << "Neighbours: ";
     int no_of_neighbours = mylattice.no_of_neighbours;
-    //int N = mylattice.N;
-    for(int i=0; i<no_of_neighbours; i++)
+    int N                = mylattice.N;
+    if(mylattice.dim<3)
     {
-        neighbour = mylattice.sites[n].bonds[i].siteindex2;
-        cout << "Neighbour " << i << ": " << neighbour << endl;
+        for(int n=0; n<N; n++)
+        {
+            cout << "The neighbours of spin " << n << endl;
+            for(int i=0; i<no_of_neighbours; i++)
+            {
+                neighbour = mylattice.sites[n].bonds[i].siteindex2;
+                cout << "Neighbour " << i << ": " << neighbour << endl;
+            }
+            cout << endl;
+        }
     }
+    else
+    {
+        int n = 0;//215;
+        cout << "n = " << n << endl << "Neighbours: ";
+        for(int i=0; i<no_of_neighbours; i++)
+        {
+            neighbour = mylattice.sites[n].bonds[i].siteindex2;
+            cout << "Neighbour " << i << ": " << neighbour << endl;
+        }
+    }
+
 
 }
 
