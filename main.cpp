@@ -78,8 +78,11 @@ int main()
     bool periodic     = true; // To determine whether we have periodic boundary conditions or not
 
     // Selecting the lattice type
-    // F: face-centered cubic (fcc); E: fcc with different directions C: cubic; Q:quadratic; O: chain;
-    char type_lattice = 'Q';
+    // F: face-centered cubic (fcc); E: fcc with different directions
+    // C: cubic; D: cubic with different directions
+    // Q:quadratic; R: quadratic with different directions
+    // O: chain;
+    char type_lattice = 'E';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -92,7 +95,7 @@ int main()
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jx = 0; double Jy  = 0;    double Jz  = 0;
-    double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
+    double Jxy = -1;    double Jxz = 0;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -114,7 +117,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 0.05;
+    double beta = 5.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure

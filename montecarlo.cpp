@@ -5,7 +5,7 @@ MonteCarlo::MonteCarlo()
 }
 
 MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
-{
+{   // Should probably just send this in to the other initializer as MonteCarlo(int L, int L, int L, ...)
     randomtest = false;
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
     this->eqsteps = eqsteps;
@@ -41,11 +41,13 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     // Type of Lattice
     if(periodic)
     {
-        if(type_lattice=='F')      mylattice.fcc_helical_initialize();          // F for fcc
-        if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
-        else if(type_lattice=='C') mylattice.cubic_helical_initialize();        // C for cubic
-        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();    // Q for quadratic
-        else if(type_lattice=='O') mylattice.chain_periodic_initialize();       // O for one-dimensional
+        if(type_lattice=='F')      mylattice.fcc_helical_initialize();                // F for fcc
+        if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended();       // E for fcc extended
+        else if(type_lattice=='C') mylattice.cubic_helical_initialize();              // C for cubic
+        else if(type_lattice=='D') mylattice.cubic_helical_initialize_extended();     // D for cubic extended
+        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();          // Q for quadratic
+        else if(type_lattice=='R') mylattice.quadratic_helical_initialize_extended(); // R for quadr. ext.
+        else if(type_lattice=='O') mylattice.chain_periodic_initialize();             // O for one-dimensional
     }
     else
     {
@@ -154,11 +156,13 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
     // Type of Lattice
     if(periodic)
     {
-        if(type_lattice=='F')      mylattice.fcc_helical_initialize();          // F for fcc
-        if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
-        else if(type_lattice=='C') mylattice.cubic_helical_initialize();        // C for cubic
-        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();    // Q for quadratic
-        else if(type_lattice=='O') mylattice.chain_periodic_initialize();       // O for one-dimensional
+        if(type_lattice=='F')      mylattice.fcc_helical_initialize();                // F for fcc
+        if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended();       // E for fcc extended
+        else if(type_lattice=='C') mylattice.cubic_helical_initialize();              // C for cubic
+        else if(type_lattice=='D') mylattice.cubic_helical_initialize_extended();     // D for cubic extended
+        else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();          // Q for quadratic
+        else if(type_lattice=='R') mylattice.quadratic_helical_initialize_extended(); // R for quadr. ext.
+        else if(type_lattice=='O') mylattice.chain_periodic_initialize();             // O for one-dimensional
     }
     else
     {
@@ -891,11 +895,11 @@ void MonteCarlo::runmetropolis(double beta)
         if(SCBUG)    cout << "Have made correlation_function_store, bin " << i << endl;
         endtime = clock();
         total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
-        if((double)(i+1)/no_of_bins==0.10)    cout << "10% done. Time elapsed :" << total_time << endl;
-        if((double)(i+1)/no_of_bins==0.25)    cout << "25% done. Time elapsed :" << total_time << endl;
-        if((double)(i+1)/no_of_bins==0.50)    cout << "50% done. time elapsed :" << total_time << endl;
-        if((double)(i+1)/no_of_bins==0.75)    cout << "75% done. Time elapsed :" << total_time << endl;
-        if((double)(i+1)/no_of_bins==1.00)    cout << "100% done. Time elapsed :" << total_time<< endl;
+        if((double)(i+1)/no_of_bins==0.10)    cout << "10% done. Time elapsed: " << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.25)    cout << "25% done. Time elapsed: " << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.50)    cout << "50% done. time elapsed: " << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.75)    cout << "75% done. Time elapsed: " << total_time << endl;
+        if((double)(i+1)/no_of_bins==1.00)    cout << "100% done. Time elapsed: " << total_time<< endl;
 
 
     }  // End loops over bins
