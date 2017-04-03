@@ -384,14 +384,17 @@ void MonteCarlo::initialize_energy()
                     if(BEDBUG)    cout << "Have set k in loop, k = " << k << "; N = " << N << endl;
                     double J = mylattice.sites[i].bonds[j].J;
                     if(BEDBUG)    cout << "Have accessed J in bond between spins" << endl;
-                    double sxk = mylattice.sites[k].spinx;
-                    double syk = mylattice.sites[k].spiny;
-                    double szk = mylattice.sites[k].spinz;
-                    if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
-                    partnerspinx += J*sxk;
-                    partnerspiny += J*syk;
-                    partnerspinz += J*szk;
-                    if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
+                    if(J!=0)
+                    {
+                        double sxk = mylattice.sites[k].spinx;
+                        double syk = mylattice.sites[k].spiny;
+                        double szk = mylattice.sites[k].spinz;
+                        if(BEDBUG)    cout << "Have accessed the components of the spin on the other end" << endl;
+                        partnerspinx += J*sxk;
+                        partnerspiny += J*syk;
+                        partnerspinz += J*szk;
+                        if(BEDBUG)    cout << "Have gathered this contribution into partnerspin" << endl;
+                    }
                 }
             }
             if(BEDBUG)   cout << "Done with the loop in isotropic" << endl;
@@ -664,7 +667,7 @@ void MonteCarlo::runmetropolis(double beta)
                 double energy_hardcoded = check_the_energy();
                 double endiff = energy_hardcoded-energy_old;
                 // Choose when I would like to be notified
-                if(abs(endiff)>1e-10)    cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
+                if(abs(endiff)>1e-9)    cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
                 //cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
 
             }
@@ -1238,6 +1241,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
             if(HUMBUG)    cout << "no_of_neighbours, spin " << k << ": " << nneighbours << endl;
+            if(CONTRBUG)  cout << "no_of_neighbours, spin " << k << ": " << nneighbours << endl;
             //cout << nneighbours;
             for(int j=0; j<nneighbours; j++)
             {
@@ -1248,13 +1252,21 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 // Picking out the J each time (may vary depending on bond type)
                 double J = mylattice.sites[k].bonds[j].J;
                 if(HUMBUG)    cout << "Neighbour no. " << j << "; J = " << J << endl;
-                if(CONTRBUG)  cout << "Neighbour no. " << j << ", i.e. spin " << l << "; J = " << J << endl;
-                double sxk = mylattice.sites[l].spinx;  // The neighbours does not change
-                double syk = mylattice.sites[l].spiny;
-                double szk = mylattice.sites[l].spinz;
-                partnerspinx += J*sxk;
-                partnerspiny += J*syk;
-                partnerspinz += J*szk;
+                string dir = mylattice.sites[k].bonds[j].direction;
+                if(CONTRBUG)
+                {
+                    if(!mylattice.extended)    cout << "Neighbour no. " << j << ", i.e. spin " << l << "; J = " << J << endl;
+                    else                       cout << "Neighbour no. " << j << ", i.e. spin " << l << "; J = " << J << "; Direction: " << dir << endl;
+                }
+                if(J!=0)
+                {
+                    double sxk = mylattice.sites[l].spinx;  // The neighbours does not change
+                    double syk = mylattice.sites[l].spiny;
+                    double szk = mylattice.sites[l].spinz;
+                    partnerspinx += J*sxk;
+                    partnerspiny += J*syk;
+                    partnerspinz += J*szk;
+                }
                 //cout << "j = " << j << "; partnerspinx = " << partnerspinx << " " << "; partnerspiny = " << partnerspiny << " " << "; partnerspinz = " << partnerspinz << endl;
             }
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
@@ -2022,7 +2034,70 @@ void MonteCarlo::compareFFTW_withmanual_av(double beta)
                     spincorr_manual_rel_array_av[n] += spincorr_manual_rel;
                 }
             }
+        if(mylattice.dim==2)
+        {
+            int L1 = mylattice.L1;
+            int L2 = mylattice.L2;
+            int elinar = 0; // For retrieving the elements residing in the output array
+            for(int n=0; n<N; n++)
+            {
+                vector<int> cord = mylattice.sitecoordinates[n];
+                int n1 = cord[0];
+                int n2 = cord[1];
+                int index;
+                if(n2<=(int)L2/2)
+                {   // If our element is stored in the output array, we retrieve it
+                    index = elinar;
+                    elinar++;        // We move one index forward in the output array
+                    //cout << "I have met ms elinar" << endl;
+                }
+                else
+                {   // If our element is not stored in the output array, we retrieve its
+                    // complex conjugate. We needn't do anything with it as the result is a
+                    // complex number times its complex conjugate
+                    index = ((int)L2/2+1)*((L1-n1)%L1)+(L2-n2)%L2;
+                    //cout << "Retrieving the index of the cc" << endl;
+                } // End if-tests
+                correlation_function_av[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
 
+                // Manual procedure
+                // Resetting quantities
+                spincorr_manual_rel = 0;
+                spincorr_manual_cpl = 0;
+                for(int k=0; k<N; k++) // Loop over r'
+                {
+                    vector<int> cord = mylattice.sitecoordinates[k];
+                    int k1 = cord[0]; // Number in the x-direction
+                    int k2 = cord[1]; // Number in the y-direction
+                    for(int l=0; l<N; l++) // Loop over r
+                    {   // Something similar for cubic/fcc, but need to get indices.
+                        vector<int> cord = mylattice.sitecoordinates[l];
+                        int l1 = cord[0]; // Number in the x-direction
+                        int l2 = cord[1]; // Number in the y-direction
+
+                        q1 = 2*M_PI*(k1-l1)*n1/L1;
+                        q2 = 2*M_PI*(k2-l2)*n2/L2;
+
+                        q =  q1 + q2;
+                        //cout << "q = " << q << endl;
+                        relfac = cos(q);
+                        cplfac = sin(q);
+                        // Standard, should work:
+                        double spinzk = mylattice.sites[k].spinz;
+                        double spinzl = mylattice.sites[l].spinz;
+                        // Safety route (doesn't work either):
+                        //double spinzk = spins_in_z[k];
+                        //double spinzl = spins_in_z[l];
+                        spincorr_manual_rel += relfac*spinzk*spinzl;
+                        spincorr_manual_cpl += cplfac*spinzk*spinzl;
+                    }
+                }
+                spincorr_manual_rel = spincorr_manual_rel/(N*N);
+                spincorr_manual_cpl = spincorr_manual_cpl/(N*N);
+                spincorr_manual_rel_array[n]     = spincorr_manual_rel;
+                spincorr_manual_rel_array_av[n] += spincorr_manual_rel;
+            }
+        }
         if(mylattice.dim==3) // Simple cubic or fcc
         {
             int L1 = mylattice.L1;
@@ -2152,6 +2227,109 @@ void MonteCarlo::compareFFTW_withmanual_av(double beta)
     else    cout << "No significant deviations. Program OK." << endl;
 }
 
+void MonteCarlo::shortsim(double beta)
+{
+    // For FFTW:
+    // Making the plan
+    std::vector<double> spins_in_z = std::vector<double>(N);
+    vector< complex<double> > qconf(N);  // Output array
+    giveplanforFFT(spins_in_z, qconf);
+
+    // Making an array for the correlation function, one for each value of q
+    vector<double> correlation_function        = vector<double>(N);
+    for(int i=0; i<N; i++)    correlation_function[i] = 0;
+    vector<double> correlation_function_av     = vector<double>(N);
+    for(int i=0; i<N; i++)    correlation_function_av[i] = 0;
+
+    // Equilibration steps
+    for(int i=0; i<eqsteps; i++)        mcstepf_metropolis(beta);
+
+    for(int i=0; i<mcsteps_inbin; i++) // A small number of Monte Carlo steps
+    {
+        cout << "MCstep " << i << endl;
+        // Running the Monte Carlo procedure. One MCstep
+        mcstepf_metropolis(beta);
+
+        // Update the spin array
+        for(int j=0; j<N; j++)    spins_in_z[j] = mylattice.sites[j].spinz;
+
+        // Then execute the plan
+        fftw_execute(p);
+        // For different system types
+        if(mylattice.dim==1) // Chain
+        {
+            int L = mylattice.L;
+            cout << "L = " << L << endl;
+            for(int n=0; n<N; n++) // Loop over the q-values
+            {
+                // FFTW procedure
+                int index;
+                if(n<=(int)N/2)    index = n;
+                else               index = N-n;
+                correlation_function_av[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
+            }
+        }
+        if(mylattice.dim==2)
+        {
+            int L1 = mylattice.L1;
+            int L2 = mylattice.L2;
+            int elinar = 0; // For retrieving the elements residing in the output array
+            for(int n=0; n<N; n++)
+            {
+                vector<int> cord = mylattice.sitecoordinates[n];
+                int n1 = cord[0];
+                int n2 = cord[1];
+                int index;
+                if(n2<=(int)L2/2)
+                {   // If our element is stored in the output array, we retrieve it
+                    index = elinar;
+                    elinar++;        // We move one index forward in the output array
+                    //cout << "I have met ms elinar" << endl;
+                }
+                else
+                {   // If our element is not stored in the output array, we retrieve its
+                    // complex conjugate. We needn't do anything with it as the result is a
+                    // complex number times its complex conjugate
+                    index = ((int)L2/2+1)*((L1-n1)%L1)+(L2-n2)%L2;
+                    //cout << "Retrieving the index of the cc" << endl;
+                } // End if-tests
+                correlation_function_av[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
+            }
+        }
+        if(mylattice.dim==3) // Simple cubic or fcc
+        {
+            int L1 = mylattice.L1;
+            int L2 = mylattice.L2;
+            int L3 = mylattice.L3;
+            //for(int k=0; k<N; k++)    correlation_function_av_bin[k] = 0;
+            int elinar = 0; // For retrieving the elements residing in the output array
+            for(int n=0; n<N; n++)
+            {   // FFTW procedure
+                vector<int> cord = mylattice.sitecoordinates[n];
+                int n1 = cord[0];
+                int n2 = cord[1];
+                int n3 = cord[2];
+                int index;
+                if(n3<=(int)L3/2)
+                {   // If our element is stored in the output array, we retrieve it
+                    index = elinar;
+                    elinar++;        // We move one index forward in the output array
+                }
+                else
+                {   // If our element is not stored in the output array, we retrieve its
+                    // complex conjugate. We needn't do anything with it as the result is a
+                    // complex number times its complex conjugate
+                    index = L2*((int)L3/2+1)*((L1-n1)%L1)+((int)L3/2+1)*((L2-n2)%L2)+((L3-n3)%L3);
+                    //cout << "Retrieving the index of the cc" << endl;
+                } // End if-tests
+                correlation_function_av[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
+            } // End loop over n
+        } // End if-test dimension
+    } // End Monte Carlo steps
+
+    for(int n=0; n<N; n++)        correlation_function_av[n] /= mcsteps_inbin;
+}
+
 void MonteCarlo::test_couplings_strengths()
 {
     // Seeing that our switches work
@@ -2171,7 +2349,12 @@ void MonteCarlo::test_couplings_strengths()
         for(int j=0; j<nneighbours; j++)
         {
             double J = mylattice.sites[n].bonds[j].J;
-            cout << "Neighbour no.: " << j << ", J = " << J << endl;
+            if(!mylattice.extended)            cout << "Neighbour no.: " << j << ", J = " << J << endl;
+            else
+            {
+                string dir = mylattice.sites[n].bonds[j].direction;
+                cout << "Neighbour no.: " << j << ", J = " << J << "; Direction: " << dir << endl;
+            }
         }
     }
     if(sianisotropy)

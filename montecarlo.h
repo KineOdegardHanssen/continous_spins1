@@ -79,6 +79,7 @@ public:
     void compareFFTW_withmanual_av(double beta);
     double check_the_energy(); // Function that finds the energy by going through every spin
     void test_couplings_strengths();
+    void shortsim(double beta);
 
     // Other initialization procedures
     void initialize_energy();

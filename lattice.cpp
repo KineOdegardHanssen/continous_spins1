@@ -18,6 +18,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
+    extended = false;
     cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -36,6 +37,7 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
 
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
+    extended = false;
     cout << "In L1, L2, L3 Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -335,6 +337,7 @@ void Lattice::quadratic_helical_initialize_extended()
     dim = 2;
     N = L1*L2;
     no_of_neighbours = 4;
+    extended = true;
 
     // No of particles in each direction
     dimlengths = vector<int>(dim);
@@ -363,7 +366,7 @@ void Lattice::quadratic_helical_initialize_extended()
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
 
-    // Move these when neccessary
+    // Move these when neccessary  // Could have these inside the loop and add randomness.
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
     std::vector<double> bondints = std::vector<double>(3);
     bondints[0] = Dx;
@@ -373,7 +376,9 @@ void Lattice::quadratic_helical_initialize_extended()
     std::vector<double> position_n = std::vector<double>(2);
     std::vector<int> coord_n = std::vector<int>(2);
 
-    // Could have these inside the loop and add randomness.
+    // Extended version: Can have different interactions in different directions
+    string x = "x";
+    string y = "y";
 
     for(int n=0; n<N; n++)
     {
@@ -387,10 +392,10 @@ void Lattice::quadratic_helical_initialize_extended()
         std::vector<Bond> bonds;
 
         // Making a lot of Bond classes to be added to vector of bonds.
-        bonds.push_back(Bond(n, np1, Jy, true, 'y', bondints)); // Not sure there is much point of this...
-        bonds.push_back(Bond(n, nm1, Jy, false, 'y', bondints));
-        bonds.push_back(Bond(n, npL, Jx, true, 'x', bondints));
-        bonds.push_back(Bond(n, nmL, Jx, false, 'x', bondints));
+        bonds.push_back(Bond(n, np1, Jy, true, y, bondints)); // Not sure there is much point of this...
+        bonds.push_back(Bond(n, nm1, Jy, false, y, bondints));
+        bonds.push_back(Bond(n, npL, Jx, true, x, bondints));
+        bonds.push_back(Bond(n, nmL, Jx, false, x, bondints));
 
         // Send in bools
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
@@ -524,6 +529,7 @@ void Lattice::cubic_helical_initialize_extended()
     dim = 3;
     N = L1*L2*L3;
     no_of_neighbours = 6;
+    extended = true;
 
     // No of particles in each direction
     dimlengths    = vector<int>(dim);
@@ -570,7 +576,7 @@ void Lattice::cubic_helical_initialize_extended()
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
 
-    // Move these when neccessary
+    // Move these when neccessary // Could have these inside the loop and add randomness.
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
     std::vector<double> bondints = std::vector<double>(3);
     bondints[0] = Dx;
@@ -580,7 +586,10 @@ void Lattice::cubic_helical_initialize_extended()
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
 
-    // Could have these inside the loop and add randomness.
+    // Extended version: Can have different interactions in different directions
+    string x = "x";
+    string y = "y";
+    string z = "z";
 
     for(int n=0; n<N; n++)
     {
@@ -597,12 +606,12 @@ void Lattice::cubic_helical_initialize_extended()
 
         //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, Jz, true, 'z', bondints));
-        bonds.push_back(Bond(n, nm1, Jz, true, 'z', bondints));
-        bonds.push_back(Bond(n, npL, Jy, true, 'y', bondints));
-        bonds.push_back(Bond(n, nmL, Jy, true, 'y', bondints));
-        bonds.push_back(Bond(n, npL2, Jx, true, 'x', bondints));
-        bonds.push_back(Bond(n, nmL2, Jx, true, 'x', bondints));
+        bonds.push_back(Bond(n, np1, Jz, true, z, bondints));
+        bonds.push_back(Bond(n, nm1, Jz, true, z, bondints));
+        bonds.push_back(Bond(n, npL, Jy, true, y, bondints));
+        bonds.push_back(Bond(n, nmL, Jy, true, y, bondints));
+        bonds.push_back(Bond(n, npL2, Jx, true, x, bondints));
+        bonds.push_back(Bond(n, nmL2, Jx, true, x, bondints));
 
         sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
 
@@ -634,6 +643,7 @@ void Lattice::fcc_helical_initialize_extended()
     N = L1*L2*L3;
     cout << "N: " << N << endl;
     no_of_neighbours = 12;
+    extended = true;
 
     // No of particles in each direction
     dimlengths    = vector<int>(dim);

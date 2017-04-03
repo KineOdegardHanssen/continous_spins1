@@ -62,7 +62,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 6; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 4; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
@@ -92,7 +92,7 @@ int main()
     // Single-ion anisotropy terms
     double Dix = 1;    double Diy = 1;    double Diz = 0;
     // Heisenberg term
-    double J = 1;
+    double J = -1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jx = 1; double Jy  = 0;    double Jz  = 0;
     double Jxy = -1;    double Jxz = 0;    double Jyz = 1;
@@ -117,7 +117,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 5.0;
+    double beta = 10.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -125,11 +125,11 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    string filenamePrefix = "test2";
+    string filenamePrefix = "test4";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
-    //string filenamePrefix = "quadr6x6_Jx1_Jy0_beta10_eq10000_mc1000_bins100";
-    //string filenamePrefix = "cubic6x6x6_Js1_beta0p05_eq10000_mc1000_bins100";
-    ////string filenamePrefix = "fcc6x6x6_Js1_beta2p5_eq10000_mc1000_bins100";
+    //string filenamePrefix = "quadr6x6_Jsm1_beta0p01_eq10000_mc1000_bins100";
+    //string filenamePrefix = "cubic6x6x6_Jsm1_beta0p5_eq10000_mc1000_bins100";
+    //string filenamePrefix = "fcc6x6x6_Jsm1_beta0p5_eq10000_mc1000_bins100";
     ////string filenamePrefix = "fcc6x6x6_Jxym1_Jxz0_Jyz1_sianDx1Dy1Dz0_beta1_eq10000_mc10000_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
@@ -1338,7 +1338,8 @@ void checkneighbours(int L, char type_lattice)
     int neighbour;
     int no_of_neighbours = mylattice.no_of_neighbours;
     int N                = mylattice.N;
-    if(mylattice.dim<3)
+    bool inspectall = false;
+    if(inspectall)
     {
         for(int n=0; n<N; n++)
         {
@@ -1353,7 +1354,7 @@ void checkneighbours(int L, char type_lattice)
     }
     else
     {
-        int n = 0;//215;
+        int n = 1; // Some spin in the system
         cout << "n = " << n << endl << "Neighbours: ";
         for(int i=0; i<no_of_neighbours; i++)
         {
@@ -1361,7 +1362,5 @@ void checkneighbours(int L, char type_lattice)
             cout << "Neighbour " << i << ": " << neighbour << endl;
         }
     }
-
-
 }
 

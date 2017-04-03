@@ -22,6 +22,7 @@ public:
     bool notperiodic;            // Bool to keep track of neighbours
     bool dimequal;               // Bool for specifying whether we have dimensions of equal length, i.e. LxLxL.
     bool systemstrengthsgiven;   // Bool for indicating whether system strengths are given. Actions will be taken if not
+    bool extended;               // Bool for whether we use an extended class or not (different attributes)
 
     int dim, L, N, no_of_neighbours;
     int L1, L2, L3;              // For when we have unequal dimensions

@@ -105,7 +105,6 @@ Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing, std::vecto
 
 Bond::Bond(int siteindex1, int siteindex2, double J, bool increasing, string direction, std::vector<double> bondints)
 {
-    cout << "In the difficult thing..." << endl;
     this->J = J;     //
     this->bondints = bondints;
     this->siteindex1 = siteindex1;
