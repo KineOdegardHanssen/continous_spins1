@@ -105,10 +105,12 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
         spcorFile.open(filename);
         delete filename;
 
+        /*
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename2, "%s_spincorrelationfunction_transformed.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
         ftspcorFile.open(filename2);
         delete filename2;
+        */
 
         cout << "File set" << endl;
     }
@@ -221,10 +223,12 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
         spcorFile.open(filename);
         delete filename;
 
+        /*
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
         sprintf(filename2, "%s_spincorrelationfunction_transformed.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
         ftspcorFile.open(filename2);
         delete filename2;
+        */
 
         cout << "File set" << endl;  
 
@@ -480,6 +484,7 @@ void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q) 
                           FFTW_ESTIMATE);
 }
 
+/*
 void MonteCarlo::giveplanforFFT_inverse(vector<double>& rout, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
 {
     int rank = mylattice.dim;               // Dimension of lattice
@@ -492,6 +497,7 @@ void MonteCarlo::giveplanforFFT_inverse(vector<double>& rout, vector<complex<dou
                           &rout[0],
                           FFTW_ESTIMATE);
 }
+*/
 
 
 void MonteCarlo::runmetropolis(double beta)
@@ -508,7 +514,7 @@ void MonteCarlo::runmetropolis(double beta)
     if(calculatespincorrelationfunction)
     {
         spcorFile << beta << " " << N << endl;
-        ftspcorFile << beta << " " << N << endl;
+        //ftspcorFile << beta << " " << N << endl;
     }
     //allFile << "N: " << N << "; Jxz: " << mylattice.sites[0].bonds[0].J << "; Jyz: " << mylattice.sites[0].bonds[2].J << "; Jxy: " << mylattice.sites[0].bonds[4].J << "; Dix: " << mylattice.sites[0].Dix << "; Diy: " << mylattice.sites[0].Diy << "; Diz: " << mylattice.sites[0].Diz << endl;
     //allFile << "eqsteps: " << eqsteps << "; mcsteps_inbin: " << mcsteps_inbin << "; no_of_bins: " << no_of_bins << endl;
@@ -561,9 +567,9 @@ void MonteCarlo::runmetropolis(double beta)
     // Declare qconf and set the plan
     vector< complex<double> > qconf(N);  // Output array
     giveplanforFFT(spins_in_z, qconf);
-    // Do the inverse
-    std::vector<double> rout = std::vector<double>(N);
-    giveplanforFFT_inverse(rout, qconf);
+    // Do the inverse?
+    //std::vector<double> rout = std::vector<double>(N);
+    //giveplanforFFT_inverse(rout, qconf);
     // Array for the results
     // Determining the length of the array
     int dim = mylattice.dim;
@@ -584,11 +590,13 @@ void MonteCarlo::runmetropolis(double beta)
     // For the inverse Fourier transform (after we have taken fftw)
     // This should probably be done to the correlation function, not spins_in_z...
     // Because otherwise we would just get the same result back (though not normalized...)
+    /*
     vector<double> ftcorrelation_function_av_bin    = vector<double>(N);
     vector<double> ftcorrelation_function_av        = vector<double>(N);
     for(int i=0; i<N; i++)    ftcorrelation_function_av[i] = 0;
     vector< complex<double> > qconfstore(qlimit);  // Array to store spin correlation function for input
     vector<vector<double> > ftcorrelation_function_store;
+    */
 
     // Resetting quantities
     double ar_av        = 0;
@@ -627,7 +635,8 @@ void MonteCarlo::runmetropolis(double beta)
         mysquad[i]     = 0;
         mzsquad[i]     = 0;
         // Resetting the correlation function bin average for every bin
-        for(int k=0; k<N; k++)    correlation_function_av_bin[k] = 0;
+        for(int k=0; k<N; k++)    correlation_function_av_bin[k]   = 0;
+        //for(int k=0; k<N; k++)    ftcorrelation_function_av_bin[k] = 0;
         if(LADYBUG)
         {
             if(i>0)
@@ -745,8 +754,8 @@ void MonteCarlo::runmetropolis(double beta)
 
                 // Back again:
                 // Finding <S^z_{q}S^z_{-q}> to look at the spin correlation as a function of distance
-                for(int n=0; n<qlimit; n++)    qconfstore[n] = qconf[n]*conj(qconf[n]); // This is unnormalized
-                fftw_execute(pinv);
+                //for(int n=0; n<qlimit; n++)    qconfstore[n] = qconf[n]*conj(qconf[n]); // This is unnormalized
+                //fftw_execute(pinv);
 
                 if(mylattice.dim==1) // Chain
                 {
@@ -758,8 +767,8 @@ void MonteCarlo::runmetropolis(double beta)
                         correlation_function_av[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
 
                         // Normalization constant?
-                        double normconst = 1/(N*N); // Only a factor of 1/N one way
-                        for(int n=0; n<N ;n++)   ftcorrelation_function_av_bin[n] += normconst*rout[n];
+                        //double normconst = 1/(N*N); // Only a factor of 1/N one way
+                        //for(int n=0; n<N ;n++)   ftcorrelation_function_av_bin[n] += normconst*rout[n];
                     }
                 }
                 if(mylattice.dim==2)
@@ -792,8 +801,8 @@ void MonteCarlo::runmetropolis(double beta)
                         // Change this:
 
                         // Normalization constant?
-                        double normconst = 1/(N*N); // Only a factor of 1/N one way
-                        for(int n=0; n<N ;n++)   ftcorrelation_function_av_bin[n] += normconst*rout[n];
+                        //double normconst = 1/(N*N); // Only a factor of 1/N one way
+                        //for(int n=0; n<N ;n++)   ftcorrelation_function_av_bin[n] += normconst*rout[n];
                     }
                 }
                 if(mylattice.dim==3) // Simple cubic or fcc
@@ -833,8 +842,8 @@ void MonteCarlo::runmetropolis(double beta)
                     if(SCBUG)    cout << "Done patching together the corr.func.array" << endl;
 
                     // Normalization constant?
-                    double normconst = 1/(N*N); // Only a factor of 1/N one way
-                    for(int n=0; n<N ;n++)   ftcorrelation_function_av_bin[n] += normconst*rout[n];
+                    //double normconst = 1/(N*N); // Only a factor of 1/N one way
+                    //for(int n=0; n<N ;n++)   ftcorrelation_function_av_bin[n] += normconst*rout[n];
                 }
             }
 
@@ -888,12 +897,15 @@ void MonteCarlo::runmetropolis(double beta)
                 //cout << "Done calculating average of the spin correlation function over every bin" << endl;
                 // Could print for every bin, but is that really neccessary?
                 //spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
+
+                /*
                 ftcorrelation_function_av_bin[l] = correlation_function_av_bin[l]/mcsteps_inbin;
                 ftcorrelation_function_av[l]  += ftcorrelation_function_av_bin[l];
+                */
             }
             //spcorFile << endl; // End line to get ready for new result
             correlation_function_store.push_back(correlation_function_av_bin);
-            ftcorrelation_function_store.push_back(ftcorrelation_function_av_bin);
+            //ftcorrelation_function_store.push_back(ftcorrelation_function_av_bin);
         } // End if-test calculatecorrelationfunction
         if(SCBUG)    cout << "Have made correlation_function_store, bin " << i << endl;
         endtime = clock();
@@ -1057,6 +1069,7 @@ void MonteCarlo::runmetropolis(double beta)
         }
 
         // Fourier transformed back:
+        /*
         for(int k=0; k<N; k++)    ftcorrelation_function_av[k] = ftcorrelation_function_av[k]/no_of_bins;
 
         vector<double> ftspinncorrstdv = vector<double>(N);
@@ -1079,6 +1092,7 @@ void MonteCarlo::runmetropolis(double beta)
             //cout << "FT Correlation function, site " << k << ": " << ftcorrelation_function_av[k] << "; ftstdv: " << ftspinncorrstdv[k] << endl;
             ftspcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << ftcorrelation_function_av[k] << " " << ftspinncorrstdv[k] << endl; // Easier to get the desired output this way
         }
+        */
     }
     if(SCBUG)    cout << "DONE! with writing the correlation functions to file";
     //cout << "Now going to print to allFile" << endl;
@@ -1097,7 +1111,7 @@ void MonteCarlo::runmetropolis(double beta)
 
     // Destroy plan
     fftw_destroy_plan(p);
-    fftw_destroy_plan(pinv);
+    //fftw_destroy_plan(pinv);
 
     // Print to terminal if desired
     bool printenergytoterminal = false;
@@ -1266,8 +1280,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                     partnerspinx += J*sxk;
                     partnerspiny += J*syk;
                     partnerspinz += J*szk;
+                    //cout << "j = " << j << "; partnerspinx = " << partnerspinx << " " << "; partnerspiny = " << partnerspiny << " " << "; partnerspinz = " << partnerspinz << endl;
+                    //cout << "J!=0, get a contribution from bond " << j << ": " << J*(sxk*(sx_t-sx)+syk*(sy_t-sy)+szk*(sz_t-sz)) << endl;
                 }
-                //cout << "j = " << j << "; partnerspinx = " << partnerspinx << " " << "; partnerspiny = " << partnerspiny << " " << "; partnerspinz = " << partnerspinz << endl;
             }
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
             energy_diff += partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz);
@@ -1380,7 +1395,7 @@ void MonteCarlo::endsims()
     if(calculatespincorrelationfunction)
     {
         if(spcorFile.is_open())    spcorFile.close();
-        if(ftspcorFile.is_open())  ftspcorFile.close();
+        //if(ftspcorFile.is_open())  ftspcorFile.close();
     }
 }
 
@@ -2339,7 +2354,7 @@ void MonteCarlo::test_couplings_strengths()
     if(dm)              cout << "bool dm true" << endl;
 
     cout << "We are printing the couplings at work here:" << endl;
-    int n = 0; // We could just test for all, but that muddles our overview. Do this first, then, maybe, throw the following section into a loop
+    int n = 1; // We could just test for all, but that muddles our overview. Do this first, then, maybe, throw the following section into a loop
     int nneighbours;
     if(notperiodic)    nneighbours = mylattice.sites[n].no_of_neighbours_site;
     else               nneighbours = no_of_neighbours;

@@ -44,7 +44,7 @@ void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, b
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
-void checkneighbours(int L, char type_lattice);
+void checkneighbours(int L, char type_lattice, bool periodic);
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J);
 
@@ -62,7 +62,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 4; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 6; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
@@ -92,10 +92,10 @@ int main()
     // Single-ion anisotropy terms
     double Dix = 1;    double Diy = 1;    double Diz = 0;
     // Heisenberg term
-    double J = -1;
+    double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jx = 1; double Jy  = 0;    double Jz  = 0;
-    double Jxy = -1;    double Jxz = 0;    double Jyz = 1;
+    double Jx = 1; double Jy  = 1;    double Jz  = 1;
+    double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -125,11 +125,11 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    string filenamePrefix = "test4";
+    //string filenamePrefix = "test4";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
-    //string filenamePrefix = "quadr6x6_Jsm1_beta0p01_eq10000_mc1000_bins100";
-    //string filenamePrefix = "cubic6x6x6_Jsm1_beta0p5_eq10000_mc1000_bins100";
-    //string filenamePrefix = "fcc6x6x6_Jsm1_beta0p5_eq10000_mc1000_bins100";
+    //string filenamePrefix = "quadr6x6_Js1_beta0p0001_eq10000_mc1000_bins100_II";
+    //string filenamePrefix = "cubic6x6x6_Js1_beta10_eq10000_mc1000_bins100_II";
+    string filenamePrefix = "fcc6x6x6_Js1_beta10_eq10000_mc1000_bins100_II";
     ////string filenamePrefix = "fcc6x6x6_Jxym1_Jxz0_Jyz1_sianDx1Dy1Dz0_beta1_eq10000_mc10000_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
@@ -137,7 +137,7 @@ int main()
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
-    int beta_n = 2;
+    int beta_n = 100;
     double betamin = 1e-6;
     double betamax = 100;
     int betanset = 5;
@@ -163,7 +163,7 @@ int main()
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
-    //checkneighbours(L, type_lattice);
+    //checkneighbours(L, type_lattice, periodic);
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
     //L = 6;
@@ -1323,7 +1323,7 @@ void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
     linethroughmaxFile.close();
 }
 
-void checkneighbours(int L, char type_lattice)
+void checkneighbours(int L, char type_lattice, bool periodic)
 {
     Lattice mylattice = Lattice(L, false, false, false, false); // We only look at the neighbours
 
@@ -1336,14 +1336,16 @@ void checkneighbours(int L, char type_lattice)
 
 
     int neighbour;
-    int no_of_neighbours = mylattice.no_of_neighbours;
+    int no_of_neighbours;
     int N                = mylattice.N;
     bool inspectall = false;
+    if(periodic) no_of_neighbours = mylattice.no_of_neighbours;
     if(inspectall)
     {
         for(int n=0; n<N; n++)
         {
             cout << "The neighbours of spin " << n << endl;
+            if(!periodic)    no_of_neighbours = mylattice.sites[n].no_of_neighbours_site;
             for(int i=0; i<no_of_neighbours; i++)
             {
                 neighbour = mylattice.sites[n].bonds[i].siteindex2;
