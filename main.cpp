@@ -44,7 +44,7 @@ void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, b
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
-void checkneighbours(int L, char type_lattice, bool periodic);
+void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J);
 
@@ -82,7 +82,7 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'E';
+    char type_lattice = 'C';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -125,11 +125,11 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    //string filenamePrefix = "test4";
+    string filenamePrefix = "test4";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "quadr6x6_Js1_beta0p0001_eq10000_mc1000_bins100_II";
-    //string filenamePrefix = "cubic6x6x6_Js1_beta10_eq10000_mc1000_bins100_II";
-    string filenamePrefix = "fcc6x6x6_Js1_beta10_eq10000_mc1000_bins100_II";
+    //string filenamePrefix = "cubic6x6x6_Jxm1_Jy0_Jz1_beta0p01_eq10000_mc1000_bins100_II";
+    //---->//string filenamePrefix = "fcc6x6x6_Jxy1_Jxz0_Jyz0_beta10_eq10000_mc1000_bins100_II";
     ////string filenamePrefix = "fcc6x6x6_Jxym1_Jxz0_Jyz1_sianDx1Dy1Dz0_beta1_eq10000_mc10000_bins100";
     //string filenamePrefix = "bigtest_periodicchain_2p_beta0p00001and4000_10000eqsteps_10000mcsteps_1000bins";
     //string filenamePrefix = "00a_fcc20x20x20_Jyz1_Jxy1_DMDxyz1_beta1_eqsteps10000_mcsteps_inbin_1000_no_of_bins100";
@@ -146,7 +146,7 @@ int main()
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
-    //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //§run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
@@ -163,7 +163,7 @@ int main()
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
-    //checkneighbours(L, type_lattice, periodic);
+    //checkneighbours(L, type_lattice, periodic, sitestrengthsin, heisenbergin, dm_in);
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
     //L = 6;
@@ -185,8 +185,8 @@ int main()
     //reciprocallattice_coordinates_xyzline(L, type_lattice, latticefilenamePrefix);
     //isitonplane(filenamePrefix);
     //isitonline(filenamePrefix);
-    string indexfilenamePrefix = "fcc6x6x6_index27";
-    int maxindex = 27;
+    string indexfilenamePrefix = "fcc6x6x6_index163";
+    int maxindex = 163;
     //findlinethroughmax(L, maxindex, indexfilenamePrefix);
     //cubic_extract_xyzlines(L, latticefilenamePrefix);
     //quadratic_extract_xylines(L, latticefilenamePrefix);
@@ -738,6 +738,7 @@ void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latt
     qFiley.close();
     qFilez.close();
 
+    cout << "DONE!" << endl;
 }
 
 
@@ -1323,33 +1324,47 @@ void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
     linethroughmaxFile.close();
 }
 
-void checkneighbours(int L, char type_lattice, bool periodic)
+void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     Lattice mylattice = Lattice(L, false, false, false, false); // We only look at the neighbours
+    mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
 
     // We only look at periodic functions here
-    if(type_lattice=='E')         mylattice.fcc_helical_initialize_extended();
-    else if(type_lattice=='F')    mylattice.fcc_helical_initialize();
-    else if(type_lattice=='C')    mylattice.cubic_helical_initialize();
-    else if(type_lattice=='Q')    mylattice.quadratic_helical_initialize();
-    else if(type_lattice=='O')    mylattice.chain_periodic_initialize();
+    if(periodic)
+    {
+        if(type_lattice=='E')         mylattice.fcc_helical_initialize_extended();
+        else if(type_lattice=='D')    mylattice.cubic_helical_initialize_extended();
+        else if(type_lattice=='R')    mylattice.quadratic_helical_initialize_extended();
+        else if(type_lattice=='F')    mylattice.fcc_helical_initialize();
+        else if(type_lattice=='C')    mylattice.cubic_helical_initialize();
+        else if(type_lattice=='Q')    mylattice.quadratic_helical_initialize();
+        else if(type_lattice=='O')    mylattice.chain_periodic_initialize();
+    }
+    else
+    {
+        if(type_lattice=='O')    mylattice.chain_open_initialize();
+        else                     cout << "Error! For open BCs, only the chain is implemented!!!" << endl;
+    }
 
 
     int neighbour;
     int no_of_neighbours;
     int N                = mylattice.N;
-    bool inspectall = false;
+    bool inspectall = true;
     if(periodic) no_of_neighbours = mylattice.no_of_neighbours;
+    Bond nbond;
     if(inspectall)
     {
+        //N = 52;
         for(int n=0; n<N; n++)
         {
             cout << "The neighbours of spin " << n << endl;
             if(!periodic)    no_of_neighbours = mylattice.sites[n].no_of_neighbours_site;
             for(int i=0; i<no_of_neighbours; i++)
             {
-                neighbour = mylattice.sites[n].bonds[i].siteindex2;
-                cout << "Neighbour " << i << ": " << neighbour << endl;
+                nbond = mylattice.sites[n].bonds[i];
+                neighbour = nbond.siteindex2;
+                cout << "Neighbour " << i << ": " << neighbour << "; " << nbond.direction << " = " << nbond.J << endl;
             }
             cout << endl;
         }
