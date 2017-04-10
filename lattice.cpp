@@ -270,17 +270,14 @@ void Lattice::quadratic_helical_initialize()
     // Lattice vectors
     a1 = vector<double>(2);
     a2 = vector<double>(2);
-    a1[0] = 1;
-    a1[1] = 0;
-    a2[0] = 0;
-    a2[1] = 1;
+    a1[0] = 1;    a1[1] = 0;
+    a2[0] = 0;    a2[1] = 1;
+
     // Reciprocal lattice vectors
     b1 = vector<double>(2);
     b2 = vector<double>(2);
-    b1[0] = 2*M_PI;
-    b1[1] = 0;
-    b2[0] = 0;
-    b2[1] = 2*M_PI;
+    b1[0] = 2*M_PI;    b1[1] = 0;
+    b2[0] = 0;         b2[1] = 2*M_PI;
 
 
     double a = 1/sqrt(3);
@@ -296,6 +293,7 @@ void Lattice::quadratic_helical_initialize()
 
     std::vector<double> position_n = std::vector<double>(2);
     std::vector<int> coord_n = std::vector<int>(2);
+    std::vector<int> neighbours_n = std::vector<int>(4);
 
     // Could have these inside the loop and add randomness.
 
@@ -307,6 +305,14 @@ void Lattice::quadratic_helical_initialize()
         nm1 = findneighbour2D(n,0,-1);
         npL = findneighbour2D(n,1,0);
         nmL = findneighbour2D(n,-1,0);
+
+        neighbours_n[0] = np1;
+        neighbours_n[1] = nm1;
+        neighbours_n[2] = npL;
+        neighbours_n[3] = nmL;
+
+        siteneighbours.push_back(neighbours_n);
+
 
         std::vector<Bond> bonds;
 
@@ -347,17 +353,14 @@ void Lattice::quadratic_helical_initialize_extended()
     // Lattice vectors
     a1 = vector<double>(2);
     a2 = vector<double>(2);
-    a1[0] = 1;
-    a1[1] = 0;
-    a2[0] = 0;
-    a2[1] = 1;
+    a1[0] = 1;    a1[1] = 0;
+    a2[0] = 0;    a2[1] = 1;
+
     // Reciprocal lattice vectors
     b1 = vector<double>(2);
     b2 = vector<double>(2);
-    b1[0] = 2*M_PI;
-    b1[1] = 0;
-    b2[0] = 0;
-    b2[1] = 2*M_PI;
+    b1[0] = 2*M_PI;    b1[1] = 0;
+    b2[0] = 0;         b2[1] = 2*M_PI;
 
     double a = 1/sqrt(3);
     double spinx = a;
@@ -375,6 +378,7 @@ void Lattice::quadratic_helical_initialize_extended()
 
     std::vector<double> position_n = std::vector<double>(2);
     std::vector<int> coord_n = std::vector<int>(2);
+    std::vector<int> neighbours_n = std::vector<int>(4);
 
     // Extended version: Can have different interactions in different directions
     string x = "x";
@@ -388,6 +392,13 @@ void Lattice::quadratic_helical_initialize_extended()
         nm1 = findneighbour2D(n,0,-1);
         npL = findneighbour2D(n,1,0);
         nmL = findneighbour2D(n,-1,0);
+
+        neighbours_n[0] = np1;
+        neighbours_n[1] = nm1;
+        neighbours_n[2] = npL;
+        neighbours_n[3] = nmL;
+
+        siteneighbours.push_back(neighbours_n);
 
         std::vector<Bond> bonds;
 
@@ -431,28 +442,17 @@ void Lattice::cubic_helical_initialize()
     a1 = vector<double>(3); // Should they be double?
     a2 = vector<double>(3);
     a3 = vector<double>(3);
-    a1[0] = 1;
-    a1[1] = 0;
-    a1[2] = 0;
-    a2[0] = 0;
-    a2[1] = 1;
-    a2[2] = 0;
-    a3[0] = 0;
-    a3[1] = 0;
-    a3[2] = 1;
+    a1[0] = 1;    a1[1] = 0;    a1[2] = 0;
+    a2[0] = 0;    a2[1] = 1;    a2[2] = 0;
+    a3[0] = 0;    a3[1] = 0;    a3[2] = 1;
+
     // Reciprocal lattice vectors
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);
-    b1[0] = 2*M_PI;
-    b1[1] = 0;
-    b1[2] = 0;
-    b2[0] = 0;
-    b2[1] = 2*M_PI;
-    b2[2] = 0;
-    b3[0] = 0;
-    b3[1] = 0;
-    b3[2] = 2*M_PI;
+    b1[0] = 2*M_PI;    b1[1] = 0;         b1[2] = 0;
+    b2[0] = 0;         b2[1] = 2*M_PI;    b2[2] = 0;
+    b3[0] = 0;         b3[1] = 0;         b3[2] = 2*M_PI;
 
     // Temporary fix. May want to send in L1, L2 and L3 to Lattice and deal with a 'rectangular' crystal
     //int L1 = L;
@@ -472,6 +472,7 @@ void Lattice::cubic_helical_initialize()
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
+    std::vector<int> neighbours_n = std::vector<int>(6);
 
     // Could have these inside the loop and add randomness.
 
@@ -484,6 +485,15 @@ void Lattice::cubic_helical_initialize()
         nmL  = findneighbour(n,0,-1,0);
         npL2 = findneighbour(n,1,0,0);
         nmL2 = findneighbour(n,-1,0,0);
+
+        neighbours_n[0] = np1;
+        neighbours_n[1] = nm1;
+        neighbours_n[2] = npL;
+        neighbours_n[3] = nmL;
+        neighbours_n[4] = npL2;
+        neighbours_n[5] = nmL2;
+
+        siteneighbours.push_back(neighbours_n);
 
         std::vector<Bond> bonds;
 
@@ -541,28 +551,17 @@ void Lattice::cubic_helical_initialize_extended()
     a1 = vector<double>(3); // Should they be double?
     a2 = vector<double>(3);
     a3 = vector<double>(3);
-    a1[0] = 1;
-    a1[1] = 0;
-    a1[2] = 0;
-    a2[0] = 0;
-    a2[1] = 1;
-    a2[2] = 0;
-    a3[0] = 0;
-    a3[1] = 0;
-    a3[2] = 1;
+    a1[0] = 1;    a1[1] = 0;    a1[2] = 0;
+    a2[0] = 0;    a2[1] = 1;    a2[2] = 0;
+    a3[0] = 0;    a3[1] = 0;    a3[2] = 1;
+
     // Reciprocal lattice vectors
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);
-    b1[0] = 2*M_PI;
-    b1[1] = 0;
-    b1[2] = 0;
-    b2[0] = 0;
-    b2[1] = 2*M_PI;
-    b2[2] = 0;
-    b3[0] = 0;
-    b3[1] = 0;
-    b3[2] = 2*M_PI;
+    b1[0] = 2*M_PI;    b1[1] = 0;         b1[2] = 0;
+    b2[0] = 0;         b2[1] = 2*M_PI;    b2[2] = 0;
+    b3[0] = 0;         b3[1] = 0;         b3[2] = 2*M_PI;
 
     // Temporary fix. May want to send in L1, L2 and L3 to Lattice and deal with a 'rectangular' crystal
     //int L1 = L;
@@ -585,6 +584,7 @@ void Lattice::cubic_helical_initialize_extended()
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
+    std::vector<int> neighbours_n = std::vector<int>(6);
 
     // Extended version: Can have different interactions in different directions
     string x = "x";
@@ -601,8 +601,16 @@ void Lattice::cubic_helical_initialize_extended()
         npL2 = findneighbour(n,1,0,0);
         nmL2 = findneighbour(n,-1,0,0);
 
-        std::vector<Bond> bonds;
+        neighbours_n[0] = np1;
+        neighbours_n[1] = nm1;
+        neighbours_n[2] = npL;
+        neighbours_n[3] = nmL;
+        neighbours_n[4] = npL2;
+        neighbours_n[5] = nmL2;
 
+        siteneighbours.push_back(neighbours_n);
+
+        std::vector<Bond> bonds;
 
         //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
         // Making a lot of bond classes to be added to bonds.
@@ -657,28 +665,17 @@ void Lattice::fcc_helical_initialize_extended()
     a1 = vector<double>(3); // Should they be double?
     a2 = vector<double>(3);
     a3 = vector<double>(3);
-    a1[0] = 0.5;
-    a1[1] = 0.5;
-    a1[2] = 0;
-    a2[0] = 0;
-    a2[1] = 0.5;
-    a2[2] = 0.5;
-    a3[0] = 0.5;
-    a3[1] = 0;
-    a3[2] = 0.5;
+    a1[0] = 0.5;    a1[1] = 0.5;    a1[2] = 0;
+    a2[0] = 0;      a2[1] = 0.5;    a2[2] = 0.5;
+    a3[0] = 0.5;    a3[1] = 0;      a3[2] = 0.5;
+
     // Reciprocal lattice vectors
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);
-    b1[0] = M_PI;
-    b1[1] = M_PI;
-    b1[2] = 0;
-    b2[0] = 0;
-    b2[1] = M_PI;
-    b2[2] = M_PI;
-    b3[0] = M_PI;
-    b3[1] = 0;
-    b3[2] = M_PI;
+    b1[0] =  2*M_PI;     b1[1] =  2*M_PI;     b1[2] = -2*M_PI;
+    b2[0] = -2*M_PI;     b2[1] =  2*M_PI;     b2[2] =  2*M_PI;
+    b3[0] =  2*M_PI;     b3[1] = -2*M_PI;     b3[2] =  2*M_PI;
 
     //cout << "In fcc_helical_initialize_extended!!!!!!!" << endl;
 
@@ -708,6 +705,7 @@ void Lattice::fcc_helical_initialize_extended()
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n       = std::vector<int>(3);
+    std::vector<int> neighbours_n  = std::vector<int>(12);
 
     string xy = "xy";
     string xz = "xz";
@@ -748,6 +746,21 @@ void Lattice::fcc_helical_initialize_extended()
         nmL2m1 = findneighbour(n,-1,0,1); // Jyz
         npL2mL = findneighbour(n,1,-1,0); // Jxz
         nmL2mL = findneighbour(n,-1,1,0); // Jxz
+
+        neighbours_n[0] = np1;
+        neighbours_n[1] = nm1;
+        neighbours_n[2] = npL;
+        neighbours_n[3] = nmL;
+        neighbours_n[4] = npL2;
+        neighbours_n[5] = nmL2;
+        neighbours_n[6] = npLm1;
+        neighbours_n[7] = nmLm1;
+        neighbours_n[8] = npL2m1;
+        neighbours_n[9] = nmL2m1;
+        neighbours_n[10] = npL2mL;
+        neighbours_n[11] = nmL2mL;
+
+        siteneighbours.push_back(neighbours_n);
 
         // Should I have some bool that determines whether or not I need these?
         // This part probably need fixing!!
@@ -881,28 +894,17 @@ void Lattice::fcc_helical_initialize()
     a1 = vector<double>(3); // Should they be double?
     a2 = vector<double>(3);
     a3 = vector<double>(3);
-    a1[0] = 0.5;
-    a1[1] = 0.5;
-    a1[2] = 0;
-    a2[0] = 0;
-    a2[1] = 0.5;
-    a2[2] = 0.5;
-    a3[0] = 0.5;
-    a3[1] = 0;
-    a3[2] = 0.5;
+    a1[0] = 0.5;    a1[1] = 0.5;    a1[2] = 0;
+    a2[0] = 0;      a2[1] = 0.5;    a2[2] = 0.5;
+    a3[0] = 0.5;    a3[1] = 0;      a3[2] = 0.5;
+
     // Reciprocal lattice vectors
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);
-    b1[0] = M_PI;
-    b1[1] = M_PI;
-    b1[2] = 0;
-    b2[0] = 0;
-    b2[1] = M_PI;
-    b2[2] = M_PI;
-    b3[0] = M_PI;
-    b3[1] = 0;
-    b3[2] = M_PI;
+    b1[0] =  2*M_PI;     b1[1] =  2*M_PI;     b1[2] = -2*M_PI;
+    b2[0] = -2*M_PI;     b2[1] =  2*M_PI;     b2[2] =  2*M_PI;
+    b3[0] =  2*M_PI;     b3[1] = -2*M_PI;     b3[2] =  2*M_PI;
 
     cout << "In fcc_helical_initialize" << endl;
 
@@ -921,6 +923,7 @@ void Lattice::fcc_helical_initialize()
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
+    std::vector<int> neighbours_n = std::vector<int>(12);
 
     // Could have these inside the loop and add randomness.
 
@@ -948,6 +951,21 @@ void Lattice::fcc_helical_initialize()
         nmL2m1 = findneighbour(n,-1,0,1);
         npL2mL = findneighbour(n,1,-1,0);
         nmL2mL = findneighbour(n,-1,1,0);
+
+        neighbours_n[0] = np1;
+        neighbours_n[1] = nm1;
+        neighbours_n[2] = npL;
+        neighbours_n[3] = nmL;
+        neighbours_n[4] = npL2;
+        neighbours_n[5] = nmL2;
+        neighbours_n[6] = npLm1;
+        neighbours_n[7] = nmLm1;
+        neighbours_n[8] = npL2m1;
+        neighbours_n[9] = nmL2m1;
+        neighbours_n[10] = npL2mL;
+        neighbours_n[11] = nmL2mL;
+
+        siteneighbours.push_back(neighbours_n);
 
         /*
         // Test this in some way...
@@ -1078,15 +1096,9 @@ std::vector<double> Lattice::giveqvector_fcc_lines(int i, int j, int k, char let
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);
-    b1[0] = M_PI;
-    b1[1] = M_PI;
-    b1[2] = 0;
-    b2[0] = 0;
-    b2[1] = M_PI;
-    b2[2] = M_PI;
-    b3[0] = M_PI;
-    b3[1] = 0;
-    b3[2] = M_PI;
+    b1[0] = 2*M_PI;     b1[1] = 2*M_PI;     b1[2] = -2*M_PI;
+    b2[0] = -2*M_PI;    b2[1] = 2*M_PI;     b2[2] = 2*M_PI;
+    b3[0] = 2*M_PI;     b3[1] = -2*M_PI;    b3[2] = 2*M_PI;
 
     // Our permutations
     if(letter=='x')         if(j>0)    j-=L2;
@@ -1175,7 +1187,7 @@ std::vector<int> Lattice::fccyline_shifted(double xshift, double zshift)
     double xc, yc, zc;
 
     vector<int> yline;
-    for(int n=0; n<N; n++)  // This should fix it, I think...
+    for(int n=0; n<N; n++)
     {
         n1 = n/(L2*L3);
         n2 = n/L3 - n/(L2*L3)*L2;
@@ -1196,7 +1208,7 @@ std::vector<int> Lattice::cubicyline()
     int n1, n2, n3;
 
     vector<int> yline;
-    for(int n=0; n<N; n++)  // This should fix it, I think...
+    for(int n=0; n<N; n++)
     {
         n1 = n/(L2*L3);
         n2 = n/L3 - n/(L2*L3)*L2;
@@ -1212,17 +1224,13 @@ std::vector<int> Lattice::cubicxline()
     int n1, n2, n3;
 
     vector<int> xline;
-    for(int n=0; n<N; n++)  // This should fix it, I think...
+    for(int n=0; n<N; n++)
     {
         n1 = n/(L2*L3);
         n2 = n/L3 - n/(L2*L3)*L2;
         n3 = n%L3;
         cout << "n1 = " << n1 << "; n2 = " << n2 << "; n3 = " << n3 << endl;
-        if(n2==0 && n3==0)
-        {
-            cout << "And we are in the loop" << endl;
-            xline.push_back(n);
-        }
+        if(n2==0 && n3==0)            xline.push_back(n);
     }
     return xline;
 }
@@ -1233,7 +1241,7 @@ std::vector<int> Lattice::cubiczline()
     int n1, n2, n3;
 
     vector<int> zline;
-    for(int n=0; n<N; n++)  // This should fix it, I think...
+    for(int n=0; n<N; n++)
     {
         n1 = n/(L2*L3);
         n2 = n/L3 - n/(L2*L3)*L2;
@@ -1249,9 +1257,9 @@ std::vector<int> Lattice::quadrxline()
     int n1, n2;
 
     vector<int> xline;
-    for(int n=0; n<N; n++)  // This should fix it, I think...
+    for(int n=0; n<N; n++)
     {
-        n1 = ((int)n/L2); // n1
+        n1 = ((int)n/L2);
         n2 = ((int)n%L2);
         if(n2==0)        xline.push_back(n);
     }
@@ -1264,13 +1272,64 @@ std::vector<int> Lattice::quadryline()
     int n1, n2;
 
     vector<int> yline;
-    for(int n=0; n<N; n++)  // This should fix it, I think...
+    for(int n=0; n<N; n++)
     {
-        n1 = ((int)n/L2); // n1
+        n1 = ((int)n/L2);
         n2 = ((int)n%L2);
         if(n1==0)        yline.push_back(n);
     }
     return yline;
+}
+
+std::vector<int> Lattice::diagline_fcc()
+{
+    cout << "In diagline_fcc" << endl;
+    int n1, n2, n3, xint, yint,zint;
+
+    vector<int> dline;
+    for(int n=0; n<N; n++)
+    {
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+
+        xint = n1+n3;
+        yint = n1+n2;
+        zint = n2+n3;
+        if(xint==yint && yint==zint)        dline.push_back(n);
+    }
+    return dline;
+}
+
+std::vector<int> Lattice::diagline_cubic()
+{
+    cout << "In diagline_cubic" << endl;
+    int n1, n2, n3;
+
+    vector<int> dline;
+    for(int n=0; n<N; n++)
+    {
+        n1 = n/(L2*L3);
+        n2 = n/L3 - n/(L2*L3)*L2;
+        n3 = n%L3;
+        if(n1==n2 && n2==n3)        dline.push_back(n);
+    }
+    return dline;
+}
+
+std::vector<int> Lattice::diagline_quadr()
+{
+    cout << "In diagline_quadr" << endl;
+    int n1, n2;
+
+    vector<int> dline;
+    for(int n=0; n<N; n++)
+    {
+        n1 = ((int)n/L2); // n1
+        n2 = ((int)n%L2);
+        if(n1==n2)        dline.push_back(n);
+    }
+    return dline;
 }
 
 std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)
