@@ -24,7 +24,12 @@ void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcstep
 void extract_yline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
 void extract_xline(int L, string ylinefilenamePrefix); // fcc only
 void extract_zline(int L, string ylinefilenamePrefix); // fcc only
+void extract_qyline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
+void extract_qxline(int L, string ylinefilenamePrefix); // fcc only
+void extract_qzline(int L, string ylinefilenamePrefix); // fcc only
+void extract_qdline(int L, string ylinefilenamePrefix); // fcc only
 void extract_yline_shifted(int L, double xshift, double zshift, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
+void diagline(int L, string latticefilenamePrefix);
 void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix);
 void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);  // Only for fcc
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
@@ -82,7 +87,7 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'C';
+    char type_lattice = 'E';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -95,7 +100,7 @@ int main()
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jx = 1; double Jy  = 1;    double Jz  = 1;
-    double Jxy = 1;    double Jxz = 1;    double Jyz = 1;
+    double Jxy = 0;    double Jxz = 0;    double Jyz = 1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -125,7 +130,8 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    string filenamePrefix = "test4";
+    //string filenamePrefix = "test4";
+    string filenamePrefix = "fcc6x6x6_Jxy0_Jxz0_Jyz1_beta10_eq10000_mc1000_bins100_seed59_spincorralldir";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "quadr6x6_Js1_beta0p0001_eq10000_mc1000_bins100_II";
     //string filenamePrefix = "cubic6x6x6_Jxm1_Jy0_Jz1_beta0p01_eq10000_mc1000_bins100_II";
@@ -152,7 +158,7 @@ int main()
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
 
     //-------------------------------------Test functions--------------------------------------------//
@@ -171,25 +177,39 @@ int main()
     double xshift = 2;
     double zshift = 1;
     string latticefilenamePrefix = "fcc6x6x6";
+    string latticefilenamePrefixd = "L6";
     //string latticefilenamePrefix = "test";
-    // Special functions
+    // Line finding functions
     // fcc only:
     //extract_yline(L, latticefilenamePrefix);
     //extract_xline(L, latticefilenamePrefix);
     //extract_zline(L, latticefilenamePrefix);
+    //extract_qyline(L, latticefilenamePrefix);
+    //extract_qxline(L, latticefilenamePrefix);
+    //extract_qzline(L, latticefilenamePrefix);
+    //extract_qdline(L, latticefilenamePrefix);
     //extract_yline_shifted(L, xshift, zshift, latticefilenamePrefix);
-    //Others
+    //diagline(L, latticefilenamePrefixd);
+    // Lattice coordinates
     //lattice_coordinates_straightforward(L, type_lattice, latticefilenamePrefix);
     //reciprocallattice_coordinates(L, type_lattice, latticefilenamePrefix);
     //lattice_coordinates_xyz_lines(L, latticefilenamePrefix);
     //reciprocallattice_coordinates_xyzline(L, type_lattice, latticefilenamePrefix);
     //isitonplane(filenamePrefix);
     //isitonline(filenamePrefix);
-    string indexfilenamePrefix = "fcc6x6x6_index163";
-    int maxindex = 163;
+    string indexfilenamePrefix = "fcc6x6x6_index126";
+    int maxindex = 126;
     //findlinethroughmax(L, maxindex, indexfilenamePrefix);
     //cubic_extract_xyzlines(L, latticefilenamePrefix);
     //quadratic_extract_xylines(L, latticefilenamePrefix);
+
+    vector<double> qs;
+    int i = 1;    int j = 2;    int k = 3;
+    Lattice mylattice = Lattice(L, false, false, false, false); // Only for testing
+    qs = mylattice.giveqvector_fcc(i,j,k);
+    cout << "qx = " << qs[0] << endl;
+    cout << "qy = " << qs[1] << endl;
+    cout << "qz = " << qs[2] << endl;
 
 }
 
@@ -292,6 +312,7 @@ void extract_yline(int L, string ylinefilenamePrefix)
     {
         ylineFile << ysites[i]  << endl;
     }
+    ylineFile.close();
 }
 
 void extract_xline(int L, string ylinefilenamePrefix)
@@ -312,6 +333,7 @@ void extract_xline(int L, string ylinefilenamePrefix)
     {
         xlineFile << xsites[i]  << endl;
     }
+    xlineFile.close();
 }
 
 void extract_zline(int L, string ylinefilenamePrefix)
@@ -332,6 +354,7 @@ void extract_zline(int L, string ylinefilenamePrefix)
     {
         zlineFile << zsites[i]  << endl;
     }
+    zlineFile.close();
 }
 
 void extract_yline_shifted(int L, double xshift, double zshift, string ylinefilenamePrefix)
@@ -353,6 +376,142 @@ void extract_yline_shifted(int L, double xshift, double zshift, string ylinefile
     {
         ylineFile << ysites[i]  << endl;
     }
+    ylineFile.close();
+}
+
+void extract_qyline(int L, string ylinefilenamePrefix)
+{
+    cout << "In extract_qyline" << endl;
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.fcc_helical_initialize_extended();
+    vector<int> ysites = mylattice.fccqyline();
+
+    ofstream ylineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_qyline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    ylineFile.open(filename);
+    delete filename;
+
+    int N = ysites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        ylineFile << ysites[i]  << endl;
+    }
+    ylineFile.close();
+}
+
+void extract_qxline(int L, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.fcc_helical_initialize_extended();
+    vector<int> xsites = mylattice.fccqxline();
+
+    ofstream xlineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_qxline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xlineFile.open(filename);
+    delete filename;
+
+    int N = xsites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        xlineFile << xsites[i]  << endl;
+    }
+    xlineFile.close();
+}
+
+void extract_qzline(int L, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.fcc_helical_initialize_extended();
+    vector<int> zsites = mylattice.fccqzline();
+
+    ofstream zlineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_qzline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    zlineFile.open(filename);
+    delete filename;
+
+    int N = zsites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        zlineFile << zsites[i]  << endl;
+    }
+    zlineFile.close();
+}
+
+void extract_qdline(int L, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    mylattice.fcc_helical_initialize_extended();
+    vector<int> dsites = mylattice.fccqdline();
+
+    ofstream dlineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_qdline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    dlineFile.open(filename);
+    delete filename;
+
+    int N = dsites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        dlineFile << dsites[i]  << endl;
+    }
+    dlineFile.close();
+}
+
+void diagline(int L, string latticefilenamePrefix)
+{
+    // Getting the Lattice sites along the diagonal in the quadratic lattice
+    Lattice qlattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    qlattice.quadratic_helical_initialize();
+    vector<int> dqsites = qlattice.diagline_quadr();
+
+    // Getting the Lattice sites along the diagonal in the simple cubic lattice
+    Lattice clattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    clattice.cubic_helical_initialize();
+    vector<int> dcsites = clattice.diagline_cubic();
+
+    // Getting the Lattice sites along the diagonal in the face centered cubic lattice
+    Lattice flattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    flattice.fcc_helical_initialize_extended();
+    vector<int> dfsites = flattice.diagline_cubic();
+
+    ofstream dqlineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_quadr_diagline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    dqlineFile.open(filename);
+    delete filename;
+
+    ofstream dclineFile;
+    char *filename2 = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename2, "%s_cubic_diagline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    dclineFile.open(filename2);
+    delete filename2;
+
+    ofstream dflineFile;
+    char *filename3 = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename3, "%s_fcc_diagline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    dflineFile.open(filename3);
+    delete filename3;
+
+    int N = dqsites.size();
+
+    for(int i=0; i<N; i++)        dqlineFile << dqsites[i]  << endl;
+    for(int i=0; i<N; i++)        dclineFile << dcsites[i]  << endl;
+    for(int i=0; i<N; i++)        dflineFile << dfsites[i]  << endl;
+
+    dqlineFile.close();
+    dclineFile.close();
+    dflineFile.close();
 }
 
 void cubic_extract_xyzlines(int L, string latticefilenamePrefix)
@@ -663,13 +822,10 @@ void reciprocallattice_coordinates(int L, char type_lattice, string latticefilen
         for(int i=0; i<N; i++) // Possibly only up to N/2.
         {
             vector<int> ns = mylattice.sitecoordinates[i];
-            //cout << "ns retrieved" << endl;
-            // These must be changed if we change into possibly setting L1, L2, L3 different
-            // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
-            // Could be more general, but we don't need to play around with our lattices that much...
-            qx = ns[0]*mylattice.b1[0]/L1 + ns[2]*mylattice.b3[0]/L3;
-            qy = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2;
-            qz = ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
+
+            qx = ns[0]*mylattice.b1[0]/L1 + ns[1]*mylattice.b2[0]/L2 + ns[2]*mylattice.b3[0]/L3;
+            qy = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2 + ns[2]*mylattice.b3[1]/L3;
+            qz = ns[0]*mylattice.b1[2]/L1 + ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
             // Print to file. Site number, qx, qy, qz.
             qFile << "Running index = " << i << "; Indices: i = " << ns[0] << ";  j = " << ns[1] << "; k = " << ns[2] << "; Positions in q-space:   qx = " << qx << ";   qy  = " << qy << ";    qz = " << qz << endl;
         }
@@ -1272,7 +1428,7 @@ void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
         */
 
         // Or we could use the shifted lattice:
-        qs = mylattice.giveqvector_fcc_lines(ns[0], ns[1], ns[2], 'y');
+        qs = mylattice.giveqvector_fcc(ns[0], ns[1], ns[2]);
 
         storage.push_back(qs);
         // Print to file. Site number, qx, qy, qz.

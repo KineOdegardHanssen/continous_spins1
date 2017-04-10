@@ -30,9 +30,13 @@ public:
     ofstream    allFile;
     ofstream    bigFile;
     ofstream    compareFile;
-    ofstream    spcorFile;
+    ofstream    spcorFilex;
+    ofstream    spcorFiley;
+    ofstream    spcorFilez;
+    ofstream    spcorFiletot;
     ofstream    ftspcorFile;
     ofstream    randomtestFile;
+    ofstream    qxFile;
     ofstream    qFile;
     string      filenamePrefix;
 
@@ -44,7 +48,7 @@ public:
     bool printeveryMCstep, calculatespincorrelationfunction, randomtest;
     bool DEBUG, MAJORDEBUG;
 
-    fftw_plan p;
+    fftw_plan px, py, pz;
     fftw_plan pinv;
 
     // Random generators
@@ -86,7 +90,9 @@ public:
     void reset_energy();
 
     // Function making a plan for the FFT
-    void giveplanforFFT(vector<double> &r, vector<complex<double> > &q);
+    void givexplanforFFT(vector<double> &r, vector<complex<double> > &q);
+    void giveyplanforFFT(vector<double> &r, vector<complex<double> > &q);
+    void givezplanforFFT(vector<double> &r, vector<complex<double> > &q);
     void giveplanforFFT_inverse(vector<double>& rout, vector<complex<double> >& q);
 
 

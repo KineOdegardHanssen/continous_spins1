@@ -99,11 +99,27 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     if(calculatespincorrelationfunction)
     {
         cout << "In if-test calculatespincorrelationfunction" << endl;
-        // Setting up file to print to
-        char *filename = new char[1000];                                // File name can have max 1000 characters
-        sprintf(filename, "%s_spincorrelationfunction.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-        spcorFile.open(filename);
-        delete filename;
+        // Setting up files to print to
+        // Should probably add yet another switch...
+        char *filenamex = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenamex, "%s_spincorrelationfunctionx.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFilex.open(filenamex);
+        delete filenamex;
+
+        char *filenamey = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenamey, "%s_spincorrelationfunctiony.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFiley.open(filenamey);
+        delete filenamey;
+
+        char *filenamez = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenamez, "%s_spincorrelationfunctionz.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFilez.open(filenamez);
+        delete filenamez;
+
+        char *filenametot = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenametot, "%s_spincorrelationfunctiontot.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFiletot.open(filenametot);
+        delete filenametot;
 
         /*
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
@@ -217,11 +233,27 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
     if(calculatespincorrelationfunction)
     {
         cout << "In if-test calculatespincorrelationfunction" << endl;
-        // Setting up file to print to
-        char *filename = new char[1000];                                // File name can have max 1000 characters
-        sprintf(filename, "%s_spincorrelationfunction.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-        spcorFile.open(filename);
-        delete filename;
+        // Setting up files to print to
+        // Should probably add yet another switch
+        char *filenamex = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenamex, "%s_spincorrelationfunctionx.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFilex.open(filenamex);
+        delete filenamex;
+
+        char *filenamey = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenamey, "%s_spincorrelationfunctiony.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFiley.open(filenamey);
+        delete filenamey;
+
+        char *filenamez = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenamez, "%s_spincorrelationfunctionz.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFilez.open(filenamez);
+        delete filenamez;
+
+        char *filenametot = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filenametot, "%s_spincorrelationfunctiontot.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        spcorFiletot.open(filenametot);
+        delete filenametot;
 
         /*
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
@@ -471,13 +503,39 @@ void MonteCarlo::reset_energy()
     //setrandomgenerators();
 }
 
-void MonteCarlo::giveplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
+void MonteCarlo::givexplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
 {
     int rank = mylattice.dim;               // Dimension of lattice
     vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
                                             // depending on the lattice
     // p declared as a class variable
-    p = fftw_plan_dft_r2c(rank,
+    px = fftw_plan_dft_r2c(rank,
+                          &Ls[0],
+                          &r[0],
+                          reinterpret_cast<fftw_complex*>(&q[0]),
+                          FFTW_ESTIMATE);
+}
+
+void MonteCarlo::giveyplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
+{
+    int rank = mylattice.dim;               // Dimension of lattice
+    vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
+                                            // depending on the lattice
+    // p declared as a class variable
+    py = fftw_plan_dft_r2c(rank,
+                          &Ls[0],
+                          &r[0],
+                          reinterpret_cast<fftw_complex*>(&q[0]),
+                          FFTW_ESTIMATE);
+}
+
+void MonteCarlo::givezplanforFFT(vector<double>& r, vector<complex<double> >& q)  // Return p? Or have p as a class variable?
+{
+    int rank = mylattice.dim;               // Dimension of lattice
+    vector<int> Ls = mylattice.dimlengths;  // List containing [L], [L1,L2], [L1,L2,L3],
+                                            // depending on the lattice
+    // p declared as a class variable
+    pz = fftw_plan_dft_r2c(rank,
                           &Ls[0],
                           &r[0],
                           reinterpret_cast<fftw_complex*>(&q[0]),
@@ -512,8 +570,11 @@ void MonteCarlo::runmetropolis(double beta)
     // Header for spcorFiles
     if(calculatespincorrelationfunction)
     {
-        spcorFile << beta << " " << N << endl;
-        ftspcorFile << beta << " " << N << endl;
+        spcorFilex   << beta << " " << N << endl;
+        spcorFiley   << beta << " " << N << endl;
+        spcorFilez   << beta << " " << N << endl;
+        spcorFiletot << beta << " " << N << endl;
+        ftspcorFile  << beta << " " << N << endl;
     }
     //allFile << "N: " << N << "; Jxz: " << mylattice.sites[0].bonds[0].J << "; Jyz: " << mylattice.sites[0].bonds[2].J << "; Jxy: " << mylattice.sites[0].bonds[4].J << "; Dix: " << mylattice.sites[0].Dix << "; Diy: " << mylattice.sites[0].Diy << "; Diz: " << mylattice.sites[0].Diz << endl;
     //allFile << "eqsteps: " << eqsteps << "; mcsteps_inbin: " << mcsteps_inbin << "; no_of_bins: " << no_of_bins << endl;
@@ -562,10 +623,16 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mzsquad            = std::vector<double>(no_of_bins);
     // For the correlation function
     // The spins
+    std::vector<double> spins_in_x = std::vector<double>(N);
+    std::vector<double> spins_in_y = std::vector<double>(N);
     std::vector<double> spins_in_z = std::vector<double>(N);
     // Declare qconf and set the plan
-    vector< complex<double> > qconf(N);  // Output array
-    giveplanforFFT(spins_in_z, qconf);
+    vector< complex<double> > qconfx(N);  // Output array
+    vector< complex<double> > qconfy(N);  // Output array
+    vector< complex<double> > qconfz(N);  // Output array
+    givexplanforFFT(spins_in_x, qconfx);
+    giveyplanforFFT(spins_in_y, qconfy);
+    givezplanforFFT(spins_in_z, qconfz);
 
     // Array for the results
     // Determining the length of the array
@@ -582,12 +649,22 @@ void MonteCarlo::runmetropolis(double beta)
     vector< complex<double> > qconfstore(qlimit);  // Array to store spin correlation function for input
     giveplanforFFT_inverse(rout, qconfstore);
 
-    // Typedefs
-
-    vector<double> correlation_function_av_bin    = vector<double>(N);
-    vector<double> correlation_function_av        = vector<double>(N);
-    for(int i=0; i<N; i++)    correlation_function_av[i] = 0;
-    vector<vector<double> > correlation_function_store;
+    vector<double> correlation_functionx_av_bin    = vector<double>(N);
+    vector<double> correlation_functiony_av_bin    = vector<double>(N);
+    vector<double> correlation_functionz_av_bin    = vector<double>(N);
+    vector<double> correlation_functiontot_av_bin  = vector<double>(N);
+    vector<double> correlation_functionx_av        = vector<double>(N);
+    vector<double> correlation_functiony_av        = vector<double>(N);
+    vector<double> correlation_functionz_av        = vector<double>(N);
+    vector<double> correlation_functiontot_av      = vector<double>(N);
+    for(int i=0; i<N; i++)    correlation_functionx_av[i]   = 0;
+    for(int i=0; i<N; i++)    correlation_functiony_av[i]   = 0;
+    for(int i=0; i<N; i++)    correlation_functionz_av[i]   = 0;
+    for(int i=0; i<N; i++)    correlation_functiontot_av[i] = 0;
+    vector<vector<double> > correlation_functionx_store;
+    vector<vector<double> > correlation_functiony_store;
+    vector<vector<double> > correlation_functionz_store;
+    vector<vector<double> > correlation_functiontot_store;
 
     // For the inverse Fourier transform (after we have taken fftw)
     // This should probably be done to the correlation function, not spins_in_z...
@@ -634,8 +711,11 @@ void MonteCarlo::runmetropolis(double beta)
         mysquad[i]     = 0;
         mzsquad[i]     = 0;
         // Resetting the correlation function bin average for every bin
-        for(int k=0; k<N; k++)    correlation_function_av_bin[k]   = 0;
-        for(int k=0; k<N; k++)    ftcorrelation_function_av_bin[k] = 0;
+        for(int k=0; k<N; k++)    correlation_functionx_av_bin[k]     = 0;
+        for(int k=0; k<N; k++)    correlation_functiony_av_bin[k]     = 0;
+        for(int k=0; k<N; k++)    correlation_functionz_av_bin[k]     = 0;
+        for(int k=0; k<N; k++)    correlation_functiontot_av_bin[k]   = 0;
+        for(int k=0; k<N; k++)    ftcorrelation_function_av_bin[k]    = 0;
         if(LADYBUG)
         {
             if(i>0)
@@ -702,7 +782,12 @@ void MonteCarlo::runmetropolis(double beta)
                 my+= mylattice.sites[k].spiny;
                 mz+= mylattice.sites[k].spinz;
                 // For the correlation function
-                if(calculatespincorrelationfunction)    spins_in_z[k] = mylattice.sites[k].spinz;
+                if(calculatespincorrelationfunction)
+                {
+                    spins_in_x[k] = mylattice.sites[k].spinx;
+                    spins_in_y[k] = mylattice.sites[k].spiny;
+                    spins_in_z[k] = mylattice.sites[k].spinz;
+                }
             }
             if(SCBUG)    cout << "Done with that, ascribing magnetizations and such" << endl;
             mx = mx/N;
@@ -749,13 +834,16 @@ void MonteCarlo::runmetropolis(double beta)
             if(calculatespincorrelationfunction)
             {
                 if(SCBUG)    cout << "Calculating the spin correlation function in mcsteps" << endl;
-                fftw_execute(p);
+                fftw_execute(px);
+                fftw_execute(py);
+                fftw_execute(pz);
 
                 // Back again:
                 //Finding <S^z_{q}S^z_{-q}> to look at the spin correlation as a function of distance
-                for(int n=0; n<qlimit; n++)    qconfstore[n] = qconf[n]*conj(qconf[n]); // This is unnormalized
+                for(int n=0; n<qlimit; n++)    qconfstore[n] = qconfz[n]*conj(qconfz[n]); // This is unnormalized
                 fftw_execute(pinv);
 
+                double cx, cy, cz;
                 if(mylattice.dim==1) // Chain
                 {
                     int index;
@@ -763,7 +851,14 @@ void MonteCarlo::runmetropolis(double beta)
                     {
                         if(n<=(int)N/2)    index = n;
                         else               index = N-n;
-                        correlation_function_av[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
+                        cx = (qconfx[index]*conj(qconfx[index])).real()/(N*N);
+                        cy = (qconfy[index]*conj(qconfy[index])).real()/(N*N);
+                        cz = (qconfz[index]*conj(qconfz[index])).real()/(N*N);
+
+                        correlation_functionx_av_bin[n]   += cx;
+                        correlation_functiony_av_bin[n]   += cy;
+                        correlation_functionz_av_bin[n]   += cz;
+                        correlation_functiontot_av_bin[n] += cx + cy + cz;
 
                         // Normalization constant?
                         double normconst = 1/(N*N); // Only a factor of 1/N one way
@@ -795,7 +890,14 @@ void MonteCarlo::runmetropolis(double beta)
                             //cout << "Retrieving the index of the cc" << endl;
                         } // End if-tests
                         if(SCBUG)    cout << "Adding to the spin correlation function" << endl;
-                        correlation_function_av_bin[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
+                        cx = (qconfx[index]*conj(qconfx[index])).real()/(N*N);
+                        cy = (qconfy[index]*conj(qconfy[index])).real()/(N*N);
+                        cz = (qconfz[index]*conj(qconfz[index])).real()/(N*N);
+
+                        correlation_functionx_av_bin[n]   += cx;
+                        correlation_functiony_av_bin[n]   += cy;
+                        correlation_functionz_av_bin[n]   += cz;
+                        correlation_functiontot_av_bin[n] += cx + cy + cz;
 
                         // Change this:
 
@@ -834,9 +936,16 @@ void MonteCarlo::runmetropolis(double beta)
                             //cout << "Retrieving the index of the cc" << endl;
                         } // End if-tests
                         if(SCBUG)    cout << "Adding to the spin correlation function" << endl;
-                        correlation_function_av_bin[n] += (qconf[index]*conj(qconf[index])).real()/(N*N);
+                        cx = (qconfx[index]*conj(qconfx[index])).real()/(N*N);
+                        cy = (qconfy[index]*conj(qconfy[index])).real()/(N*N);
+                        cz = (qconfz[index]*conj(qconfz[index])).real()/(N*N);
+
+                        correlation_functionx_av_bin[n]   += cx;
+                        correlation_functiony_av_bin[n]   += cy;
+                        correlation_functionz_av_bin[n]   += cz;
+                        correlation_functiontot_av_bin[n] += cx + cy + cz;
                         if(SCBUG)    cout << "Done adding to the spin correlation function" << endl;
-                        if(SCBUG)    cout << "Which is: " << correlation_function_av_bin[n] << endl;
+                        if(SCBUG)    cout << "Which is: " << correlation_functionz_av_bin[n] << endl;
                     } // End loop over n
                     if(SCBUG)    cout << "Done patching together the corr.func.array" << endl;
 
@@ -890,18 +999,30 @@ void MonteCarlo::runmetropolis(double beta)
             for(int l = 0; l<N; l++)
             {
                 //cout << "calculating the average of the spin correlation function in this bin" << endl;
-                correlation_function_av_bin[l] = correlation_function_av_bin[l]/(mcsteps_inbin);
+                correlation_functionx_av_bin[l]   /=(mcsteps_inbin);
+                correlation_functiony_av_bin[l]   /=(mcsteps_inbin);
+                correlation_functionz_av_bin[l]   /=(mcsteps_inbin);
+                correlation_functiontot_av_bin[l] /=(mcsteps_inbin);
                 //cout << "Average for this bin, particle " << l << ": " << correlation_function_av_bin[l] << endl;
-                correlation_function_av[l]    += correlation_function_av_bin[l]; // I divide by the number of bins later
+                correlation_functionx_av[l]    += correlation_functionx_av_bin[l]; // I divide by the number of bins later
+                correlation_functiony_av[l]    += correlation_functiony_av_bin[l];
+                correlation_functionz_av[l]    += correlation_functionz_av_bin[l];
+                correlation_functiontot_av[l]  += correlation_functiontot_av_bin[l];
                 //cout << "Done calculating average of the spin correlation function over every bin" << endl;
                 // Could print for every bin, but is that really neccessary?
                 //spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[l] << " ";  // Should I include a beta, just in case?
 
-                ftcorrelation_function_av_bin[l] = correlation_function_av_bin[l]/mcsteps_inbin;
+                ftcorrelation_function_av_bin[l] /= mcsteps_inbin;
                 ftcorrelation_function_av[l]  += ftcorrelation_function_av_bin[l];
             }
+            // WHERE TO PUT THE TOTAL CORRELATION FUNCTION?
             //spcorFile << endl; // End line to get ready for new result
-            correlation_function_store.push_back(correlation_function_av_bin);
+            correlation_functionx_store.push_back(correlation_functionx_av_bin);
+            correlation_functiony_store.push_back(correlation_functiony_av_bin);
+            correlation_functionz_store.push_back(correlation_functionz_av_bin);
+
+            correlation_functiontot_store.push_back(correlation_functiontot_av_bin);
+
             ftcorrelation_function_store.push_back(ftcorrelation_function_av_bin);
         } // End if-test calculatecorrelationfunction
         if(SCBUG)    cout << "Have made correlation_function_store, bin " << i << endl;
@@ -1042,28 +1163,56 @@ void MonteCarlo::runmetropolis(double beta)
     {
         cout << "Going to print spin correlation to file" << endl;
         // Completing the average over the spin correlation function
-        for(int k=0; k<N; k++)    correlation_function_av[k] = correlation_function_av[k]/no_of_bins;
+        for(int k=0; k<N; k++)
+        {
+            correlation_functionx_av[k]   /= no_of_bins;
+            correlation_functiony_av[k]   /= no_of_bins;
+            correlation_functionz_av[k]   /= no_of_bins;
+            correlation_functiontot_av[k] /= no_of_bins;
+        }
 
-        vector<double> spinncorrstdv = vector<double>(N);
+        vector<double> spinncorrxstdv   = vector<double>(N);
+        vector<double> spinncorrystdv   = vector<double>(N);
+        vector<double> spinncorrzstdv   = vector<double>(N);
+        vector<double> spinncorrtotstdv = vector<double>(N);
         //energy += (energies[l]-energy_av)*(energies[l]-energy_av);
         // Finding the standard deviation
+        double littlex, littley, littlez, littletot;
         for(int l=0; l<no_of_bins; l++)
         {   // For every bin
-            vector<double> corrfunc_thisbin = correlation_function_store[l];
+            vector<double> corrfuncx_thisbin   = correlation_functionx_store[l];
+            vector<double> corrfuncy_thisbin   = correlation_functiony_store[l];
+            vector<double> corrfuncz_thisbin   = correlation_functionz_store[l];
+            vector<double> corrfunctot_thisbin = correlation_functiontot_store[l];
             for(int k=0; k<N; k++)
             {   // For every particle
-                double little = corrfunc_thisbin[k]-correlation_function_av[k];
-                spinncorrstdv[k] += little*little;
+                littlex   = corrfuncx_thisbin[k]-correlation_functionx_av[k];
+                littley   = corrfuncy_thisbin[k]-correlation_functiony_av[k];
+                littlez   = corrfuncz_thisbin[k]-correlation_functionz_av[k];
+                littletot = corrfunctot_thisbin[k]-correlation_functiontot_av[k];
+                spinncorrxstdv[k]   += littlex*littlex;
+                spinncorrystdv[k]   += littley*littley;
+                spinncorrzstdv[k]   += littlez*littlez;
+                spinncorrtotstdv[k] += littletot*littletot;
             }
         }
-        for(int k=0; k<N; k++)    spinncorrstdv[k] = sqrt(spinncorrstdv[k]/(no_of_bins*(no_of_bins-1)));
+        for(int k=0; k<N; k++)
+        {
+            spinncorrxstdv[k]   = sqrt(spinncorrxstdv[k]/(no_of_bins*(no_of_bins-1)));
+            spinncorrystdv[k]   = sqrt(spinncorrystdv[k]/(no_of_bins*(no_of_bins-1)));
+            spinncorrzstdv[k]   = sqrt(spinncorrzstdv[k]/(no_of_bins*(no_of_bins-1)));
+            spinncorrtotstdv[k] = sqrt(spinncorrtotstdv[k]/(no_of_bins*(no_of_bins-1)));
+        }
 
-
+        // Print it to file
         for(int k=0; k<N; k++)
         {
             //cout << "Correlation function, site " << k << ": " << correlation_function_av[k] << "; stdv: " << spinncorrstdv[k] << endl;
-            spcorFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_function_av[k] << " " << spinncorrstdv[k] << endl; // Easier to get the desired output this way
-        } 
+            spcorFilex << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_functionx_av[k] << " " << spinncorrxstdv[k] << endl; // Easier to get the desired output this way
+            spcorFiley << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_functiony_av[k] << " " << spinncorrystdv[k] << endl; // Easier to get the desired output this way
+            spcorFilez << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_functionz_av[k] << " " << spinncorrzstdv[k] << endl; // Easier to get the desired output this way
+            spcorFiletot << std::setprecision(std::numeric_limits<double>::digits10 + 1) << correlation_functiontot_av[k] << " " << spinncorrtotstdv[k] << endl; // Easier to get the desired output this way
+        }
         // Fourier transformed back:
         cout << "Going to print the s.c.f. f.t.ed back" << endl;
         for(int k=0; k<N; k++)    ftcorrelation_function_av[k] = ftcorrelation_function_av[k]/no_of_bins;
@@ -1074,7 +1223,7 @@ void MonteCarlo::runmetropolis(double beta)
         for(int l=0; l<no_of_bins; l++)
         {   // For every bin
             vector<double> ftcorrfunc_thisbin = ftcorrelation_function_store[l];
-            cout << "ftcorrfunc_thisbin retrieved" << endl;
+            //cout << "ftcorrfunc_thisbin retrieved" << endl;
             for(int k=0; k<N; k++)
             {   // For every particle
                 double little = ftcorrfunc_thisbin[k]-ftcorrelation_function_av[k];
@@ -1106,13 +1255,78 @@ void MonteCarlo::runmetropolis(double beta)
     //cout << "Done with the Monte Carlo procedure this time around" << endl;
 
     // Destroy plan
-    fftw_destroy_plan(p);
+    fftw_destroy_plan(px);
+    fftw_destroy_plan(py);
+    fftw_destroy_plan(pz);
     fftw_destroy_plan(pinv);
 
     // Print to terminal if desired
     bool printenergytoterminal = false;
     if(printenergytoterminal)    cout << "Energy for beta = " << beta << ": " << energy_av;
     if(printenergytoterminal)    cout << ";  Standard deviation: " << E_stdv << endl;
+
+    bool CONFWR  = true;
+    if(CONFWR)
+    {
+        double sx, sy, sz;
+        // Make files to print to
+        ofstream configFile;
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_spinconfig.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        configFile.open(filename);
+        delete filename;
+
+        ofstream neighbourFile;
+        char *filename2 = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename2, "%s_neighbours.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        neighbourFile.open(filename2);
+        delete filename2;
+
+        int dim = mylattice.dim; // Header with dimension and no of elements in each direction
+
+        configFile << beta << " " << dim << " " << mylattice.L1 << " " << mylattice.L2 << " " << mylattice.L3 << endl;
+        vector<double> position;
+        vector<int> neighbours;
+        int no_of_neighbours = mylattice.no_of_neighbours;
+        for(int n=0; n<N; n++)
+        {
+            sx = mylattice.sites[n].spinx;
+            sy = mylattice.sites[n].spiny;
+            sz = mylattice.sites[n].spinz;
+
+            if(dim==1)    configFile << n << " " << sx << " " << sy << " " << sz << endl;
+            if(dim==2)
+            {
+                // Printing the config
+                position = mylattice.sitepositions[n];
+                configFile << position[0] << " " << position[1] << " " << sx << " " << sy << " " << sz << endl;
+
+                // Printing the list of neighbours
+                neighbours = mylattice.siteneighbours[n];
+                for(int j; j<no_of_neighbours; j++)    neighbourFile << neighbours[j] << " ";
+                neighbourFile << endl;
+            }
+            if(dim==3)
+            {
+                // Printing the config
+                position = mylattice.sitepositions[n];
+                configFile << position[0] << " " << position[1] << " " << position[2] << " " << sx << " " << sy << " " << sz << endl;
+
+                // Printing the list of neighbours
+                neighbours = mylattice.siteneighbours[n];
+                for(int j=0; j<no_of_neighbours; j++)
+                {
+                    //cout << "In loop, j = " << j << "; Neighbour = " << neighbours[j] << endl;
+                    neighbourFile << neighbours[j] << " ";
+                }
+                neighbourFile << endl;
+
+            } // End if-test over dimensions
+
+        } // End loop over particles
+        configFile.close();
+        neighbourFile.close();
+    } // End if-test CONFWR
 }
 
 
@@ -1161,6 +1375,12 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         double sy_t = sintheta*sin(phi);
         //double sz_t = sqrt(1-sintheta*sintheta); // This produces faulty output...
         double sz_t = cos(theta);
+        /*
+        double divisor = sqrt(sx_t*sx_t + sy_t*sy_t + sz_t*sz_t);
+        sx_t /= divisor;
+        sy_t /= divisor;
+        sz_t /= divisor;
+        */
 
         //cout << "Spin before trial: [" << sx << "," << sy << "," << sz << "]" << endl;
         //cout << "Spin after trial:  [" << sx_t << "," << sy_t << "," << sz_t << "]" << endl;
@@ -1391,8 +1611,11 @@ void MonteCarlo::endsims()
     if(printeveryMCstep)       if(bigFile.is_open())      bigFile.close();
     if(calculatespincorrelationfunction)
     {
-        if(spcorFile.is_open())    spcorFile.close();
-        //if(ftspcorFile.is_open())  ftspcorFile.close();
+        if(spcorFilex.is_open())      spcorFilex.close();
+        if(spcorFiley.is_open())      spcorFiley.close();
+        if(spcorFilez.is_open())      spcorFilez.close();
+        if(spcorFiletot.is_open())    spcorFiletot.close();
+        if(ftspcorFile.is_open())     ftspcorFile.close();
     }
 }
 
@@ -1556,8 +1779,8 @@ void MonteCarlo::testFFTW()
     vector< complex<double> > qconf(N);  // Output array
     vector<double> correlation_function_av = vector<double >(qlimit); // Change this?
     //double time_start = clock();
-    giveplanforFFT(spins_in_z, qconf);
-    fftw_execute(p);
+    givezplanforFFT(spins_in_z, qconf);
+    fftw_execute(pz);
 
     //double time_end = clock();
     //double time_realtocomplex = (time_end-time_start)/CLOCKS_PER_SEC;
@@ -1726,7 +1949,7 @@ void MonteCarlo::compareFFTW_withmanual(double beta)
     // Making the plan
     std::vector<double> spins_in_z = std::vector<double>(N);
     vector< complex<double> > qconf(N);  // Output array
-    giveplanforFFT(spins_in_z, qconf);
+    givezplanforFFT(spins_in_z, qconf);
 
     // Making an array for the correlation function, one for each value of q
     vector<double> correlation_function        = vector<double>(N);
@@ -1759,7 +1982,7 @@ void MonteCarlo::compareFFTW_withmanual(double beta)
             //cout << "Spin " << j << ": " << spins_in_z[j] << endl;
         }
         // Then execute the plan
-        fftw_execute(p);
+        fftw_execute(pz);
 
         if(i==mcsteps_inbin-1)
         {// Print the result after some MCsteps, to see if something in the routine goes wrong
@@ -1974,7 +2197,7 @@ void MonteCarlo::compareFFTW_withmanual_av(double beta)
     // Making the plan
     std::vector<double> spins_in_z = std::vector<double>(N);
     vector< complex<double> > qconf(N);  // Output array
-    giveplanforFFT(spins_in_z, qconf);
+    givezplanforFFT(spins_in_z, qconf);
 
     // Making an array for the correlation function, one for each value of q
     vector<double> correlation_function        = vector<double>(N);
@@ -2007,7 +2230,7 @@ void MonteCarlo::compareFFTW_withmanual_av(double beta)
         for(int j=0; j<N; j++)    spins_in_z[j] = mylattice.sites[j].spinz;
 
         // Then execute the plan
-        fftw_execute(p);
+        fftw_execute(pz);
         // For different system types
         if(mylattice.dim==1) // Chain
         {
@@ -2245,7 +2468,7 @@ void MonteCarlo::shortsim(double beta)
     // Making the plan
     std::vector<double> spins_in_z = std::vector<double>(N);
     vector< complex<double> > qconf(N);  // Output array
-    giveplanforFFT(spins_in_z, qconf);
+    givezplanforFFT(spins_in_z, qconf);
 
     // Making an array for the correlation function, one for each value of q
     vector<double> correlation_function        = vector<double>(N);
@@ -2266,7 +2489,7 @@ void MonteCarlo::shortsim(double beta)
         for(int j=0; j<N; j++)    spins_in_z[j] = mylattice.sites[j].spinz;
 
         // Then execute the plan
-        fftw_execute(p);
+        fftw_execute(pz);
         // For different system types
         if(mylattice.dim==1) // Chain
         {

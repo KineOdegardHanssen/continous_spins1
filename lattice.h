@@ -2,6 +2,7 @@
 #define LATTICE_H
 #include <iostream>
 #include <math.h>
+#include <cmath>
 #include "bond.h"
 #include "site.h"
 #include "gaussiandeviate.h"
@@ -42,6 +43,7 @@ public:
     //std::vector<std::vector<double> > sitepositions_chain; // In case we introduce a grid length
     std::vector<std::vector<double> > sitepositions;
     std::vector<std::vector<int> >    sitecoordinates;
+    std::vector<std::vector<int> >    siteneighbours;
 
     // Initialization
     Lattice();
@@ -73,15 +75,24 @@ public:
 
     std::vector<double> giveposition_fcc_lines(int i, int j, int k, char letter);
     std::vector<double> giveqvector_fcc_lines(int i, int j, int k, char letter);
+    std::vector<double> giveqvector_fcc(int i, int j, int k);
     std::vector<int> fccyline(); // Line of points in the (0,y,0)-direction
     std::vector<int> fccxline(); // Line of points in the (x,0,0)-direction
     std::vector<int> fcczline(); // Line of points in the (0,0,z)-direction
+    std::vector<int> fccqyline(); // Line of points in the (0,y,0)-direction
+    std::vector<int> fccqxline(); // Line of points in the (x,0,0)-direction
+    std::vector<int> fccqzline(); // Line of points in the (0,0,z)-direction
+    std::vector<int> fccqdline();
     std::vector<int> cubicyline(); // Line of points in the (0,y,0)-direction
     std::vector<int> cubicxline(); // Line of points in the (x,0,0)-direction
     std::vector<int> cubiczline(); // Line of points in the (0,0,z)-direction
     std::vector<int> quadrxline(); // Line of points in the (x,0)-direction
     std::vector<int> quadryline(); // Line of points in the (0,y)-direction
     std::vector<int> fccyline_shifted(double xshift, double zshift); //Line (0,y,0)+(a,b,c)
+    std::vector<int> diagline_cubic();
+    std::vector<int> diagline_quadr();
+    std::vector<int> diagline_fcc();
+
 };
 
 #endif // LATTICE_H

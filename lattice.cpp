@@ -1091,16 +1091,18 @@ std::vector<double> Lattice::giveposition_fcc_lines(int i, int j, int k, char le
 
 std::vector<double> Lattice::giveqvector_fcc_lines(int i, int j, int k, char letter)
 {
+    // This function is sort of caput.
     // So we don't need to call fcc_initalize(_extended)
     // Reciprocal lattice vectors
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);
-    b1[0] = 2*M_PI;     b1[1] = 2*M_PI;     b1[2] = -2*M_PI;
-    b2[0] = -2*M_PI;    b2[1] = 2*M_PI;     b2[2] = 2*M_PI;
-    b3[0] = 2*M_PI;     b3[1] = -2*M_PI;    b3[2] = 2*M_PI;
+    b1[0] =  2*M_PI;     b1[1] =  2*M_PI;     b1[2] = -2*M_PI;
+    b2[0] = -2*M_PI;     b2[1] =  2*M_PI;     b2[2] =  2*M_PI;
+    b3[0] =  2*M_PI;     b3[1] = -2*M_PI;     b3[2] =  2*M_PI;
 
     // Our permutations
+    // Drop this? For now at least?
     if(letter=='x')         if(j>0)    j-=L2;
     if(letter=='y')         if(k>0)    k-=L3;
     if(letter=='z')         if(i>0)    i-=L1;
@@ -1110,11 +1112,118 @@ std::vector<double> Lattice::giveqvector_fcc_lines(int i, int j, int k, char let
     qvector[1] = i*b1[1]/L1 + j*b2[1]/L2;
     qvector[2] = j*b2[2]/L2 + k*b3[2]/L3;
 
+    cout << "WARNING! WARNING!:" << endl;
+    cout << "This part of the program is outdates and incorrect. Call giveqvector_fcc() instead of giveqvector_fcc_lines()" << endl;
+
     return qvector;
 }
 
-std::vector<int> Lattice::fccyline()
+std::vector<double> Lattice::giveqvector_fcc(int i, int j, int k)
 {
+    // So we don't need to call fcc_initalize(_extended)
+    // Reciprocal lattice vectors
+    b1 = vector<double>(3); // Should they be double?
+    b2 = vector<double>(3);
+    b3 = vector<double>(3);
+    b1[0] =  2*M_PI;     b1[1] =  2*M_PI;     b1[2] = -2*M_PI;
+    b2[0] = -2*M_PI;     b2[1] =  2*M_PI;     b2[2] =  2*M_PI;
+    b3[0] =  2*M_PI;     b3[1] = -2*M_PI;     b3[2] =  2*M_PI;
+
+    vector<double> qvector(3);
+    qvector[0] =  i*b1[0]/L1 + j*b2[0]/L2 + k*b3[0]/L3;
+    qvector[1] =  i*b1[1]/L1 + j*b2[1]/L2 + k*b3[1]/L3;
+    qvector[2] =  i*b1[2]/L1 + j*b2[2]/L2 + k*b3[2]/L3;
+
+    return qvector;
+}
+
+std::vector<int> Lattice::fccqyline()
+{
+    vector<int> qyline;
+    vector<int> index;
+    int i, j, k;
+    double qx, qy, qz;
+    vector<double> qvec = vector<double>(3);
+    for(int n=0; n<N; n++)
+    {
+        index = sitecoordinates[n];
+        i = index[0]; j = index[1]; k = index[2];
+
+        qvec = giveqvector_fcc(i,j,k);
+        qx =  qvec[0];        qy =  qvec[1];        qz =  qvec[2];
+
+        if(abs(qx)<1e-18 && abs(qz)<1e-18)    qyline.push_back(n); // Increase it a little? Test if <1e-16?
+
+    }
+    return qyline;
+}
+
+std::vector<int> Lattice::fccqxline()
+{
+    vector<int> qxline;
+    vector<int> index;
+    int i, j, k;
+    double qx, qy, qz;
+    vector<double> qvec = vector<double>(3);
+    for(int n=0; n<N; n++)
+    {
+        index = sitecoordinates[n];
+        i = index[0]; j = index[1]; k = index[2];
+
+        qvec = giveqvector_fcc(i,j,k);
+        qx =  qvec[0];        qy =  qvec[1];        qz =  qvec[2];
+
+        if(abs(qz)<1e-18 && abs(qy)<1e-18)    qxline.push_back(n); // Increase it a little? Test if <1e-16?
+
+    }
+    return qxline;
+}
+
+std::vector<int> Lattice::fccqzline()
+{
+    vector<int> qyline;
+    vector<int> index;
+    int i, j, k;
+    double qx, qy, qz;
+    vector<double> qvec = vector<double>(3);
+    for(int n=0; n<N; n++)
+    {
+        index = sitecoordinates[n];
+        i = index[0]; j = index[1]; k = index[2];
+
+        qvec = giveqvector_fcc(i,j,k);
+        qx =  qvec[0];        qy =  qvec[1];        qz =  qvec[2];
+
+        if(abs(qx)<1e-18 && abs(qy)<1e-18)    qyline.push_back(n); // Increase it a little? Test if <1e-16?
+
+    }
+    return qyline;
+}
+
+std::vector<int> Lattice::fccqdline()
+{
+    vector<int> qdline;
+    vector<int> index;
+    int i, j, k;
+    double qx, qy, qz;
+    vector<double> qvec = vector<double>(3);
+    for(int n=0; n<N; n++)
+    {
+        index = sitecoordinates[n];
+        i = index[0]; j = index[1]; k = index[2];
+
+        qvec = giveqvector_fcc(i,j,k);
+        qx =  qvec[0];        qy =  qvec[1];        qz =  qvec[2];
+
+        if(abs(qx-qy)<1e-16 && abs(qy-qz)<1e-16)    qdline.push_back(n); // Increase it a little? Test if <1e-16?
+
+    }
+    return qdline;
+}
+
+
+std::vector<int> Lattice::fccyline()
+{   // Spatial y-line for fcc
     // Should this be written to file instead?
     int n = 0;
     int nprev = -1; // To start the loop
@@ -1132,7 +1241,7 @@ std::vector<int> Lattice::fccyline()
 }
 
 std::vector<int> Lattice::fccxline()
-{
+{   // Spatial x-line for fcc
     // Should this be written to file instead?
     int n = 0;
     int nprev = -1; // To start the loop
@@ -1150,7 +1259,7 @@ std::vector<int> Lattice::fccxline()
 }
 
 std::vector<int> Lattice::fcczline()
-{
+{   // Spatial z-line for fcc
     // Should this be written to file instead?
     int n = 0;
     int nprev = -1; // To start the loop
