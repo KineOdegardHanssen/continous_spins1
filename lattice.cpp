@@ -795,10 +795,10 @@ void Lattice::fcc_helical_initialize_extended()
         std::vector<Bond> nextnearesty;
         std::vector<Bond> nextnearestz;
 
-        nextnearesty.push_back(Bond(n, nnym, false, Jy));
-        nextnearesty.push_back(Bond(n, nnyp, true, Jy));
-        nextnearestz.push_back(Bond(n, nnzm, false, Jz));
-        nextnearestz.push_back(Bond(n, nnzp, true, Jz));
+        nextnearesty.push_back(Bond(n, nnym, Jy, false));
+        nextnearesty.push_back(Bond(n, nnyp, Jy, true));
+        nextnearestz.push_back(Bond(n, nnzm, Jz, false));
+        nextnearestz.push_back(Bond(n, nnzp, Jz, true));
 
 
         if(DEBUG)    cout << "Setting the bonds" << endl;

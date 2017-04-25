@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {   // Should probably just send this in to the other initializer as MonteCarlo(int L, int L, int L, ...)
     randomtest = false;
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
@@ -17,11 +17,14 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
+    this->nextnearest = nextnearest;
 
     if(isotropic)       cout << "bool isotropic true. Heisenberg terms will be considered." << endl;
     if(sianisotropy)    cout << "bool sianisotropy true" << endl;
     if(magfield)        cout << "bool magfield true" << endl;
     if(dm)              cout << "bool dm true" << endl;
+
+    this->type_lattice = type_lattice;
 
     this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
     this->printeveryMCstep = printeveryMCstep;
@@ -141,7 +144,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
 
 
-MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     randomtest = false;
 
@@ -155,7 +158,9 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
     this->sianisotropy = sianisotropy;
     this->magfield = magfield;
     this->dm = dm;
+    this->nextnearest = nextnearest;
 
+    this->type_lattice =  type_lattice;
     this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
     this->printeveryMCstep = printeveryMCstep;
     this->calculatespincorrelationfunction = calculatespincorrelationfunction;
@@ -465,7 +470,35 @@ void MonteCarlo::initialize_energy()
             }
         }
         if(BEDBUG) cout << "Done with one, onto the others" << endl;
-    }
+        if(type_lattice=='E')
+        {
+            if(nextnearest)
+            {
+                double partnerspinx = 0;
+                double partnerspiny = 0;
+                double partnerspinz = 0;
+                // We only work with the forward bonds in order to not overcount. This is simplest.
+                double Jy = mylattice.sites[i].nextnearesty[1].J;
+                double Jz = mylattice.sites[i].nextnearestz[1].J;
+                int ny = mylattice.sites[i].nextnearesty[1].siteindex2;
+                int nz = mylattice.sites[i].nextnearestz[1].siteindex2;
+                // Spin in the next nearest neighbour in the y-direction
+                double sx_ydir = mylattice.sites[ny].spinx;
+                double sy_ydir = mylattice.sites[ny].spiny;
+                double sz_ydir = mylattice.sites[ny].spinz;
+                // Spin in the next nearest neighbour in the z-direction
+                double sx_zdir = mylattice.sites[nz].spinx;
+                double sy_zdir = mylattice.sites[nz].spiny;
+                double sz_zdir = mylattice.sites[nz].spinz;
+                partnerspinx = Jy*sx_ydir + Jz*sx_zdir;
+                partnerspiny = Jy*sy_ydir + Jz*sy_zdir;
+                partnerspinz = Jy*sz_ydir + Jz*sz_zdir;
+
+                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            }
+        }
+
+    } // End loop over particles
     energy_old = energy_contribution_sites + energy_contribution_bonds;
     if(BEDBUG)    cout << "Energy initialized, energy = " << energy_old << endl;
 }
@@ -1543,6 +1576,41 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             if(HUMBUG)    cout << "Done with dm in mcstepf" << endl;
             //cout << "Contribution from DM: " << dmcontrib << endl;
         }
+        if(type_lattice=='E')
+        {
+            if(nextnearest)
+            {
+                double partnerspinx = 0;
+                double partnerspiny = 0;
+                double partnerspinz = 0;
+
+                double Jy = mylattice.sites[k].nextnearesty[0].J;
+                double Jz = mylattice.sites[k].nextnearestz[0].J;
+
+                double nnyspinx, nnyspiny, nnyspinz;
+                double nnzspinx, nnzspiny, nnzspinz;
+                for(int i=0; i<2; i++) // Having contributions in the + and - directions
+                {
+                    int yneigh = mylattice.sites[k].nextnearesty[i].siteindex2;
+                    int zneigh = mylattice.sites[k].nextnearestz[i].siteindex2;
+
+                    // Spin components of next nearest neighbours in the y-direction
+                    nnyspinx = mylattice.sites[yneigh].spinx;
+                    nnyspiny = mylattice.sites[yneigh].spiny;
+                    nnyspinz = mylattice.sites[yneigh].spinz;
+
+                    // Spin components of next nearest neighbours in the z-direction
+                    nnzspinx = mylattice.sites[zneigh].spinx;
+                    nnzspiny = mylattice.sites[zneigh].spiny;
+                    nnzspinz = mylattice.sites[zneigh].spinz;
+
+                    partnerspinx += Jy*nnyspinx + Jz*nnzspinx;
+                    partnerspiny += Jy*nnyspiny + Jz*nnzspiny;
+                    partnerspinz += Jy*nnyspinz + Jz*nnzspinz;
+                }
+                energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
+            }
+        } // End contrib. from next nearest neighbour
         //cout << "energy_diff = " << energy_diff << endl;
 
         double energy_new = energy_old + energy_diff;
@@ -1717,6 +1785,34 @@ double MonteCarlo::check_the_energy()
                 }
             }
         }
+        if(type_lattice=='E')
+        {
+            if(nextnearest)
+            {
+                double partnerspinx = 0;
+                double partnerspiny = 0;
+                double partnerspinz = 0;
+                // We only work with the forward bonds in order to not overcount. This is simplest.
+                double Jy = mylattice.sites[i].nextnearesty[1].J;
+                double Jz = mylattice.sites[i].nextnearestz[1].J;
+                int ny = mylattice.sites[i].nextnearesty[1].siteindex2;
+                int nz = mylattice.sites[i].nextnearestz[1].siteindex2;
+                // Spin in the next nearest neighbour in the y-direction
+                double sx_ydir = mylattice.sites[ny].spinx;
+                double sy_ydir = mylattice.sites[ny].spiny;
+                double sz_ydir = mylattice.sites[ny].spinz;
+                // Spin in the next nearest neighbour in the z-direction
+                double sx_zdir = mylattice.sites[nz].spinx;
+                double sy_zdir = mylattice.sites[nz].spiny;
+                double sz_zdir = mylattice.sites[nz].spinz;
+                partnerspinx = Jy*sx_ydir + Jz*sx_zdir;
+                partnerspiny = Jy*sy_ydir + Jz*sy_zdir;
+                partnerspinz = Jy*sz_ydir + Jz*sz_zdir;
+
+                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            }
+        }
+
         if(BEDBUG) cout << "Done with one, onto the others" << endl;
     }
     energy_out = energy_contribution_sites + energy_contribution_bonds;

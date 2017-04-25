@@ -44,9 +44,12 @@ public:
     long int seed1, seed2, testseed;
     double energy_old, acceptancerate;
     bool isotropic, sianisotropy, magfield, dm;
+    bool nextnearest;
     bool notperiodic;
     bool printeveryMCstep, calculatespincorrelationfunction, randomtest;
     bool DEBUG, MAJORDEBUG;
+
+    char type_lattice;
 
     fftw_plan px, py, pz;
     fftw_plan pinv;
@@ -70,8 +73,8 @@ public:
     //Printing print;
 
     MonteCarlo();
-    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 
     // Debugging/testing functions
