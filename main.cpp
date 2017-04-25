@@ -67,14 +67,14 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 6; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 10; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
     int L3 = 2;
 
     // bools to determine system type
-    bool isotropic    = true;
+    bool isotropic    = false;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
@@ -88,7 +88,7 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'E';
+    char type_lattice = 'O';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -98,10 +98,10 @@ int main()
     // Single-ion anisotropy terms
     double Dix = 1;    double Diy = 1;    double Diz = 0;
     // Heisenberg term
-    double J = 1;
+    double J = -1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jx = 0; double Jy  = 0;    double Jz  = 1;
-    double Jxy = 1;    double Jxz = 1;    double Jyz = 0;
+    double Jx  = -1;    double Jy  = -1;    double Jz  = -1;
+    double Jxy = -1;    double Jxz = -1;    double Jyz = -1;
     // DM terms
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
@@ -131,7 +131,8 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    string filenamePrefix = "test4";
+    //string filenamePrefix = "test4";
+    string filenamePrefix = "10pchain_periodic_ferromagn_nextnneighbours_beta10_10000eqst_1000mcst_100bins";
     //string filenamePrefix = "fcc7x7x7_Jxy1_Jxz1_Jyz0_beta10_eq10000_mc1000_bins100_seed59_spincorralldir";
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "quadr6x6_Js1_beta0p0001_eq10000_mc1000_bins100_II";

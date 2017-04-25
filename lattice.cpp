@@ -236,6 +236,10 @@ void Lattice::chain_periodic_initialize()
         int np1 = (n+1)%N;
         int nm1 = (n+N-1)%N;
 
+        // Next nearest neighbours. Do not make much sense for small chains:
+        int nnp = (n+2)%N;
+        int nnm = (n+N-2)%N;
+
         cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
 
         std::vector<Bond> bonds;
@@ -244,12 +248,24 @@ void Lattice::chain_periodic_initialize()
         bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
         bonds.push_back(Bond(n, nm1, isotropic, dm, false, bondints));
 
+        // I use Jx here because I don't bother feeding in a designated variable
+        std::vector<Bond> nextnearesty;
+        std::vector<Bond> nextnearestz;
+
+        nextnearesty.push_back(Bond(n, nnm, Jx, false));
+        nextnearesty.push_back(Bond(n, nnp, Jx, true));
+        nextnearestz.push_back(Bond(n, nnm, Jx, false));
+        nextnearestz.push_back(Bond(n, nnp, Jx, true));
+
+        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds, nextnearesty, nextnearestz));
+
+
         // or
         //bonds.push_back(Bond(n, np1, bondints));
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        //sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
     }
