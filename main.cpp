@@ -50,6 +50,7 @@ void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, 
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
 void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void testnestnearestneighbour_chain(int L);
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J);
 
@@ -77,8 +78,8 @@ int main()
     bool isotropic    = false;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
-    bool dm           = false;
-    bool nextnearest  = true;
+    bool dm           = true;
+    bool nextnearest  = false;
 
     // Bool to determine periodicity
     bool periodic     = true; // To determine whether we have periodic boundary conditions or not
@@ -96,13 +97,13 @@ int main()
     // Magnetic field terms
     double hx = 1;    double hy = 1;    double hz = 1;
     // Single-ion anisotropy terms
-    double Dix = 1;    double Diy = 1;    double Diz = 0;
+    double Dix = 0.0;    double Diy = 0.0;    double Diz = 1.0;
     // Heisenberg term
-    double J = -1;
+    double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jx  = -1;    double Jy  = -1;    double Jz  = -1;
-    double Jxy = -1;    double Jxz = -1;    double Jyz = -1;
-    // DM terms
+    double Jx  = 1.0;    double Jy  = 0;    double Jz  = 0;
+    double Jxy = 1;    double Jxz = 0;    double Jyz = 1;
+    // DM term
     double Dx = 0;     double Dy = 0;    double Dz = 1;
 
     vector<double> sitestrengthsin = vector<double>(6);
@@ -123,7 +124,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 10.0;
+    double beta = 100000.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -131,9 +132,24 @@ int main()
     int no_of_bins = 100;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    //string filenamePrefix = "test4";
-    string filenamePrefix = "10pchain_periodic_ferromagn_nextnneighbours_beta10_10000eqst_1000mcst_100bins";
-    //string filenamePrefix = "fcc7x7x7_Jxy1_Jxz1_Jyz0_beta10_eq10000_mc1000_bins100_seed59_spincorralldir";
+    //string filenamePrefix = "test";
+
+    // Shorter runs, investigating chain interactions, comparing energies
+    //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
+    string filenamePrefix = "2ptest";
+
+
+    // Shorter runs, investigating chain interactions.
+    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_Dy1_Dz2_beta1000_10000eqst_10000mcst_1000bins_seed59";
+
+    // Longer runs, lower temp., investigating chain interactions
+    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDy0p1_Dz0p1_beta10000_10000eqst_100000mcst_1000bins_seed59";
+
+    // Longer runs, extra low temp., investigating chain interactions
+    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDz1_beta100000_10000eqst_100000mcst_1000bins_seed59";
+
+    //string filenamePrefix = "fcc6x6x6_sianDx1_sianDy1_beta50_eq10000_mc1000_bins100_seed59_spincorralldir";
+
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "quadr6x6_Js1_beta0p0001_eq10000_mc1000_bins100_II";
     //string filenamePrefix = "cubic6x6x6_Jxm1_Jy0_Jz1_beta0p01_eq10000_mc1000_bins100_II";
@@ -145,7 +161,7 @@ int main()
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
-    int beta_n = 100;
+    int beta_n = 5;
     double betamin = 1e-6;
     double betamax = 100;
     int betanset = 5;
@@ -155,12 +171,13 @@ int main()
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
 
     //-------------------------------------Test functions--------------------------------------------//
@@ -172,13 +189,14 @@ int main()
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
     //checkneighbours(L, type_lattice, periodic, sitestrengthsin, heisenbergin, dm_in);
+    //testnestnearestneighbour_chain(L);
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
     //L = 6;
     type_lattice = 'E';
     double xshift = 2;
     double zshift = 1;
-    string latticefilenamePrefix = "fcc3x3x3";
+    string latticefilenamePrefix = "fcc6x6x6";
     string latticefilenamePrefixd = "L6";
     //string latticefilenamePrefix = "test";
     // Line finding functions
@@ -226,6 +244,7 @@ void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta,
     mymc.runmetropolis(beta);
     mymc.endsims();
     mymc.test_couplings_strengths(); // Just to test it. Can remove later
+    cout << "beta = " << beta << endl;
     //cout << "L = " << L << endl;
 }
 
@@ -1539,6 +1558,20 @@ void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sit
             neighbour = mylattice.sites[n].bonds[i].siteindex2;
             cout << "Neighbour " << i << ": " << neighbour << endl;
         }
+    }
+}
+
+void testnestnearestneighbour_chain(int L)
+{
+    Lattice mylattice = Lattice(L,false, false, false, false);
+    mylattice.chain_periodic_initialize();
+
+    for(int i=0; i<L; i++)
+    {
+        int nbm = mylattice.sites[i].nextnearesty[0].siteindex2;
+        int nbp = mylattice.sites[i].nextnearesty[1].siteindex2;
+
+        cout << "Spin " << i << ": next-nearest neighbours: " << nbm << ", " << nbp << endl;
     }
 }
 

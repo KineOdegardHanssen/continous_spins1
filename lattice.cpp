@@ -226,7 +226,6 @@ void Lattice::chain_periodic_initialize()
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
     std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
-    bool increasing;
     for(int n=0; n<N; n++)
     {
         // Finding the neighbours to n
@@ -240,9 +239,22 @@ void Lattice::chain_periodic_initialize()
         int nnp = (n+2)%N;
         int nnm = (n+N-2)%N;
 
-        cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
+        //cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
 
         std::vector<Bond> bonds;
+
+        /*
+        bool increasingp;
+        bool increasingm;
+        if(np1>n)    increasingp = true;
+        else         increasingp = false;
+
+        if(nm1>n)    increasingm = true;
+        else         increasingm = false;
+
+        bonds.push_back(Bond(n, np1, isotropic, dm, increasingp, bondints));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, nm1, isotropic, dm, increasingm, bondints));
+        */
 
         // Making a lot of bond classes to be added to bonds.
         bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
@@ -332,6 +344,21 @@ void Lattice::quadratic_helical_initialize()
 
         std::vector<Bond> bonds;
 
+        /*
+        bool increasingp1, increasingm1, increasingpL, increasingmL;
+        if(np1>n)    increasingp1 = true;
+        else         increasingp1 = false;
+
+        if(nm1>n)    increasingm1 = true;
+        else         increasingm1 = false;
+
+        if(npL>n)    increasingpL = true;
+        else         increasingpL = false;
+
+        if(nmL>n)    increasingmL = true;
+        else         increasingmL = false;
+        */
+
         // Making a lot of Bond classes to be added to vector of bonds.
         bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
         bonds.push_back(Bond(n, nm1, isotropic, dm, false, bondints));
@@ -415,6 +442,22 @@ void Lattice::quadratic_helical_initialize_extended()
         neighbours_n[3] = nmL;
 
         siteneighbours.push_back(neighbours_n);
+
+        /*
+        bool increasingp1, increasingm1, increasingpL, increasingmL;
+        if(np1>n)    increasingp1 = true;
+        else         increasingp1 = false;
+
+        if(nm1>n)    increasingm1 = true;
+        else         increasingm1 = false;
+
+        if(npL>n)    increasingpL = true;
+        else         increasingpL = false;
+
+        if(nmL>n)    increasingmL = true;
+        else         increasingmL = false;
+        */
+
 
         std::vector<Bond> bonds;
 
@@ -512,6 +555,22 @@ void Lattice::cubic_helical_initialize()
         siteneighbours.push_back(neighbours_n);
 
         std::vector<Bond> bonds;
+
+        /*
+        bool increasingp1, increasingm1, increasingpL, increasingmL, increasingpL2, increasingmL2;
+        if(np1>n)     increasingp1 = true;
+        else          increasingp1 = false;
+        if(nm1>n)     increasingm1 = true;
+        else          increasingm1 = false;
+        if(npL>n)     increasingpL = true;
+        else          increasingpL = false;
+        if(nmL>n)     increasingmL = true;
+        else          increasingmL = false;
+        if(npL2>n)    increasingpL2 = true;
+        else          increasingpL2 = false;
+        if(nmL2>n)    increasingmL2 = true;
+        else          increasingmL2 = false;
+        */
 
         // Making a lot of bond classes to be added to bonds.
         bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
@@ -625,6 +684,22 @@ void Lattice::cubic_helical_initialize_extended()
         neighbours_n[5] = nmL2;
 
         siteneighbours.push_back(neighbours_n);
+
+        /*
+        bool increasingp1, increasingm1, increasingpL, increasingmL, increasingpL2, increasingmL2;
+        if(np1>n)     increasingp1 = true;
+        else          increasingp1 = false;
+        if(nm1>n)     increasingm1 = true;
+        else          increasingm1 = false;
+        if(npL>n)     increasingpL = true;
+        else          increasingpL = false;
+        if(nmL>n)     increasingmL = true;
+        else          increasingmL = false;
+        if(npL2>n)    increasingpL2 = true;
+        else          increasingpL2 = false;
+        if(nmL2>n)    increasingmL2 = true;
+        else          increasingmL2 = false;
+        */
 
         std::vector<Bond> bonds;
 
@@ -777,6 +852,36 @@ void Lattice::fcc_helical_initialize_extended()
         neighbours_n[11] = nmL2mL;
 
         siteneighbours.push_back(neighbours_n);
+
+        /*
+        bool increasingp1, increasingm1, increasingpL, increasingmL, increasingpL2, increasingmL2;
+        bool increasingpLm1, increasingmLm1, increasingpL2m1, increasingmL2m1, increasingpL2mL, increasingmL2mL;
+        if(np1>n)     increasingp1 = true;
+        else          increasingp1 = false;
+        if(nm1>n)     increasingm1 = true;
+        else          increasingm1 = false;
+        if(npL>n)     increasingpL = true;
+        else          increasingpL = false;
+        if(nmL>n)     increasingmL = true;
+        else          increasingmL = false;
+        if(npL2>n)    increasingpL2 = true;
+        else          increasingpL2 = false;
+        if(nmL2>n)    increasingmL2 = true;
+        else          increasingmL2 = false;
+        if(npLm1>n)     increasingpLm1  = true;
+        else            increasingpLm1  = false;
+        if(nmLm1>n)     increasingmLm1  = true;
+        else            increasingmLm1  = false;
+        if(npL2m1>n)    increasingpL2m1 = true;
+        else            increasingpL2m1 = false;
+        if(nmL2m1>n)    increasingmL2m1 = true;
+        else            increasingmL2m1 = false;
+        if(npL2mL>n)    increasingpL2mL = true;
+        else            increasingpL2mL = false;
+        if(nmL2mL>n)    increasingmL2mL = true;
+        else            increasingmL2mL = false;
+        */
+
 
         // Should I have some bool that determines whether or not I need these?
         // This part probably need fixing!!
@@ -982,6 +1087,37 @@ void Lattice::fcc_helical_initialize()
         neighbours_n[11] = nmL2mL;
 
         siteneighbours.push_back(neighbours_n);
+
+        /*
+        bool increasingp1, increasingm1, increasingpL, increasingmL, increasingpL2, increasingmL2;
+        bool increasingpLm1, increasingmLm1, increasingpL2m1, increasingmL2m1, increasingpL2mL, increasingmL2mL;
+
+        if(np1>n)     increasingp1 = true;
+        else          increasingp1 = false;
+        if(nm1>n)     increasingm1 = true;
+        else          increasingm1 = false;
+        if(npL>n)     increasingpL = true;
+        else          increasingpL = false;
+        if(nmL>n)     increasingmL = true;
+        else          increasingmL = false;
+        if(npL2>n)    increasingpL2 = true;
+        else          increasingpL2 = false;
+        if(nmL2>n)    increasingmL2 = true;
+        else          increasingmL2 = false;
+
+        if(npLm1>n)     increasingpLm1  = true;
+        else            increasingpLm1  = false;
+        if(nmLm1>n)     increasingmLm1  = true;
+        else            increasingmLm1  = false;
+        if(npL2m1>n)    increasingpL2m1 = true;
+        else            increasingpL2m1 = false;
+        if(nmL2m1>n)    increasingmL2m1 = true;
+        else            increasingmL2m1 = false;
+        if(npL2mL>n)    increasingpL2mL = true;
+        else            increasingpL2mL = false;
+        if(nmL2mL>n)    increasingmL2mL = true;
+        else            increasingmL2mL = false;
+        */
 
         /*
         // Test this in some way...

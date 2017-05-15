@@ -377,7 +377,7 @@ void MonteCarlo::initialize_energy()
     double energy_contribution_sites = 0;
     double energy_contribution_bonds = 0;
 
-    bool BEDBUG = true;
+    bool BEDBUG = false;
     for(int i=0; i<N; i++)
     {
         if(BEDBUG) cout << "In loop to set initial energy" << endl;
@@ -453,10 +453,11 @@ void MonteCarlo::initialize_energy()
             if(notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
             for(int j=0; j<nneighbours; j++)
-            {
-                int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                if(i<k)    // To avoid double counting. Hopefully saves time for large systems
-                {
+            {              
+                bool increasing = mylattice.sites[i].bonds[j].increasing;
+                if(increasing) // To avoid double counting. Hopefully saves time for large systems
+                {            // When increasing==true, the sign is set
+                    int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
                     double Dx = mylattice.sites[i].bonds[j].Dx;
                     double Dy = mylattice.sites[i].bonds[j].Dy;
                     double Dz = mylattice.sites[i].bonds[j].Dz;
@@ -625,7 +626,7 @@ void MonteCarlo::runmetropolis(double beta)
     bool LADYBUG = false;
     bool SCBUG   = false; // For finding out what's wrong with the spin correlation function
     bool DMEBUG  = false;
-    bool ENGYBUG = false; // For checking that our two ways of computing the energy agrees (somewhat)
+    bool ENGYBUG = true; // For checking that our two ways of computing the energy agrees (somewhat)
     bool bincout = false;
 
     // Header for spcorFiles
@@ -1582,6 +1583,7 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 bool increasing = mylattice.sites[k].bonds[j].increasing;
                 if(increasing)           detsign = 1.0;
                 else                     detsign = -1.0;
+                //cout << "Sign of determinant:" << detsign << endl;
 
                 //cout << "Sign: " << detsign << endl;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
@@ -1824,10 +1826,11 @@ double MonteCarlo::check_the_energy()
             else               nneighbours = no_of_neighbours;
             for(int j=0; j<nneighbours; j++)
             {
-                int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                if(i<k)    // To avoid double counting. Hopefully saves time for large systems
-                {
-                    double Dx = mylattice.sites[i].bonds[j].Dx;
+                bool increasing = mylattice.sites[i].bonds[j].increasing;
+                if(increasing) // To avoid double counting. Hopefully saves time for large systems
+                {              // When increasing==true, the sign is set
+                    int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
+                    double Dx = mylattice.sites[i].bonds[j].Dx; // Could have these as class variables.
                     double Dy = mylattice.sites[i].bonds[j].Dy;
                     double Dz = mylattice.sites[i].bonds[j].Dz;
 
