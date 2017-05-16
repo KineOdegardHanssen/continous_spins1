@@ -626,7 +626,7 @@ void MonteCarlo::runmetropolis(double beta)
     bool LADYBUG = false;
     bool SCBUG   = false; // For finding out what's wrong with the spin correlation function
     bool DMEBUG  = false;
-    bool ENGYBUG = true; // For checking that our two ways of computing the energy agrees (somewhat)
+    bool ENGYBUG = false; // For checking that our two ways of computing the energy agrees (somewhat)
     bool bincout = false;
 
     // Header for spcorFiles
@@ -1327,16 +1327,28 @@ void MonteCarlo::runmetropolis(double beta)
     if(printenergytoterminal)    cout << "Energy for beta = " << beta << ": " << energy_av;
     if(printenergytoterminal)    cout << ";  Standard deviation: " << E_stdv << endl;
 
-    bool CONFWR  = true;
+    bool CONFWR    = true;
+    bool sameprint = true;
     if(CONFWR)
     {
         double sx, sy, sz;
         // Make files to print to
         ofstream configFile;
-        char *filename = new char[1000];                                // File name can have max 1000 characters
-        sprintf(filename, "%s_spinconfig.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
-        configFile.open(filename);
-        delete filename;
+        if(!sameprint)
+        {
+            char *filename = new char[1000];
+            sprintf(filename, "%s_spinconfig.txt", filenamePrefix.c_str() );
+            configFile.open(filename);
+            delete filename;
+        }
+        else
+        {
+            char *filename = new char[1000];
+            sprintf(filename, "%s_spinconfigsameprint.txt", filenamePrefix.c_str() );
+            configFile.open(filename);
+            delete filename;
+        }
+
 
         ofstream neighbourFile;
         char *filename2 = new char[1000];                                // File name can have max 1000 characters
@@ -1356,13 +1368,17 @@ void MonteCarlo::runmetropolis(double beta)
             sy = mylattice.sites[n].spiny;
             sz = mylattice.sites[n].spinz;
 
-            if(dim==1)    configFile << n << " " << sx << " " << sy << " " << sz << endl;
+            if(dim==1)
+            {
+                if(!sameprint)    configFile << n << " " << sx << " " << sy << " " << sz << endl;
+                else              configFile << n << " " << 0 << " " << 0 << " " << sx << " " << sy << " " << sz << endl;
+            }
             if(dim==2)
             {
                 // Printing the config
                 position = mylattice.sitepositions[n];
-                configFile << position[0] << " " << position[1] << " " << sx << " " << sy << " " << sz << endl;
-
+                if(!sameprint)    configFile << position[0] << " " << position[1] << " " << sx << " " << sy << " " << sz << endl;
+                else              configFile << position[0] << " " << position[1] << " " << 0 << " " << sx << " " << sy << " " << sz << endl;
                 // Printing the list of neighbours
                 neighbours = mylattice.siteneighbours[n];
                 for(int j; j<no_of_neighbours; j++)    neighbourFile << neighbours[j] << " ";

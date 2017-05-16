@@ -68,18 +68,18 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 10; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 6; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
     int L3 = 2;
 
     // bools to determine system type
-    bool isotropic    = false;
+    bool isotropic    = true;
     bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
-    bool dm           = true;
-    bool nextnearest  = false;
+    bool dm           = false;
+    bool nextnearest  = true;
 
     // Bool to determine periodicity
     bool periodic     = true; // To determine whether we have periodic boundary conditions or not
@@ -97,11 +97,11 @@ int main()
     // Magnetic field terms
     double hx = 1;    double hy = 1;    double hz = 1;
     // Single-ion anisotropy terms
-    double Dix = 0.0;    double Diy = 0.0;    double Diz = 1.0;
+    double Dix = 0.1;    double Diy = 0.0;    double Diz = 0.0;
     // Heisenberg term
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jx  = 1.0;    double Jy  = 0;    double Jz  = 0;
+    double Jx  = 0.25;    double Jy  = 0;    double Jz  = 0;
     double Jxy = 1;    double Jxz = 0;    double Jyz = 1;
     // DM term
     double Dx = 0;     double Dy = 0;    double Dz = 1;
@@ -124,30 +124,33 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 100000.0;
+    double beta = 100.0;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 1000; //100000; // MCsteps per bin.
-    int no_of_bins = 100;     // The number of bins.
+    int mcsteps_inbin = 10000; //100000; // MCsteps per bin.
+    int no_of_bins = 1000;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "test";
 
     // Shorter runs, investigating chain interactions, comparing energies
-    //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
-    string filenamePrefix = "2ptest";
+    //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDx1_severalbetas_10000eqst_10000mcst_100bins_seed59";
+    //string filenamePrefix = "2ptest";
 
+    // Shorter runs, low temp., investigating chain interactions.
+    string filenamePrefix = "6pchain_periodic_beta100_10000eqst_10000mcst_1000bins_seed59_randomstart";
 
-    // Shorter runs, investigating chain interactions.
-    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_Dy1_Dz2_beta1000_10000eqst_10000mcst_1000bins_seed59";
+    // Shorter runs, lower temp., investigating chain interactions.
+    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_Dy2_Dz1_beta1000_10000eqst_10000mcst_1000bins_seed59";
 
-    // Longer runs, lower temp., investigating chain interactions
+    // Longer runs, very low temp., investigating chain interactions
     //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDy0p1_Dz0p1_beta10000_10000eqst_100000mcst_1000bins_seed59";
 
     // Longer runs, extra low temp., investigating chain interactions
-    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDz1_beta100000_10000eqst_100000mcst_1000bins_seed59";
+    //string filenamePrefix = "6pchain_periodic_Jnnm1_Jnnn0p5_beta100000_10000eqst_100000mcst_1000bins_seed59";
 
+    //string filenamePrefix = "test";
     //string filenamePrefix = "fcc6x6x6_sianDx1_sianDy1_beta50_eq10000_mc1000_bins100_seed59_spincorralldir";
 
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
@@ -171,14 +174,13 @@ int main()
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
     //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
+    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     //-------------------------------------Test functions--------------------------------------------//
     //L = 2;
@@ -266,6 +268,7 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
         mymc.reset_energy();
     }
     mymc.endsims();
+    mymc.test_couplings_strengths(); // Just to test it. Can remove later
 }
 
 void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
@@ -283,6 +286,7 @@ void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, i
         cout << betas[i] << " done" << endl;
     }
     mymc.endsims();
+    mymc.test_couplings_strengths(); // Just to test it. Can remove later
 }
 
 void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
@@ -299,6 +303,7 @@ void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, 
         mymc.reset_energy();
     }
     mymc.endsims();
+    mymc.test_couplings_strengths(); // Just to test it. Can remove later
 }
 
 void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)

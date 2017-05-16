@@ -226,8 +226,24 @@ void Lattice::chain_periodic_initialize()
     std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
     std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
+    bool randomspins = true;
     for(int n=0; n<N; n++)
     {
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
+
         // Finding the neighbours to n
         // This should only be done once. And that is exactly what we are doing.
         // Doing modulo operations, as suggested in Newman & Barkema
@@ -240,6 +256,7 @@ void Lattice::chain_periodic_initialize()
         int nnm = (n+N-2)%N;
 
         //cout << "Spin " << n << ", neighbours: " << np1 << ", " << nm1 << endl;
+
 
         std::vector<Bond> bonds;
 
@@ -325,8 +342,23 @@ void Lattice::quadratic_helical_initialize()
 
     // Could have these inside the loop and add randomness.
 
+    bool randomspins = true;
     for(int n=0; n<N; n++)
     {
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
         // Finding the neighbours
         int np1, nm1, npL, nmL;
         np1 = findneighbour2D(n,0,1);
@@ -427,8 +459,23 @@ void Lattice::quadratic_helical_initialize_extended()
     string x = "x";
     string y = "y";
 
+    bool randomspins = true;
     for(int n=0; n<N; n++)
     {
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
         // Finding the neighbours
         int np1, nm1, npL, nmL;
         np1 = findneighbour2D(n,0,1);
@@ -535,8 +582,23 @@ void Lattice::cubic_helical_initialize()
 
     // Could have these inside the loop and add randomness.
 
+    bool randomspins = true;
     for(int n=0; n<N; n++)
     {
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
         int np1, nm1, npL, nmL, npL2, nmL2;
         np1  = findneighbour(n,0,0,1);
         nm1  = findneighbour(n,0,0,-1);
@@ -1049,8 +1111,23 @@ void Lattice::fcc_helical_initialize()
     // Could have these inside the loop and add randomness.
 
     if(DEBUG)    cout << "Now entering the loop" << endl;
+    bool randomspins = true;
     for(int n=0; n<N; n++)
     {
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
         if(DEBUG)    cout << "In loop, n = " << n << endl;
         // Finding the neighbours to n
         // NB!: So far, I have only added neighbours that are a distance 1 apart, 2 being the length of the cell.
