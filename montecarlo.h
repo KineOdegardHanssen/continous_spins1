@@ -87,6 +87,7 @@ public:
     double check_the_energy(); // Function that finds the energy by going through every spin
     void test_couplings_strengths();
     void shortsim(double beta);
+    double dotproducts(int i, int j);
 
     // Other initialization procedures
     void initialize_energy();

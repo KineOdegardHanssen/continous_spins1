@@ -19,6 +19,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
+    //seed = 21;
     cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -38,6 +39,7 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
+    //seed = 21;
     cout << "In L1, L2, L3 Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -215,10 +217,22 @@ void Lattice::chain_periodic_initialize()
     b1 = vector<double>(1);
     b1[0] = 2*M_PI;
 
-    double a = 1/sqrt(3);
-    double spinx = a;
-    double spiny = a;
-    double spinz = a;
+    double spinx, spiny, spinz;
+    bool zdird = true;
+    if(zdird)
+    {
+        spinx = 0;
+        spiny = 0;
+        spinz = 1;
+    }
+    else
+    {
+        double a = 1/sqrt(3);
+        spinx = a;
+        spiny = a;
+        spinz = a;
+    }
+
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
 

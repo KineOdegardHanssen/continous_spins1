@@ -78,7 +78,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed1 = 59;  // Seed to start random number generator
+    seed1 = 79;  // Seed to start random number generator
     seed2 = 61;
     testseed = 29;
     DEBUG = false;
@@ -215,7 +215,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed1 = 59;  // Seed to start random number generator
+    seed1 = 79;  // Seed to start random number generator
     seed2 = 63;
     DEBUG = false;
     MAJORDEBUG = false;
@@ -649,11 +649,26 @@ void MonteCarlo::runmetropolis(double beta)
     cout << "Initial energy, check: " << check_the_energy() << endl;
 
     // Equilibration steps
+    // Added option of cooling the system gradually
+    // OFS mentioned that I could start at beta=10xthe coupling, but the other parameters matters too...
+    // I mean, what if I just look at DM? Or crank up sian?
+    // Should implement something like that, just need to think a bit about it first. Maybe.
+    double eqbeta = beta;
+    bool slowcool = true;
+    if(beta<0.01)    slowcool = false; // Should not increase the temperature
+    double deltabeta = (beta-0.01)/(int(eqsteps/2)-1);
+    if(slowcool)    cout << "In equilibration steps: SLOW COOLING ON" << endl;
+    else            cout << "Slow cooling off" << endl;
     double starttime = clock();
     for(int i=0; i<eqsteps; i++)
     {
         if(HUMBUG)    cout << "In equilibration steps loop, i = " << i << endl;
-        mcstepf_metropolis(beta); //, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
+        if(slowcool)
+        {
+            if(i<int(eqsteps/2))    eqbeta = 0.01+deltabeta*i;
+            else                    eqbeta = beta; // I shouldn't need to hardcode this, but better safe than sorry
+        }
+        mcstepf_metropolis(eqbeta); //, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
         if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
         if(i<11)      cout << "Hardcoded energy, step " << i << ": " << check_the_energy() << endl;
     }
@@ -1411,9 +1426,10 @@ void MonteCarlo::runmetropolis(double beta)
 void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
 
-    bool HUMBUG   = false;  // The humbug is defeated.
-    bool MINIBUG  = false;  // For very little output. Couts the probs and/or the energies at each step
-    bool CONTRBUG = false;
+    bool HUMBUG   = false;  // Has been useful in finding index errors
+    bool MINIBUG  = false;   // For very little output. Couts the probs and/or the energies at each step
+    bool CONTRBUG = false;  // Prints the couplings and such
+    bool CONFBUG  = false;
     if(HUMBUG)    cout << "In mcstepf_metropolis" << endl;
     double changes = 0;
     if(HUMBUG)   cout << "In mcstepf. Looping over spins now" << endl;
@@ -1699,6 +1715,25 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
 
             if(MINIBUG) cout << "energy_old = " << energy_old << "; energy_new = " << energy_new << ". ACCEPTED!" << endl;
 
+            /*
+            if(CONFBUG)
+            {
+                cout << "Energy decreased:" << endl;
+                cout << "New spin: [" << sx_t << " , " << sy_t << "," << sz_t << "]"  << endl;
+                cout << "Updated dot products: " << endl;
+                int nneighbours;
+                if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+                else               nneighbours = no_of_neighbours;
+                for(int j=0; j<nneighbours; j++)
+                {
+                    int l = mylattice.sites[k].bonds[j].siteindex2;
+                    double dotprod = dotproducts(k,l);
+                    cout << "nb " << j << ": Si*Sj= " << dotprod << endl;
+                }
+            }
+            */
+
+
             // Updating the energy
             energy_old = energy_new;
 
@@ -1725,6 +1760,33 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 mylattice.sites[k].spinx = sx_t;
                 mylattice.sites[k].spiny = sy_t;
                 mylattice.sites[k].spinz = sz_t;
+
+                if(CONFBUG)
+                {
+                    bool hi = false;
+
+                    int nneighbours;
+                    if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
+                    else               nneighbours = no_of_neighbours;
+                    for(int j=0; j<nneighbours; j++)
+                    {
+                        int l = mylattice.sites[k].bonds[j].siteindex2;
+                        double dotprod = dotproducts(k,l);
+                        if(abs(dotprod)<0.7)
+                        {
+                            hi = true;
+                            cout << "nb " << j << ": Si*Sj= " << dotprod << endl;
+                        }
+                    }
+                    if(hi)
+                    {
+                        cout << "Weird dot products" << endl;
+                        cout << "Energy increased: drawn<prob, drawn = "<< drawn << "; prob = " << prob << endl;
+                        cout << "energy_old = " << energy_old << "; energy_diff = " << energy_diff << "; energy_new = " << energy_new << endl;
+                        cout << "New spin: [" << sx_t << " , " << sy_t << "," << sz_t << "]"  << endl;
+                        cout << "Updated dot products: " << endl;
+                    }
+                }
 
                 // Misc
                 //cout << "ENERGY INCREASED!" << endl;
@@ -2851,5 +2913,16 @@ void MonteCarlo::compareFFTW_withmanual_super(double beta)
 */
 
 
+double MonteCarlo::dotproducts(int i, int j)
+{
+    double sxi = mylattice.sites[i].spinx;
+    double syi = mylattice.sites[i].spiny;
+    double szi = mylattice.sites[i].spinz;
 
+    double sxj = mylattice.sites[j].spinx;
+    double syj = mylattice.sites[j].spiny;
+    double szj = mylattice.sites[j].spinz;
+
+    return sxi*sxj+syi*syj+szi*szj;
+}
 

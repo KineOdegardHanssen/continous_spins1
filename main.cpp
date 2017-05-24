@@ -8,7 +8,7 @@
 #include "site.h"
 #include "lattice.h"
 #include "montecarlo.h"
-//#include "gaussiandeviate.h"
+#include "gaussiandeviate.h"
 
 using namespace std;
 using std::ofstream; using std::string;
@@ -53,6 +53,7 @@ void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sit
 void testnestnearestneighbour_chain(int L);
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
 double J_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double J);
+void printrandomnumbers();
 
 // Find out if points are on a plane
 vector<double> cross(vector<double> vec1, vector<double> vec2);
@@ -76,7 +77,7 @@ int main()
 
     // bools to determine system type
     bool isotropic    = true;
-    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
     bool nextnearest  = true;
@@ -97,14 +98,14 @@ int main()
     // Magnetic field terms
     double hx = 1;    double hy = 1;    double hz = 1;
     // Single-ion anisotropy terms
-    double Dix = 0.1;    double Diy = 0.0;    double Diz = 0.0;
+    double Dix = 1;    double Diy = 0;    double Diz = 0;
     // Heisenberg term
     double J = 1;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
     double Jx  = 0.25;    double Jy  = 0;    double Jz  = 0;
     double Jxy = 1;    double Jxz = 0;    double Jyz = 1;
     // DM term
-    double Dx = 0;     double Dy = 0;    double Dz = 1;
+    double Dx = 0;     double Dy = 0.1;    double Dz = 0.1;
 
     vector<double> sitestrengthsin = vector<double>(6);
     sitestrengthsin[0] = hx;    sitestrengthsin[1] = hy;    sitestrengthsin[2] = hz;
@@ -124,7 +125,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 100.0;
+    double beta = 100;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -135,17 +136,17 @@ int main()
     //string filenamePrefix = "test";
 
     // Shorter runs, investigating chain interactions, comparing energies
-    //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDx1_severalbetas_10000eqst_10000mcst_100bins_seed59";
+    //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
     //string filenamePrefix = "2ptest";
 
     // Shorter runs, low temp., investigating chain interactions.
-    string filenamePrefix = "6pchain_periodic_beta100_10000eqst_10000mcst_1000bins_seed59_randomstart";
+    string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_beta100_10000eqst_10000mcst_1000bins_seed79_fixedstartallinzdir_slowcool";
 
     // Shorter runs, lower temp., investigating chain interactions.
     //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_Dy2_Dz1_beta1000_10000eqst_10000mcst_1000bins_seed59";
 
     // Longer runs, very low temp., investigating chain interactions
-    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDy0p1_Dz0p1_beta10000_10000eqst_100000mcst_1000bins_seed59";
+    //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDz1_beta10000_10000eqst_100000mcst_1000bins_seed59";
 
     // Longer runs, extra low temp., investigating chain interactions
     //string filenamePrefix = "6pchain_periodic_Jnnm1_Jnnn0p5_beta100000_10000eqst_100000mcst_1000bins_seed59";
@@ -234,6 +235,8 @@ int main()
     cout << "qy = " << qs[1] << endl;
     cout << "qz = " << qs[2] << endl;
     */
+
+    //printrandomnumbers();
 
 }
 
@@ -1580,3 +1583,16 @@ void testnestnearestneighbour_chain(int L)
     }
 }
 
+void printrandomnumbers()
+{
+    ofstream rannumFile;
+    string filenamePrefix = "randomnumbergenerator";
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_test.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+    rannumFile.open(filename);
+    delete filename;
+
+    long int seed = 59;
+    for(int i=0; i<1e5; i++)    rannumFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << ran2(&seed) << endl;
+    rannumFile.close();
+}
