@@ -69,7 +69,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 6; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 10; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 2;
     int L2 = 2;
@@ -78,8 +78,8 @@ int main()
     // bools to determine system type
     bool isotropic    = true;
     bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
-    bool magfield     = false;
-    bool dm           = false;
+    bool magfield     = true;
+    bool dm           = true;
     bool nextnearest  = true;
 
     // Bool to determine periodicity
@@ -90,22 +90,24 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'O';
+    char type_lattice = 'E';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
     // Setting the strengths of the Hamiltonian terms
     // Magnetic field terms
-    double hx = 1;    double hy = 1;    double hz = 1;
+    double hx = 1;    double hy = 2;    double hz = 7;
     // Single-ion anisotropy terms
-    double Dix = 1;    double Diy = 0;    double Diz = 0;
+    double Dix = 1;    double Diy = 0;    double Diz = 2;
     // Heisenberg term
-    double J = 1;
-    // Heisenberg terms with varying strengths (for fcc_initialize_extended E)
-    double Jx  = 0.25;    double Jy  = 0;    double Jz  = 0;
-    double Jxy = 1;    double Jxz = 0;    double Jyz = 1;
+    double J = -1;
+    // Heisenberg terms with varying strengths (for fcc_initialize_extended E)    
+    double Jx  = 0.25;    double Jy  = 2.5;    double Jz  = 0;
+    //double intheta = M_PI/5;
+    //double Jx  = 1.0/(4*cos(intheta));    double Jy  = 0;    double Jz  = 0;
+    double Jxy = 1;    double Jxz = 0.1;    double Jyz = 1;
     // DM term
-    double Dx = 0;     double Dy = 0.1;    double Dz = 0.1;
+    double Dx = 0.5;     double Dy = 0.1;    double Dz = 0.1;
 
     vector<double> sitestrengthsin = vector<double>(6);
     sitestrengthsin[0] = hx;    sitestrengthsin[1] = hy;    sitestrengthsin[2] = hz;
@@ -125,7 +127,7 @@ int main()
     bool calculatespincorrelationfunction = true;
 
     // A beta value for one run
-    double beta = 100;
+    double beta = 10;
 
     // Run parameters
     int eqsteps = 10000; // Number of steps in the equilibration procedure
@@ -133,6 +135,9 @@ int main()
     int no_of_bins = 1000;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
+
+    string filenamePrefix = "prechange";
+
     //string filenamePrefix = "test";
 
     // Shorter runs, investigating chain interactions, comparing energies
@@ -140,7 +145,7 @@ int main()
     //string filenamePrefix = "2ptest";
 
     // Shorter runs, low temp., investigating chain interactions.
-    string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_beta100_10000eqst_10000mcst_1000bins_seed79_fixedstartallinzdir_slowcool";
+    //string filenamePrefix = "10pchain_periodic_Jnnm1_Jnnn0p25_beta10_10000eqst_10000mcst_1000bins_seed79_fixedstartallinzdir_slowcool";
 
     // Shorter runs, lower temp., investigating chain interactions.
     //string filenamePrefix = "6pchain_periodic_Jnn1_Jnnn0p25_sianDx1_Dy2_Dz1_beta1000_10000eqst_10000mcst_1000bins_seed59";
