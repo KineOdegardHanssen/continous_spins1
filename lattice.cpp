@@ -149,10 +149,6 @@ void Lattice::chain_open_initialize()
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
 
-    // Move these when neccessary
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
-
     for(int n=0; n<N; n++)
     {
         // Finding the neighbours to n
@@ -181,13 +177,13 @@ void Lattice::chain_open_initialize()
         if(np1>n)
         {
             increasing = true;
-            bonds.push_back(Bond(n, np1, isotropic, dm, increasing, bondints));
+            bonds.push_back(Bond(n, np1, J, increasing));
             no_of_neighbours_site++;
         }
         if(nm1<n)
         {
             increasing = false;
-            bonds.push_back(Bond(n, nm1, isotropic, dm, increasing, bondints));
+            bonds.push_back(Bond(n, nm1, J, increasing));
             no_of_neighbours_site++;
         }
 
@@ -196,7 +192,7 @@ void Lattice::chain_open_initialize()
 
         // Is it too nested to make Site inherit Bond? ... Seems fair?
         // Send in bools
-        sites.push_back(Site(n, no_of_neighbours_site, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, no_of_neighbours_site, spinx, spiny, spinz, bonds));
         // or
         //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
     }
@@ -233,12 +229,7 @@ void Lattice::chain_periodic_initialize()
         spinz = a;
     }
 
-
     if(!systemstrengthsgiven)    givestrengths_automatic();
-
-    // Move these when neccessary
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     bool randomspins = true;
     for(int n=0; n<N; n++)
@@ -288,8 +279,8 @@ void Lattice::chain_periodic_initialize()
         */
 
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
-        bonds.push_back(Bond(n, nm1, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, np1, J, true));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, nm1, J, false));
 
         // I use Jx here because I don't bother feeding in a designated variable
         std::vector<Bond> nextnearesty;
@@ -300,17 +291,7 @@ void Lattice::chain_periodic_initialize()
         nextnearestz.push_back(Bond(n, nnm, Jx, false));
         nextnearestz.push_back(Bond(n, nnp, Jx, true));
 
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds, nextnearesty, nextnearestz));
-
-
-        // or
-        //bonds.push_back(Bond(n, np1, bondints));
-
-        // Is it too nested to make Site inherit Bond? ... Seems fair?
-        // Send in bools
-        //sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
-        // or
-        //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds, nextnearesty, nextnearestz));
     }
 }
 
@@ -345,10 +326,6 @@ void Lattice::quadratic_helical_initialize()
     double spinz = a;
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
-
-    // Move these when neccessary
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     std::vector<double> position_n = std::vector<double>(2);
     std::vector<int> coord_n = std::vector<int>(2);
@@ -406,13 +383,13 @@ void Lattice::quadratic_helical_initialize()
         */
 
         // Making a lot of Bond classes to be added to vector of bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
-        bonds.push_back(Bond(n, nm1, isotropic, dm, false, bondints));
-        bonds.push_back(Bond(n, npL, isotropic, dm, true, bondints));
-        bonds.push_back(Bond(n, nmL, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, np1, J, true));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, nm1, J, false));
+        bonds.push_back(Bond(n, npL, J, true));
+        bonds.push_back(Bond(n, nmL, J, false));
 
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds));
 
         // Positions (row-major order)
         position_n[0] = 1.0*((int)n/L2); // n1
@@ -457,13 +434,6 @@ void Lattice::quadratic_helical_initialize_extended()
     double spinz = a;
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
-
-    // Move these when neccessary  // Could have these inside the loop and add randomness.
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = std::vector<double>(3);
-    bondints[0] = Dx;
-    bondints[1] = Dy;
-    bondints[2] = Dz;
 
     std::vector<double> position_n = std::vector<double>(2);
     std::vector<int> coord_n = std::vector<int>(2);
@@ -523,13 +493,13 @@ void Lattice::quadratic_helical_initialize_extended()
         std::vector<Bond> bonds;
 
         // Making a lot of Bond classes to be added to vector of bonds.
-        bonds.push_back(Bond(n, np1, Jy, true, y, bondints)); // Not sure there is much point of this...
-        bonds.push_back(Bond(n, nm1, Jy, false, y, bondints));
-        bonds.push_back(Bond(n, npL, Jx, true, x, bondints));
-        bonds.push_back(Bond(n, nmL, Jx, false, x, bondints));
+        bonds.push_back(Bond(n, np1, Jy, true, y)); // Not sure there is much point of this...
+        bonds.push_back(Bond(n, nm1, Jy, false, y));
+        bonds.push_back(Bond(n, npL, Jx, true, x));
+        bonds.push_back(Bond(n, nmL, Jx, false, x));
 
         // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds));
 
         // Positions (row-major order)
         position_n[0] = 1.0*((int)n/L2); // n1
@@ -585,10 +555,6 @@ void Lattice::cubic_helical_initialize()
     double spinz = a;
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
-
-    // Move these when neccessary
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
@@ -649,21 +615,14 @@ void Lattice::cubic_helical_initialize()
         */
 
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
-        bonds.push_back(Bond(n, nm1, isotropic, dm, false, bondints));
-        bonds.push_back(Bond(n, npL, isotropic, dm, true, bondints));
-        bonds.push_back(Bond(n, nmL, isotropic, dm, false, bondints));
-        bonds.push_back(Bond(n, npL2, isotropic, dm, true, bondints));
-        bonds.push_back(Bond(n, nmL2, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, np1, J, true));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, nm1, J, false));
+        bonds.push_back(Bond(n, npL, J, true));
+        bonds.push_back(Bond(n, nmL, J, false));
+        bonds.push_back(Bond(n, npL2, J, true));
+        bonds.push_back(Bond(n, nmL2, J, false));
 
-        // or
-        //bonds.push_back(Bond(n, np1, bondints));
-
-        // Is it too nested to make Site inherit Bond? ... Seems fair?
-        // Send in bools
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
-        // or
-        //sites.push_back(Site(n, spinx, spiny, spinz, hx, hy, hz, Dix, Diy, Diz, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds));
 
         // Giving the position (row-major order)
         int n1, n2, n3;
@@ -726,13 +685,6 @@ void Lattice::cubic_helical_initialize_extended()
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
 
-    // Move these when neccessary // Could have these inside the loop and add randomness.
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = std::vector<double>(3);
-    bondints[0] = Dx;
-    bondints[1] = Dy;
-    bondints[2] = Dz;
-
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
     std::vector<int> neighbours_n = std::vector<int>(6);
@@ -779,16 +731,15 @@ void Lattice::cubic_helical_initialize_extended()
 
         std::vector<Bond> bonds;
 
-        //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, Jz, true, z, bondints));
-        bonds.push_back(Bond(n, nm1, Jz, true, z, bondints));
-        bonds.push_back(Bond(n, npL, Jy, true, y, bondints));
-        bonds.push_back(Bond(n, nmL, Jy, true, y, bondints));
-        bonds.push_back(Bond(n, npL2, Jx, true, x, bondints));
-        bonds.push_back(Bond(n, nmL2, Jx, true, x, bondints));
+        bonds.push_back(Bond(n, np1, Jz, true, z));
+        bonds.push_back(Bond(n, nm1, Jz, true, z));
+        bonds.push_back(Bond(n, npL, Jy, true, y));
+        bonds.push_back(Bond(n, nmL, Jy, true, y));
+        bonds.push_back(Bond(n, npL2, Jx, true, x));
+        bonds.push_back(Bond(n, nmL2, Jx, true, x));
 
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds));
 
         // Giving the position (row-major order)
         int n1, n2, n3;
@@ -861,14 +812,6 @@ void Lattice::fcc_helical_initialize_extended()
         cout << "J : " << J << "; Jy : " << Jy << "; Jz : " << Jz << "; Jxy : " << Jxy << "; Jxz : " << Jxz << "; Jyz : " << Jyz << endl;
         cout << " Dx : " << Dx << "; Dy : " << Dy << "; Dz : " << Dz << endl;
     }
-
-    // Move these when neccessary
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    // This could be simpler, actually:
-    std::vector<double> bondints = std::vector<double>(3);
-    bondints[0] = Dx;
-    bondints[1] = Dy;
-    bondints[2] = Dz;
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n       = std::vector<int>(3);
@@ -1004,37 +947,37 @@ void Lattice::fcc_helical_initialize_extended()
 
         // Making a lot of bond classes to be added to bonds.
         // Should I send in J separately (to easier allow for difference in strength in different directions)
-        bonds.push_back(Bond(n, np1, Jxz,  true, xz, bondints));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, np1, Jxz,  true, xz));  // Do I really need to send in n?
         if(DEBUG)    cout << "Bond 1 done" << endl;
-        bonds.push_back(Bond(n, nm1, Jxz, false, xz, bondints));
+        bonds.push_back(Bond(n, nm1, Jxz, false, xz));
         if(DEBUG)    cout << "Bond 2 done" << endl;
-        bonds.push_back(Bond(n, npL, Jyz, true, yz, bondints));
+        bonds.push_back(Bond(n, npL, Jyz, true, yz));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 3 done" << endl;
-        bonds.push_back(Bond(n, nmL, Jyz, false, yz, bondints));
+        bonds.push_back(Bond(n, nmL, Jyz, false, yz));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 4 done" << endl;
-        bonds.push_back(Bond(n, npL2, Jxy, true, xy, bondints));
+        bonds.push_back(Bond(n, npL2, Jxy, true, xy));
         if(DEBUG)    cout << "Bond 5 done" << endl;
-        bonds.push_back(Bond(n, nmL2, Jxy, false, xy, bondints));
+        bonds.push_back(Bond(n, nmL2, Jxy, false, xy));
         if(DEBUG)    cout << "Bond 6 done" << endl;
-        bonds.push_back(Bond(n, npLm1, Jxy, true, xy, bondints));
+        bonds.push_back(Bond(n, npLm1, Jxy, true, xy));
         if(DEBUG)    cout << "Bond 7 done" << endl;
-        bonds.push_back(Bond(n, nmLm1, Jxy, false, xy, bondints));
+        bonds.push_back(Bond(n, nmLm1, Jxy, false, xy));
         if(DEBUG)    cout << "Bond 8 done" << endl;
-        bonds.push_back(Bond(n, npL2m1, Jyz, true, yz, bondints));
+        bonds.push_back(Bond(n, npL2m1, Jyz, true, yz));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 9 done" << endl;
-        bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz, bondints));
+        bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz));
         //cout << "Jyz bond set" << endl;
         if(DEBUG)    cout << "Bond 10 done" << endl;
-        bonds.push_back(Bond(n, npL2mL, Jxz, true, xz, bondints));
+        bonds.push_back(Bond(n, npL2mL, Jxz, true, xz));
         if(DEBUG)    cout << "Bond 11 done" << endl;
-        bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz, bondints));
+        bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz));
         if(DEBUG)    cout << "Bond 12 done" << endl;
 
         if(DEBUG)    cout << "Done setting the bonds. Setting the sites" << endl;
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds, nextnearesty, nextnearestz));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds, nextnearesty, nextnearestz));
 
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
         // Giving the position of the fcc (when saved in row-major order)
@@ -1113,10 +1056,6 @@ void Lattice::fcc_helical_initialize()
     double spinz = a;
 
     if(!systemstrengthsgiven)    givestrengths_automatic();
-
-    // Move these when neccessary
-    std::vector<double> siteint = givethesiteints(Dix, Diy, Diz, hx, hy, hz, sianisotropy, magfield);
-    std::vector<double> bondints = givethebondints(J, Dx, Dy, Dz, isotropic, dm);
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n = std::vector<int>(3);
@@ -1246,33 +1185,33 @@ void Lattice::fcc_helical_initialize()
         // isotropic in the Bond initialization. Must find out which direction, though...
         if(DEBUG)    cout << "Setting the bonds" << endl;
         // Making a lot of bond classes to be added to bonds.
-        bonds.push_back(Bond(n, np1, isotropic, dm, true, bondints));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, np1, J, true));  // Do I really need to send in n?
         if(DEBUG)    cout << "Bond 1 done" << endl;
-        bonds.push_back(Bond(n, nm1, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, nm1, J, false));
         if(DEBUG)    cout << "Bond 2 done" << endl;
-        bonds.push_back(Bond(n, npL, isotropic, dm, true, bondints));
+        bonds.push_back(Bond(n, npL, J, true));
         if(DEBUG)    cout << "Bond 3 done" << endl;
-        bonds.push_back(Bond(n, nmL, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, nmL, J, false));
         if(DEBUG)    cout << "Bond 4 done" << endl;
-        bonds.push_back(Bond(n, npL2, isotropic, dm, true, bondints));
+        bonds.push_back(Bond(n, npL2, J, true));
         if(DEBUG)    cout << "Bond 5 done" << endl;
-        bonds.push_back(Bond(n, nmL2, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, nmL2, J, false));
         if(DEBUG)    cout << "Bond 6 done" << endl;
-        bonds.push_back(Bond(n, npLm1, isotropic, dm, true, bondints));
+        bonds.push_back(Bond(n, npLm1, J, true));
         if(DEBUG)    cout << "Bond 7 done" << endl;
-        bonds.push_back(Bond(n, nmLm1, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, nmLm1, J, false));
         if(DEBUG)    cout << "Bond 8 done" << endl;
-        bonds.push_back(Bond(n, npL2m1, isotropic, dm, true, bondints));
+        bonds.push_back(Bond(n, npL2m1, J, true));
         if(DEBUG)    cout << "Bond 9 done" << endl;
-        bonds.push_back(Bond(n, nmL2m1, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, nmL2m1, J, false));
         if(DEBUG)    cout << "Bond 10 done" << endl;
-        bonds.push_back(Bond(n, npL2mL, isotropic, dm, true, bondints));
+        bonds.push_back(Bond(n, npL2mL, J, true));
         if(DEBUG)    cout << "Bond 11 done" << endl;
-        bonds.push_back(Bond(n, nmL2mL, isotropic, dm, false, bondints));
+        bonds.push_back(Bond(n, nmL2mL, J, false));
         if(DEBUG)    cout << "Bond 12 done" << endl;
 
         cout << "Done setting the bonds. Setting the sites" << endl;
-        sites.push_back(Site(n, sianisotropy, magfield, spinx, spiny, spinz, siteint, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds));
 
         // Listing the positions of the spins:
 
@@ -1682,74 +1621,4 @@ std::vector<int> Lattice::diagline_quadr()
         if(n1==n2)        dline.push_back(n);
     }
     return dline;
-}
-
-std::vector<double> Lattice::givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield)
-{
-    if(sianisotropy && magfield)
-    {
-        std::vector<double> siteint = std::vector<double>(6);
-        siteint[0] = Dix;
-        siteint[1] = Diy;
-        siteint[2] = Diz;
-        siteint[3] = hx;
-        siteint[4] = hy;
-        siteint[5] = hz;
-        return siteint;
-    }
-    else if(sianisotropy && (!magfield))
-    {
-        std::vector<double> siteint = std::vector<double>(3);
-        siteint[0] = Dix;
-        siteint[1] = Diy;
-        siteint[2] = Diz;
-        return siteint;
-    }
-    else if((!sianisotropy) && magfield)
-    {
-        std::vector<double> siteint = std::vector<double>(3);
-        siteint[0] = hx;
-        siteint[1] = hy;
-        siteint[2] = hz;
-        return siteint;
-    }
-    else
-    {
-        std::vector<double> siteint = std::vector<double>(1);
-        siteint[0] = 0;
-        return siteint;
-    }
-}
-
-std::vector<double> Lattice::givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm)
-{
-    if(isotropic && dm)
-    {
-        std::vector<double> bondints = std::vector<double>(4);
-        bondints[0] = J;
-        bondints[1] = Dx;
-        bondints[2] = Dy;
-        bondints[3] = Dz;
-        return bondints;
-    }
-    else if(isotropic && (!dm))
-    {
-        std::vector<double> bondints = std::vector<double>(1);
-        bondints[0] = J;
-        return bondints;
-    }
-    else if((!isotropic) && dm)
-    {
-        std::vector<double> bondints = std::vector<double>(3);
-        bondints[0] = Dx;
-        bondints[1] = Dy;
-        bondints[2] = Dz;
-        return bondints;
-    }
-    else
-    {
-        std::vector<double> bondints = std::vector<double>(1);
-        bondints[0] = 0;
-        return bondints;
-    }
 }
