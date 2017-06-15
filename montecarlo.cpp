@@ -390,18 +390,18 @@ void MonteCarlo::initialize_energy()
         {
             //cout << "in sianisotropy, init" << endl;
             if(BEDBUG)    cout << "In sianisotropy" << endl;
-            double Dix = mylattice.sites[i].Dix;   // Should these lie in Lattice instead of in Lattice::site?
-            double Diy = mylattice.sites[i].Diy;
-            double Diz = mylattice.sites[i].Diz;           
+            double Dix = mylattice.Dix;   // Moved these to Lattice from Lattice::site to make it more effective
+            double Diy = mylattice.Diy;
+            double Diz = mylattice.Diz;
             energy_contribution_sites += (Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz);
             //cout << "Energy contribution from sites: " << energy_contribution_sites << endl;
         }
         if(magfield)
         {
             if(BEDBUG)    cout << "In magfield" << endl;
-            double hx = mylattice.sites[i].hx;
-            double hy = mylattice.sites[i].hy;
-            double hz = mylattice.sites[i].hz;
+            double hx = mylattice.hx;
+            double hy = mylattice.hy;
+            double hz = mylattice.hz;
             energy_contribution_sites -= hx*sx + hy*sy + hz*sz;
         }
         // Contribution from bonds
@@ -456,11 +456,11 @@ void MonteCarlo::initialize_energy()
             {              
                 bool increasing = mylattice.sites[i].bonds[j].increasing;
                 if(increasing) // To avoid double counting. Hopefully saves time for large systems
-                {            // When increasing==true, the sign is set
+                {              // When increasing==true, the sign is set
                     int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                    double Dx = mylattice.sites[i].bonds[j].Dx;
-                    double Dy = mylattice.sites[i].bonds[j].Dy;
-                    double Dz = mylattice.sites[i].bonds[j].Dz;
+                    double Dx = mylattice.Dx;
+                    double Dy = mylattice.Dy;
+                    double Dz = mylattice.Dz;
 
                     double sxk = mylattice.sites[k].spinx;
                     double syk = mylattice.sites[k].spiny;
@@ -471,6 +471,7 @@ void MonteCarlo::initialize_energy()
             }
         }
         if(BEDBUG) cout << "Done with one, onto the others" << endl;
+        cout << "Setting next nearest neighbour interactions" << endl;
         if(nextnearest)
         {
             if(BEDBUG) cout << "In nextnearest" << endl;
@@ -478,10 +479,11 @@ void MonteCarlo::initialize_energy()
             double partnerspiny = 0;
             double partnerspinz = 0;
             if(BEDBUG) cout << "Partnerspins set" << endl;
+            cout << "Partnerspins set" << endl;
             if(type_lattice=='E')
             {
                 if(BEDBUG) cout << "In fcc_extended implementation" << endl;
-
+                // Open boundary conditions are not implemented for the fcc.
                 // We only work with the forward bonds in order to not overcount. This is simplest.
                 double Jy = mylattice.sites[i].nextnearesty[1].J;
                 double Jz = mylattice.sites[i].nextnearestz[1].J;
@@ -504,27 +506,62 @@ void MonteCarlo::initialize_energy()
             if(mylattice.dim==1)
             {
                 if(BEDBUG) cout << "In chain implementation" << endl;
+                cout << "In chain implementation" << endl;
                 // We only work with the forward bonds in order to not overcount. This is simplest.
-                double J = mylattice.sites[i].nextnearesty[1].J;
-                if(BEDBUG) cout << "J retrieved" << endl;
+                if(!notperiodic)
+                {
+                    if(BEDBUG) cout << "Working with periodic BCs, chain" << endl;
+                    double J = mylattice.sites[i].nextnearesty[1].J;
+                    if(BEDBUG) cout << "J retrieved" << endl;
 
-                int nb = mylattice.sites[i].nextnearesty[1].siteindex2;
-                if(BEDBUG) cout << "Index of next nearest neighbour retrieved" << endl;
-                // Spin of the next nearest neighbour
-                double sx_nn = mylattice.sites[nb].spinx;
-                double sy_nn = mylattice.sites[nb].spiny;
-                double sz_nn = mylattice.sites[nb].spinz;
+                    int nb = mylattice.sites[i].nextnearesty[1].siteindex2;
+                    if(BEDBUG) cout << "Index of next nearest neighbour retrieved" << endl;
+                    // Spin of the next nearest neighbour
+                    double sx_nn = mylattice.sites[nb].spinx;
+                    double sy_nn = mylattice.sites[nb].spiny;
+                    double sz_nn = mylattice.sites[nb].spinz;
 
-                if(BEDBUG) cout << "Spins of next nearest neighbour retrieved" << endl;
+                    if(BEDBUG) cout << "Spins of next nearest neighbour retrieved" << endl;
 
-                partnerspinx += J*sx_nn;
-                partnerspiny += J*sy_nn;
-                partnerspinz += J*sz_nn;
+                    partnerspinx += J*sx_nn;
+                    partnerspiny += J*sy_nn;
+                    partnerspinz += J*sz_nn;
 
-                if(BEDBUG) cout << "Partnerspins set" << endl;
+                    if(BEDBUG) cout << "Partnerspins set" << endl;
 
-                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
-                if(BEDBUG) cout << "energy contribution from next nearest neighbours calculated" << endl;
+                    energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+                    if(BEDBUG) cout << "energy contribution from next nearest neighbours calculated" << endl;
+                }
+                else
+                {
+                    //cout << "Working with open BCs, chain" << endl;
+                    if(i<N-2) // These are the only sites with forward nnn bonds
+                    {
+                        //cout << "i<N-2" << endl;
+                        double J;
+                        J = mylattice.sites[i].nextnearesty[0].J;
+                        if(BEDBUG) cout << "J retrieved" << endl;
+
+                        int nb = mylattice.sites[i].nextnearesty[0].siteindex2;
+                        if(BEDBUG) cout << "Index of next nearest neighbour retrieved" << endl;
+                        // Spin of the next nearest neighbour
+                        double sx_nn = mylattice.sites[nb].spinx;
+                        double sy_nn = mylattice.sites[nb].spiny;
+                        double sz_nn = mylattice.sites[nb].spinz;
+
+                        if(BEDBUG) cout << "Spins of next nearest neighbour retrieved" << endl;
+
+                        partnerspinx += J*sx_nn;
+                        partnerspiny += J*sy_nn;
+                        partnerspinz += J*sz_nn;
+
+                        if(BEDBUG) cout << "Partnerspins set" << endl;
+
+                        energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+                        if(BEDBUG) cout << "energy contribution from next nearest neighbours calculated" << endl;
+                    }
+                }
+
             }
         } // End energy contribution from next nearest neighbour
     } // End loop over particles
@@ -638,7 +675,6 @@ void MonteCarlo::runmetropolis(double beta)
         spcorFiletot << beta << " " << N << endl;
         ftspcorFile  << beta << " " << N << endl;
     }
-    //allFile << "N: " << N << "; Jxz: " << mylattice.sites[0].bonds[0].J << "; Jyz: " << mylattice.sites[0].bonds[2].J << "; Jxy: " << mylattice.sites[0].bonds[4].J << "; Dix: " << mylattice.sites[0].Dix << "; Diy: " << mylattice.sites[0].Diy << "; Diz: " << mylattice.sites[0].Diz << endl;
     //allFile << "eqsteps: " << eqsteps << "; mcsteps_inbin: " << mcsteps_inbin << "; no_of_bins: " << no_of_bins << endl;
 
     // Initializing the energy
@@ -1107,7 +1143,7 @@ void MonteCarlo::runmetropolis(double beta)
         total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
         if((double)(i+1)/no_of_bins==0.10)    cout << "10% done. Time elapsed: " << total_time << endl;
         if((double)(i+1)/no_of_bins==0.25)    cout << "25% done. Time elapsed: " << total_time << endl;
-        if((double)(i+1)/no_of_bins==0.50)    cout << "50% done. time elapsed: " << total_time << endl;
+        if((double)(i+1)/no_of_bins==0.50)    cout << "50% done. Time elapsed: " << total_time << endl;
         if((double)(i+1)/no_of_bins==0.75)    cout << "75% done. Time elapsed: " << total_time << endl;
         if((double)(i+1)/no_of_bins==1.00)    cout << "100% done. Time elapsed: " << total_time<< endl;
 
@@ -1373,7 +1409,7 @@ void MonteCarlo::runmetropolis(double beta)
 
         int dim = mylattice.dim; // Header with dimension and no of elements in each direction
 
-        configFile << beta << " " << dim << " " << mylattice.L1 << " " << mylattice.L2 << " " << mylattice.L3 << endl;
+        configFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << dim << " " << mylattice.L1 << " " << mylattice.L2 << " " << mylattice.L3 << endl;
         vector<double> position;
         vector<int> neighbours;
         int no_of_neighbours = mylattice.no_of_neighbours;
@@ -1535,9 +1571,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         {
             if(HUMBUG)    cout << "In sianisotropy in mcstepf" << endl;
             if(CONTRBUG)  cout << "In sianisotropy in mcstepf" << endl;
-            double Dix = mylattice.sites[k].Dix;
-            double Diy = mylattice.sites[k].Diy;
-            double Diz = mylattice.sites[k].Diz;
+            double Dix = mylattice.Dix;
+            double Diy = mylattice.Diy;
+            double Diz = mylattice.Diz;
             if(CONTRBUG)  cout << "Dix: " << Dix << "; Diy: " << Diy << "; Diz = " << Diz << endl;
             //cout << "Dix : " << Dix << "; Diy : " << Diy << "; Diz : " << Diz << endl;
             energy_diff += (Dix*(sx_t*sx_t -sx*sx) + Diy*(sy_t*sy_t-sy*sy)+ Diz*(sz_t*sz_t -sz*sz));
@@ -1547,9 +1583,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         {
             if(HUMBUG)    cout << "In magfield in mcstepf" << endl;
             if(CONTRBUG)  cout << "In magfield in mcstepf" << endl;
-            double hx = mylattice.sites[k].hx;
-            double hy = mylattice.sites[k].hy;
-            double hz = mylattice.sites[k].hz;
+            double hx = mylattice.hx;
+            double hy = mylattice.hy;
+            double hz = mylattice.hz;
             energy_diff += hx*(sx-sx_t) + hy*(sy-sy_t) + hz*(sz-sz_t);
         }
         if(isotropic)
@@ -1620,9 +1656,9 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                 //cout << "Sign: " << detsign << endl;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
 
-                double Dx = mylattice.sites[k].bonds[j].Dx;
-                double Dy = mylattice.sites[k].bonds[j].Dy;
-                double Dz = mylattice.sites[k].bonds[j].Dz;
+                double Dx = mylattice.Dx;
+                double Dy = mylattice.Dy;
+                double Dz = mylattice.Dz;
                 if(HUMBUG)    cout << "Bonds accessed" << endl;
 
                 double sxk = mylattice.sites[l].spinx;
@@ -1640,7 +1676,6 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
         }
         if(nextnearest)
         {
-            //cout << "In nextnearest in mcstepf, where we shouldn't be" << endl;
             double partnerspinx = 0;
             double partnerspiny = 0;
             double partnerspinz = 0;
@@ -1675,28 +1710,65 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
             }
             if(mylattice.dim==1)
             {
-                // We only work with the forward bonds in order to not overcount. This is simplest.
-                double J = mylattice.sites[k].nextnearesty[1].J;
+                // The forward and backward bond has the same J:
+                double J = mylattice.sites[k].nextnearesty[0].J;
 
-                int nbp = mylattice.sites[k].nextnearesty[1].siteindex2;
-                int nbm = mylattice.sites[k].nextnearesty[0].siteindex2;
+                if(!notperiodic)
+                {
+                    int nbp = mylattice.sites[k].nextnearesty[0].siteindex2;
+                    int nbm = mylattice.sites[k].nextnearesty[1].siteindex2;
 
-                //cout << "Spin no " << k << " has next nearest neighbours " << nbm << " and " << nbp << endl;
+                    double sx_nnp = mylattice.sites[nbp].spinx;
+                    double sy_nnp = mylattice.sites[nbp].spiny;
+                    double sz_nnp = mylattice.sites[nbp].spinz;
 
-                // Spin of the next nearest neighbour
-                double sx_nnp = mylattice.sites[nbp].spinx;
-                double sy_nnp = mylattice.sites[nbp].spiny;
-                double sz_nnp = mylattice.sites[nbp].spinz;
+                    double sx_nnm = mylattice.sites[nbm].spinx;
+                    double sy_nnm = mylattice.sites[nbm].spiny;
+                    double sz_nnm = mylattice.sites[nbm].spinz;
 
-                double sx_nnm = mylattice.sites[nbm].spinx;
-                double sy_nnm = mylattice.sites[nbm].spiny;
-                double sz_nnm = mylattice.sites[nbm].spinz;
+                    partnerspinx += J*(sx_nnm+sx_nnp);
+                    partnerspiny += J*(sy_nnm+sy_nnp);
+                    partnerspinz += J*(sz_nnm+sz_nnp);
 
-                partnerspinx += J*(sx_nnp + sx_nnm);
-                partnerspiny += J*(sy_nnp + sy_nnm);
-                partnerspinz += J*(sz_nnp + sz_nnm);
+                    energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
 
-                energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
+                }
+                else
+                {
+                    if(k<N-2)
+                    {
+                        int nbp = mylattice.sites[k].nextnearesty[0].siteindex2;
+
+                        // Spin of the next nearest neighbour
+                        double sx_nnp = mylattice.sites[nbp].spinx;
+                        double sy_nnp = mylattice.sites[nbp].spiny;
+                        double sz_nnp = mylattice.sites[nbp].spinz;
+
+                        partnerspinx += J*sx_nnp;
+                        partnerspiny += J*sy_nnp;
+                        partnerspinz += J*sz_nnp;
+
+                        energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
+                    } // Could probably make this more efficient, but the chain is not of primary interest
+                    if(k>2)
+                    {   // If we have a next nearest neighbour in the negative direction
+                        int nbm;
+                        // If we have no nbp, nbm will have index 0, otherwise 1.
+                        if(k<N-2) nbm = mylattice.sites[k].nextnearesty[1].siteindex2;
+                        else      nbm = mylattice.sites[k].nextnearesty[0].siteindex2;
+
+                        double sx_nnm = mylattice.sites[nbm].spinx;
+                        double sy_nnm = mylattice.sites[nbm].spiny;
+                        double sz_nnm = mylattice.sites[nbm].spinz;
+
+                        partnerspinx += J*sx_nnm;
+                        partnerspiny += J*sy_nnm;
+                        partnerspinz += J*sz_nnm;
+
+                        energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
+                    }
+                }
+
             }
         } // End contrib. from next nearest neighbour
         //cout << "energy_diff = " << energy_diff << endl;
@@ -1843,18 +1915,18 @@ double MonteCarlo::check_the_energy()
         {
             //cout << "in sianisotropy, init" << endl;
             if(BEDBUG)    cout << "In sianisotropy" << endl;
-            double Dix = mylattice.sites[i].Dix;   // Should these lie in Lattice instead of in Lattice::site?
-            double Diy = mylattice.sites[i].Diy;
-            double Diz = mylattice.sites[i].Diz;
+            double Dix = mylattice.Dix;   // Should these lie in Lattice instead of in Lattice::site?
+            double Diy = mylattice.Diy;
+            double Diz = mylattice.Diz;
             energy_contribution_sites += (Dix*sx*sx + Diy*sy*sy+ Diz*sz*sz);
             //cout << "Energy contribution from sites: " << energy_contribution_sites << endl;
         }
         if(magfield)
         {
             if(BEDBUG)    cout << "In magfield" << endl;
-            double hx = mylattice.sites[i].hx;
-            double hy = mylattice.sites[i].hy;
-            double hz = mylattice.sites[i].hz;
+            double hx = mylattice.hx;
+            double hy = mylattice.hy;
+            double hz = mylattice.hz;
             energy_contribution_sites -= hx*sx + hy*sy + hz*sz;
         }
         // Contribution from bonds
@@ -1908,9 +1980,9 @@ double MonteCarlo::check_the_energy()
                 if(increasing) // To avoid double counting. Hopefully saves time for large systems
                 {              // When increasing==true, the sign is set
                     int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                    double Dx = mylattice.sites[i].bonds[j].Dx; // Could have these as class variables.
-                    double Dy = mylattice.sites[i].bonds[j].Dy;
-                    double Dz = mylattice.sites[i].bonds[j].Dz;
+                    double Dx = mylattice.Dx; // Could have these as class variables.
+                    double Dy = mylattice.Dy;
+                    double Dz = mylattice.Dz;
 
                     double sxk = mylattice.sites[k].spinx;
                     double syk = mylattice.sites[k].spiny;
@@ -1948,20 +2020,58 @@ double MonteCarlo::check_the_energy()
             }
             if(mylattice.dim==1)
             {
-                // We only work with the forward bonds in order to not overcount. This is simplest.
-                double J = mylattice.sites[i].nextnearesty[1].J;
+                if(BEDBUG) cout << "In chain implementation" << endl;
+                // We only work with bonds that point in one direction in order to not overcount. This is simplest.
+                if(!notperiodic)
+                {
+                    double J = mylattice.sites[i].nextnearesty[1].J;
+                    if(BEDBUG) cout << "J retrieved" << endl;
 
-                int nb = mylattice.sites[i].nextnearesty[1].siteindex2;
-                // Spin of the next nearest neighbour
-                double sx_nn = mylattice.sites[nb].spinx;
-                double sy_nn = mylattice.sites[nb].spiny;
-                double sz_nn = mylattice.sites[nb].spinz;
+                    int nb = mylattice.sites[i].nextnearesty[1].siteindex2;
+                    if(BEDBUG) cout << "Index of next nearest neighbour retrieved" << endl;
+                    // Spin of the next nearest neighbour
+                    double sx_nn = mylattice.sites[nb].spinx;
+                    double sy_nn = mylattice.sites[nb].spiny;
+                    double sz_nn = mylattice.sites[nb].spinz;
 
-                partnerspinx = J*sx_nn;
-                partnerspiny = J*sy_nn;
-                partnerspinz = J*sz_nn;
+                    if(BEDBUG) cout << "Spins of next nearest neighbour retrieved" << endl;
 
-                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+                    partnerspinx += J*sx_nn;
+                    partnerspiny += J*sy_nn;
+                    partnerspinz += J*sz_nn;
+
+                    if(BEDBUG) cout << "Partnerspins set" << endl;
+
+                    energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+                    if(BEDBUG) cout << "energy contribution from next nearest neighbours calculated" << endl;
+                }
+                else
+                {
+                    if(i<N-2)
+                    {
+                        double J;
+                        J = mylattice.sites[i].nextnearesty[0].J;
+                        if(BEDBUG) cout << "J retrieved" << endl;
+
+                        int nb = mylattice.sites[i].nextnearesty[0].siteindex2;
+                        if(BEDBUG) cout << "Index of next nearest neighbour retrieved" << endl;
+                        // Spin of the next nearest neighbour
+                        double sx_nn = mylattice.sites[nb].spinx;
+                        double sy_nn = mylattice.sites[nb].spiny;
+                        double sz_nn = mylattice.sites[nb].spinz;
+
+                        if(BEDBUG) cout << "Spins of next nearest neighbour retrieved" << endl;
+
+                        partnerspinx += J*sx_nn;
+                        partnerspiny += J*sy_nn;
+                        partnerspinz += J*sz_nn;
+
+                        if(BEDBUG) cout << "Partnerspins set" << endl;
+
+                        energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+                        if(BEDBUG) cout << "energy contribution from next nearest neighbours calculated" << endl;
+                    }
+                }
             }
         } // End energy contribution from next nearest neighbour
 
@@ -1972,10 +2082,6 @@ double MonteCarlo::check_the_energy()
     energy_out = energy_contribution_sites + energy_contribution_bonds;
     return energy_out;
 }
-
-
-
-
 
 void MonteCarlo::debug1d2p()
 {
@@ -2846,33 +2952,38 @@ void MonteCarlo::test_couplings_strengths()
     if(sianisotropy)
     {
         cout << "Single ion anisotropy strengths:" << endl;
-        double Dix = mylattice.sites[n].Dix;   // Should these lie in Lattice instead of in Lattice::site?
-        double Diy = mylattice.sites[n].Diy;
-        double Diz = mylattice.sites[n].Diz;
+        double Dix = mylattice.Dix;   // Should these lie in Lattice instead of in Lattice::site?
+        double Diy = mylattice.Diy;
+        double Diz = mylattice.Diz;
         cout << "Dix = " << Dix << "; Diy = " << Diy << "; Diz = " << Diz << endl;
     }
     if(magfield)
     {
         cout << "Magnetic field strength:" << endl;
-        double hx = mylattice.sites[n].hx;   // Should these lie in Lattice instead of in Lattice::site?
-        double hy = mylattice.sites[n].hy;
-        double hz = mylattice.sites[n].hz;
+        double hx = mylattice.hx;   // Should these lie in Lattice instead of in Lattice::site?
+        double hy = mylattice.hy;
+        double hz = mylattice.hz;
         cout << "hx = " << hx << "; hy = " << hy << "; hz = " << hz << endl;
     }
     if(dm)
     {
         cout << "Dzyaloshinskii-Moriya couplings:" << endl;
-        double Dx = mylattice.sites[n].bonds[0].Dx; // The same for all bonds, at leat in my case.
-        double Dy = mylattice.sites[n].bonds[0].Dy; // Could probably store it in Lattice instead of Bonds
-        double Dz = mylattice.sites[n].bonds[0].Dz;
+        double Dx = mylattice.Dx; // The same for all bonds, at leat in my case.
+        double Dy = mylattice.Dy; // Changed to storing it in Lattice from storing it in Bonds
+        double Dz = mylattice.Dz;
         cout << "Dx = " << Dx << "; Dy = " << Dy << "; Dz = " << Dz << endl;
     }
     if(nextnearest)
     {
         cout << "Next nearest neighbour couplings:" << endl;
         double Jy = mylattice.sites[n].nextnearesty[0].J;
-        double Jz = mylattice.sites[n].nextnearestz[0].J;
-        cout << "Jy = " << Jy << "; Jz = " << Jz << endl;
+        cout << "Jy = " << Jy;
+        if(mylattice.dim>1)
+        {
+            double Jz = mylattice.sites[n].nextnearestz[0].J;
+            cout << "; Jz = " << Jz;
+        }
+        cout << endl;
     }
 
 }

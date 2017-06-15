@@ -10,34 +10,25 @@ class Site
 public:
 
     int index; // is this neccessary?
-    int lenint; // Length of interaction array.
-    int n1, n2, n3;
-    double hx, hy, hz, Dix, Diy, Diz; // This would lead to a lot of zero elements, possibly
     double spinx, spiny, spinz;
 
-    // Should I have neighbours here?
-    //std::vector<int> bondtype1; // Not here
-    //std::vector<int> bondtype2;
-    //std::vector<int> bondtype3;
-    std::vector<double> siteint; // Array for site interaction
-    std::vector<Bond> bonds; // I guess I do have to add a pointer to Bond. But then both classes inherit each other. Weird.
-
+    std::vector<Bond> bonds;
     std::vector<Bond> nextnearesty;  // These are relevant for fcc only. Should they be in Lattice?
     std::vector<Bond> nextnearestz;
 
-
-    // Should I have some bondlength parameter?
-
     // For closed boundary conditions
     int no_of_neighbours_site;
+    int no_of_nneighbours_site;
 
     // Initializers
     // For periodic boundary conditions
-    Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    Site(int n, double spinx, double spiny, double spinz, std::vector<Bond> bonds);
     // For open boundary conditions
-    Site(int n, int no_of_neighbours_site, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds);
+    Site(int n, int no_of_neighbours_site, double spinx, double spiny, double spinz, std::vector<Bond> bonds);
     // For including next nearest neighbour interactions
-    Site(int n, bool sianisotropy, bool magfield, double spinx, double spiny, double spinz, std::vector<double> siteint, std::vector<Bond> bonds, std::vector<Bond> nextnearesty, std::vector<Bond> nextnearestz);
+    Site(int n, double spinx, double spiny, double spinz, std::vector<Bond> bonds, std::vector<Bond> nextnearesty, std::vector<Bond> nextnearestz);
+    Site(int n, int no_of_neighbours_site, int no_of_nneighbours_site, double spinx, double spiny, double spinz, std::vector<Bond> bonds, std::vector<Bond> nextnearesty);
+
 };
 
 #endif // SITE_H
