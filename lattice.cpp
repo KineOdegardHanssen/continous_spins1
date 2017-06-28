@@ -19,7 +19,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
-    seed = 21;
+    seed = 23;
     cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -39,7 +39,7 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
-    seed = 21;
+    seed = 23;
     cout << "In L1, L2, L3 Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -1034,6 +1034,253 @@ void Lattice::fcc_helical_initialize_extended()
     cout << "Done with fcc_helical_initialize" << endl;
 }
 
+
+
+void Lattice::fcc_helical_initialize_extended_yopen()
+{
+    cout << "In fcc_helical_initialize_extended" << endl;
+    bool DEBUG = false;
+    dim = 3;
+    N = L1*L2*L3;
+    cout << "N: " << N << endl;
+    no_of_neighbours = 12;
+    extended = true;
+
+    // No of particles in each direction
+    dimlengths    = vector<int>(dim);
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+    dimlengths[2] = L3;
+
+    // Lattice vectors
+    a1 = vector<double>(3);
+    a2 = vector<double>(3);
+    a3 = vector<double>(3);
+    a1[0] = 0.5;    a1[1] = 0.5;    a1[2] = 0;
+    a2[0] = 0;      a2[1] = 0.5;    a2[2] = 0.5;
+    a3[0] = 0.5;    a3[1] = 0;      a3[2] = 0.5;
+
+    // Reciprocal lattice vectors
+    b1 = vector<double>(3);
+    b2 = vector<double>(3);
+    b3 = vector<double>(3);
+    b1[0] =  2*M_PI;     b1[1] =  2*M_PI;     b1[2] = -2*M_PI;
+    b2[0] = -2*M_PI;     b2[1] =  2*M_PI;     b2[2] =  2*M_PI;
+    b3[0] =  2*M_PI;     b3[1] = -2*M_PI;     b3[2] =  2*M_PI;
+
+    // Setting up the sites
+    // We set up the matrix by having all spins in the same direction. Or maybe draw at random?
+    double a = 1/sqrt(3);
+    double spinx = a;
+    double spiny = a;
+    double spinz = a;
+
+    if(!systemstrengthsgiven)    givestrengths_automatic();
+
+    if(DEBUG)
+    {
+        cout << "hx : " << hx << "; hy : " << hy << "; hz : " << hz << "; Dix : " << Dix << "; Diy : " << Diy << "; Diz : " << Diz << endl;
+        cout << "J : " << J << "; Jy : " << Jy << "; Jz : " << Jz << "; Jxy : " << Jxy << "; Jxz : " << Jxz << "; Jyz : " << Jyz << endl;
+        cout << " Dx : " << Dx << "; Dy : " << Dy << "; Dz : " << Dz << endl;
+    }
+
+    std::vector<double> position_n = std::vector<double>(3);
+    std::vector<int> coord_n       = std::vector<int>(3);
+    std::vector<int> neighbours_n;
+
+    string xy = "xy";
+    string xz = "xz";
+    string yz = "yz";
+
+    // Giving the position of the fcc (when saved in row-major order)
+    // Could change it back, probably. Ordering not important, I guess. The same as rotating
+    // Should probably just choose something and stick with it.
+    int n1, n2, n3;
+
+    n1 = (int)n/(L2*L3);
+    n2 = (int)n/L3 - (int)n/(L3*L2)*L2;
+    n3 = (int)n%L3;
+
+    //cout << "Site " << n << "; [i,j,k] = [" << n1 << "," << n2 << "," << n3 << "]" << endl;
+
+    double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
+    double ypos = 0.5*(n1+n2);
+    double zpos = 0.5*(n2+n3);
+
+    //cout << "n : " << n <<  " Position: [" << xpos << "," << ypos << "," << zpos << "]" << endl;
+
+    position_n[0] = xpos;
+    position_n[1] = ypos;
+    position_n[2] = zpos;
+
+    coord_n[0] = n1;     // Have these here in case I want to check
+    coord_n[1] = n2;
+    coord_n[2] = n3;
+
+    sitepositions.push_back(position_n);
+    sitecoordinates.push_back(coord_n);
+
+    // Could have these inside the loop and add randomness.
+    bool randomspins = false;
+    if(DEBUG)    cout << "Now entering the loop" << endl;
+    for(int n=0; n<N; n++)
+    {
+        if(DEBUG)    cout << "In loop, n = " << n << endl;
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
+
+        // Finding the neighbours to n
+        int no_of_neighbours_site = 12;
+        if(ypos==(L2-1)) no_of_neighbours_site = 8; // If we are at the end
+        else if(ypos==0) no_of_neighbours_site = 8; // If we are at the start
+
+        int np1, nm1, npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
+        np1    = findneighbour(n,0,0,1);  // neighbour in positive a3-direction (row-major ordering). Jxz
+        nm1    = findneighbour(n,0,0,-1); // neighbour in negative a3-direction (row-major ordering). Jxz
+        npL    = findneighbour(n,0,1,0);  // neighbour in positive a2-direction (row-major ordering). Jyz
+        nmL    = findneighbour(n,0,-1,0); // neighbour in negative a2-direction (row-major ordering). Jyz
+        npL2   = findneighbour(n,1,0,0);  // neighbour in positive a1-direction (row-major ordering). Jxy
+        nmL2   = findneighbour(n,-1,0,0); // neighbour in negative a1-direction (row-major ordering). Jxy
+        npLm1  = findneighbour(n,0,1,-1); // Jxy
+        nmLm1  = findneighbour(n,0,-1,1); // Jxy
+        npL2m1 = findneighbour(n,1,0,-1); // Jyz
+        nmL2m1 = findneighbour(n,-1,0,1); // Jyz
+        npL2mL = findneighbour(n,1,-1,0); // Jxz
+        nmL2mL = findneighbour(n,-1,1,0); // Jxz
+
+        neighbours_n.push_back(np1);
+        neighbours_n.push_back(nm1);
+        // Bonds in the y-direction
+        if(ypos==(L2-1))
+        {   // At the end of the lattice in the y-dir
+            // We have open BCs in that direction
+            neighbours_n.push_back(nmL);
+            neighbours_n.push_back(nmL2);
+            neighbours_n.push_back(nmLm1);
+            neighbours_n.push_back(nmL2m1);
+        }
+        else if(ypos==0)
+        {   // At the beginning of the lattice in the y-dir
+            // We have open BCs in that direction
+            neighbours_n.push_back(npL);
+            neighbours_n.push_back(npL2);
+            neighbours_n.push_back(npLm1);
+            neighbours_n.push_back(npL2m1);
+        }
+        else
+        {   // In the middle of the lattice,
+            // as y-coords are concerned.
+            // Here we have all bonds.
+            neighbours_n.push_back(npL);
+            neighbours_n.push_back(nmL);
+            neighbours_n.push_back(npL2);
+            neighbours_n.push_back(nmL2);
+            neighbours_n.push_back(npLm1);
+            neighbours_n.push_back(nmLm1);
+            neighbours_n.push_back(npL2m1);
+            neighbours_n.push_back(nmL2m1);
+        }
+        neighbours_n.push_back(npL2mL);
+        neighbours_n.push_back(nmL2mL);
+
+        siteneighbours.push_back(neighbours_n);
+
+        // Should I have some bool that determines whether or not I need these?
+        // This part probably need fixing!!
+        // Finding the next nearest neighbours in the y- and z- direction
+        // (The distance between sites in the x-direction is larger, so this dir can be neglected.)
+        int nnyp, nnym, nnzp, nnzm;
+
+        nnyp = findneighbour(n, 1, 1,-1);
+        nnym = findneighbour(n,-1,-1, 1);
+        nnzp = findneighbour(n,-1, 1, 1);
+        nnzm = findneighbour(n, 1,-1,-1);
+
+        if(DEBUG)
+        {
+            cout << "np1" << " " << np1 << endl;
+            cout << "npL" << " " << npL << endl;
+            cout << "npL2" << " " << npL2 << endl;
+            cout << "npLm1" << " " << npLm1 << endl;
+            cout << "npL2m1" << " " << npL2m1 << endl;
+            cout << "npL2mL" << " " << npL2mL << endl;
+            cout << "nm1" << " " << nm1 << endl;
+            cout << "nmL" << " " << nmL << endl;
+            cout << "nmL2" << " " << nmL2 << endl;
+            cout << "nmLm1" << " " << nmLm1 << endl;
+            cout << "nmL2m1" << " " << nmL2m1 << endl;
+            cout << "nmL2mL" << " " << nmL2mL << endl;
+        }
+
+        std::vector<Bond> bonds;
+
+        // Should I have some bool that determines whether or not I need these?
+        std::vector<Bond> nextnearesty;
+        std::vector<Bond> nextnearestz;
+
+        if(ypos!=0)         nextnearesty.push_back(Bond(n, nnym, Jy, false));
+        if(ypos!=(L2-1))    nextnearesty.push_back(Bond(n, nnyp, Jy, true));
+        nextnearestz.push_back(Bond(n, nnzm, Jz, false));
+        nextnearestz.push_back(Bond(n, nnzp, Jz, true));
+
+        int no_of_nneighbours_site = 2;
+        if(ypos==0 || ypos==(L2-1))    no_of_nneighbours_site = 1;
+
+        if(DEBUG)    cout << "Setting the bonds" << endl;
+
+        //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
+
+        // Making a lot of bond classes to be added to bonds.
+        // Should I send in J separately (to easier allow for difference in strength in different directions)
+        bonds.push_back(Bond(n, np1, Jxz,  true, xz));  // Do I really need to send in n?
+        if(DEBUG)    cout << "Bond 1 done" << endl;
+        bonds.push_back(Bond(n, nm1, Jxz, false, xz));
+        if(DEBUG)    cout << "Bond 2 done" << endl;
+        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npL, Jyz, true, yz));
+        //cout << "Jyz bond set" << endl;
+        if(DEBUG)    cout << "Bond 3 done" << endl;
+        if(ypos!=0)     bonds.push_back(Bond(n, nmL, Jyz, false, yz));
+        //cout << "Jyz bond set" << endl;
+        if(DEBUG)    cout << "Bond 4 done" << endl;
+        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npL2, Jxy, true, xy));
+        if(DEBUG)    cout << "Bond 5 done" << endl;
+        if(ypos!=0)     bonds.push_back(Bond(n, nmL2, Jxy, false, xy));
+        if(DEBUG)    cout << "Bond 6 done" << endl;
+        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npLm1, Jxy, true, xy));
+        if(DEBUG)    cout << "Bond 7 done" << endl;
+        if(ypos!=0)     bonds.push_back(Bond(n, nmLm1, Jxy, false, xy));
+        if(DEBUG)    cout << "Bond 8 done" << endl;
+        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npL2m1, Jyz, true, yz));
+        //cout << "Jyz bond set" << endl;
+        if(DEBUG)    cout << "Bond 9 done" << endl;
+        if(ypos!=0)     bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz));
+        //cout << "Jyz bond set" << endl;
+        if(DEBUG)    cout << "Bond 10 done" << endl;
+        bonds.push_back(Bond(n, npL2mL, Jxz, true, xz));
+        if(DEBUG)    cout << "Bond 11 done" << endl;
+        bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz));
+        if(DEBUG)    cout << "Bond 12 done" << endl;
+
+        if(DEBUG)    cout << "Done setting the bonds. Setting the sites" << endl;
+        sites.push_back(Site(n, no_of_neighbours_site, no_of_nneighbours_site, spinx, spiny, spinz, bonds, nextnearestbonds));
+
+
+        if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
+    }
+    cout << "Done with fcc_helical_initialize" << endl;
+}
 
 void Lattice::fcc_helical_initialize()
 {

@@ -65,13 +65,12 @@ public:
     void cubic_helical_initialize();
     void cubic_helical_initialize_extended();
     void fcc_helical_initialize();
-    void fcc_helical_initialize_extended(); // Work in progress
+    void fcc_helical_initialize_extended();
+    void fcc_helical_initialize_extended_yopen();
 
     // Feed interaction functions
     void setstrengths(vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
     void givestrengths_automatic();
-    std::vector<double> givethesiteints(double Dix, double Diy, double Diz, double hx, double hy, double hz, bool sianisotropy, bool magfield);
-    std::vector<double> givethebondints(double J, double Dx, double Dy, double Dz, bool isotropic, bool dm);
 
     std::vector<double> giveposition_fcc_lines(int i, int j, int k, char letter);
     std::vector<double> giveqvector_fcc_lines(int i, int j, int k, char letter);

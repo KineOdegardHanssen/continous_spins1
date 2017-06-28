@@ -32,6 +32,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
+    if(type_lattice=='Y')    notperiodic = true; // We might have open boundary conditions in the y-dir only
 
     //if(sianisotropy)    cout << "Siiiii are the people!" << endl;
 
@@ -46,6 +47,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     {
         if(type_lattice=='F')      mylattice.fcc_helical_initialize();                // F for fcc
         if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended();       // E for fcc extended
+        else if(type_lattice=='Y') mylattice.fcc_helical_initialize_extended_yopen(); // Y for y-direction
         else if(type_lattice=='C') mylattice.cubic_helical_initialize();              // C for cubic
         else if(type_lattice=='D') mylattice.cubic_helical_initialize_extended();     // D for cubic extended
         else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();          // Q for quadratic
@@ -78,7 +80,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed1 = 79;  // Seed to start random number generator
+    seed1 = 59;  // Seed to start random number generator
     seed2 = 61;
     testseed = 29;
     DEBUG = false;
@@ -167,6 +169,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
+    else if(type_lattice=='Y') notperiodic = true; // We have open BCs in the y-direction
 
     //if(sianisotropy)    cout << "Siiiii are the people!" << endl;
 
@@ -181,6 +184,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
     {
         if(type_lattice=='F')      mylattice.fcc_helical_initialize();                // F for fcc
         if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended();       // E for fcc extended
+        else if(type_lattice=='Y') mylattice.fcc_helical_initialize_extended_yopen(); // Y for y-direction
         else if(type_lattice=='C') mylattice.cubic_helical_initialize();              // C for cubic
         else if(type_lattice=='D') mylattice.cubic_helical_initialize_extended();     // D for cubic extended
         else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();          // Q for quadratic
@@ -215,7 +219,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed1 = 79;  // Seed to start random number generator
+    seed1 = 59;  // Seed to start random number generator
     seed2 = 63;
     DEBUG = false;
     MAJORDEBUG = false;
@@ -500,6 +504,43 @@ void MonteCarlo::initialize_energy()
                 partnerspinx += Jy*sx_ydir + Jz*sx_zdir;
                 partnerspiny += Jy*sy_ydir + Jz*sy_zdir;
                 partnerspinz += Jy*sz_ydir + Jz*sz_zdir;
+
+                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            }
+            if(type_lattice=='Y')
+            {
+                if(BEDBUG) cout << "In fcc_extended implementation" << endl;
+                // Open boundary conditions are not implemented for the fcc.
+                // We only work with the forward bonds in order to not overcount. This is simplest.
+                double ypos = mylattice.sitepositions[1];
+                if(ypos!=N-1)
+                {
+                    int lookat;
+                    if(ypos!=0)    lookat = 1;
+                    else           lookat = 0;
+                    double Jy = mylattice.sites[i].nextnearesty[lookat].J;
+                    double ny = mylattice.sites[i].nextnearesty[lookat].siteindex2;
+
+                    double sx_ydir = mylattice.sites[ny].spinx;
+                    double sy_ydir = mylattice.sites[ny].spiny;
+                    double sz_ydir = mylattice.sites[ny].spinz;
+
+                    partnerspinx += Jy*sx_ydir;
+                    partnerspiny += Jy*sy_ydir;
+                    partnerspinz += Jy*sz_ydir;
+
+                }
+                double Jz = mylattice.sites[i].nextnearestz[1].J;
+                int nz = mylattice.sites[i].nextnearestz[1].siteindex2;
+                // Spin in the next nearest neighbour in the y-direction
+
+                // Spin in the next nearest neighbour in the z-direction
+                double sx_zdir = mylattice.sites[nz].spinx;
+                double sy_zdir = mylattice.sites[nz].spiny;
+                double sz_zdir = mylattice.sites[nz].spinz;
+                partnerspinx += Jz*sx_zdir;
+                partnerspiny += Jz*sy_zdir;
+                partnerspinz += Jz*sz_zdir;
 
                 energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             }
@@ -1053,6 +1094,9 @@ void MonteCarlo::runmetropolis(double beta)
                         cy = (qconfy[index]*conj(qconfy[index])).real()/(N*N);
                         cz = (qconfz[index]*conj(qconfz[index])).real()/(N*N);
 
+                        // This is <S^x_qS^x_{-q}>, not the FT spin. That is why we just add the terms to
+                        // the total spin correlation function
+                        // I don't actually store the FT spins anywhere.
                         correlation_functionx_av_bin[n]   += cx;
                         correlation_functiony_av_bin[n]   += cy;
                         correlation_functionz_av_bin[n]   += cz;
@@ -1459,7 +1503,7 @@ void MonteCarlo::runmetropolis(double beta)
 }
 
 
-void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine generator_u, std::default_random_engine generator_v, std::default_random_engine generator_n, std::default_random_engine generator_prob,  std::uniform_real_distribution<double> distribution_prob, std::uniform_real_distribution<double> distribution_u, std::uniform_real_distribution<double> distribution_v, std::uniform_int_distribution<int> distribution_n)
+void MonteCarlo::mcstepf_metropolis(double beta)
 {   // Include a counter that measures how many 'flips' are accepted. But what to do with it? Write to file?
 
     bool HUMBUG   = false;  // Has been useful in finding index errors
@@ -1705,6 +1749,43 @@ void MonteCarlo::mcstepf_metropolis(double beta) //, std::default_random_engine 
                     partnerspinx += Jy*nnyspinx + Jz*nnzspinx;
                     partnerspiny += Jy*nnyspiny + Jz*nnzspiny;
                     partnerspinz += Jy*nnyspinz + Jz*nnzspinz;
+                }
+                energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
+            }
+            if(type_lattice=='Y')
+            {
+                double Jy = mylattice.sites[k].nextnearesty[0].J;
+                double Jz = mylattice.sites[k].nextnearestz[0].J;
+
+                double nnyspinx, nnyspiny, nnyspinz;
+                double nnzspinx, nnzspiny, nnzspinz;
+                if(notperiodic)    nneighbours = mylattice.sites[k].no_of_nneighbours_site;
+                else               nneighbours = 2;
+                for(int i=0; i<nneighbours; i++) // Having contributions in the + and - directions, open BC
+                {
+                    int yneigh = mylattice.sites[k].nextnearesty[i].siteindex2;
+
+                    // Spin components of next nearest neighbours in the y-direction
+                    nnyspinx = mylattice.sites[yneigh].spinx;
+                    nnyspiny = mylattice.sites[yneigh].spiny;
+                    nnyspinz = mylattice.sites[yneigh].spinz;
+
+                    partnerspinx += Jy*nnyspinx;
+                    partnerspiny += Jy*nnyspiny;
+                    partnerspinz += Jy*nnyspinz;
+                }
+                for(int i=0; i<2; i++) // Having contributions in the + and - directions
+                {
+                    int zneigh = mylattice.sites[k].nextnearestz[i].siteindex2;
+
+                    // Spin components of next nearest neighbours in the z-direction
+                    nnzspinx = mylattice.sites[zneigh].spinx;
+                    nnzspiny = mylattice.sites[zneigh].spiny;
+                    nnzspinz = mylattice.sites[zneigh].spinz;
+
+                    partnerspinx += Jz*nnzspinx;
+                    partnerspiny += Jz*nnzspiny;
+                    partnerspinz += Jz*nnzspinz;
                 }
                 energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
             }
@@ -2015,6 +2096,43 @@ double MonteCarlo::check_the_energy()
                 partnerspinx = Jy*sx_ydir + Jz*sx_zdir;
                 partnerspiny = Jy*sy_ydir + Jz*sy_zdir;
                 partnerspinz = Jy*sz_ydir + Jz*sz_zdir;
+
+                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            }
+            if(type_lattice=='Y')
+            {
+                if(BEDBUG) cout << "In fcc_extended implementation" << endl;
+                // Open boundary conditions are not implemented for the fcc.
+                // We only work with the forward bonds in order to not overcount. This is simplest.
+                double ypos = mylattice.sitepositions[1];
+                if(ypos!=N-1)
+                {
+                    int lookat;
+                    if(ypos!=0)    lookat = 1;
+                    else           lookat = 0;
+                    double Jy = mylattice.sites[i].nextnearesty[lookat].J;
+                    double ny = mylattice.sites[i].nextnearesty[lookat].siteindex2;
+
+                    double sx_ydir = mylattice.sites[ny].spinx;
+                    double sy_ydir = mylattice.sites[ny].spiny;
+                    double sz_ydir = mylattice.sites[ny].spinz;
+
+                    partnerspinx += Jy*sx_ydir;
+                    partnerspiny += Jy*sy_ydir;
+                    partnerspinz += Jy*sz_ydir;
+
+                }
+                double Jz = mylattice.sites[i].nextnearestz[1].J;
+                int nz = mylattice.sites[i].nextnearestz[1].siteindex2;
+                // Spin in the next nearest neighbour in the y-direction
+
+                // Spin in the next nearest neighbour in the z-direction
+                double sx_zdir = mylattice.sites[nz].spinx;
+                double sy_zdir = mylattice.sites[nz].spiny;
+                double sz_zdir = mylattice.sites[nz].spinz;
+                partnerspinx += Jz*sx_zdir;
+                partnerspiny += Jz*sy_zdir;
+                partnerspinz += Jz*sz_zdir;
 
                 energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             }

@@ -28,6 +28,7 @@ public:
     // For including next nearest neighbour interactions
     Site(int n, double spinx, double spiny, double spinz, std::vector<Bond> bonds, std::vector<Bond> nextnearesty, std::vector<Bond> nextnearestz);
     Site(int n, int no_of_neighbours_site, int no_of_nneighbours_site, double spinx, double spiny, double spinz, std::vector<Bond> bonds, std::vector<Bond> nextnearesty);
+    Site(int n, int no_of_neighbours_site, int no_of_nneighbours_site, double spinx, double spiny, double spinz, std::vector<Bond> bonds, std::vector<Bond> nextnearesty, std::vector<Bond> nextnearestz);
 
 };
 
