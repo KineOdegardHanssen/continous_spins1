@@ -169,7 +169,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
-    else if(type_lattice=='Y') notperiodic = true; // We have open BCs in the y-direction
+    if(type_lattice=='Y') notperiodic = true; // We have open BCs in the y-direction
 
     //if(sianisotropy)    cout << "Siiiii are the people!" << endl;
 
@@ -452,6 +452,10 @@ void MonteCarlo::initialize_energy()
         {
             if(BEDBUG)    cout << "In dm" << endl;
             // Double loops and stuff. Could maybe make this more efficient
+            double Dx = mylattice.Dx;
+            double Dy = mylattice.Dy;
+            double Dz = mylattice.Dz;
+
             int nneighbours;
             // Determining the number of neighbours of the site
             if(notperiodic)    nneighbours = mylattice.sites[i].no_of_neighbours_site;
@@ -462,9 +466,6 @@ void MonteCarlo::initialize_energy()
                 if(increasing) // To avoid double counting. Hopefully saves time for large systems
                 {              // When increasing==true, the sign is set
                     int k = mylattice.sites[i].bonds[j].siteindex2; // Hope I can actually get to this value.
-                    double Dx = mylattice.Dx;
-                    double Dy = mylattice.Dy;
-                    double Dz = mylattice.Dz;
 
                     double sxk = mylattice.sites[k].spinx;
                     double syk = mylattice.sites[k].spiny;
@@ -475,7 +476,7 @@ void MonteCarlo::initialize_energy()
             }
         }
         if(BEDBUG) cout << "Done with one, onto the others" << endl;
-        cout << "Setting next nearest neighbour interactions" << endl;
+        //cout << "Setting next nearest neighbour interactions" << endl;
         if(nextnearest)
         {
             if(BEDBUG) cout << "In nextnearest" << endl;
@@ -483,7 +484,6 @@ void MonteCarlo::initialize_energy()
             double partnerspiny = 0;
             double partnerspinz = 0;
             if(BEDBUG) cout << "Partnerspins set" << endl;
-            cout << "Partnerspins set" << endl;
             if(type_lattice=='E')
             {
                 if(BEDBUG) cout << "In fcc_extended implementation" << endl;
@@ -512,8 +512,10 @@ void MonteCarlo::initialize_energy()
                 if(BEDBUG) cout << "In fcc_extended implementation" << endl;
                 // Open boundary conditions are not implemented for the fcc.
                 // We only work with the forward bonds in order to not overcount. This is simplest.
-                double ypos = mylattice.sitepositions[1];
-                if(ypos!=N-1)
+                int L2 = mylattice.L2;
+                vector<double> posvec = mylattice.sitepositions[i];
+                double ypos = posvec[1];
+                if(ypos!=L2-1)
                 {
                     int lookat;
                     if(ypos!=0)    lookat = 1;
@@ -703,7 +705,7 @@ void MonteCarlo::runmetropolis(double beta)
     bool HUMBUG  = false;
     bool LADYBUG = false;
     bool SCBUG   = false; // For finding out what's wrong with the spin correlation function
-    bool DMEBUG  = false;
+    bool DMEBUG  = false; // Comparing hardcoded and programmed energy
     bool ENGYBUG = false; // For checking that our two ways of computing the energy agrees (somewhat)
     bool bincout = false;
 
@@ -906,12 +908,12 @@ void MonteCarlo::runmetropolis(double beta)
             }
             if(ENGYBUG)
             {
+                //cout << "i: " << i << "; j: " << j << endl;
                 double energy_hardcoded = check_the_energy();
                 double endiff = energy_hardcoded-energy_old;
                 // Choose when I would like to be notified
                 if(abs(endiff)>1e-9)    cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
                 //cout << "A (small?) difference between hardcoded and derived energy: endiff = " << endiff << endl;
-
             }
             //energy_av      += energy_old;
             //energy_sq_av   += energy_old*energy_old;
@@ -1452,6 +1454,7 @@ void MonteCarlo::runmetropolis(double beta)
         delete filename2;
 
         int dim = mylattice.dim; // Header with dimension and no of elements in each direction
+        int neighbour;
 
         configFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << dim << " " << mylattice.L1 << " " << mylattice.L2 << " " << mylattice.L3 << endl;
         vector<double> position;
@@ -1482,15 +1485,20 @@ void MonteCarlo::runmetropolis(double beta)
             if(dim==3)
             {
                 // Printing the config
+                cout << "In dim==3, going to print to file:" << endl;
                 position = mylattice.sitepositions[n];
                 configFile << position[0] << " " << position[1] << " " << position[2] << " " << sx << " " << sy << " " << sz << endl;
 
                 // Printing the list of neighbours
+                cout << "Going to print to file neighbours:" << endl;
+                if(notperiodic)    no_of_neighbours = mylattice.sites[n].no_of_neighbours_site;
+                else               no_of_neighbours = mylattice.no_of_neighbours;
                 neighbours = mylattice.siteneighbours[n];
                 for(int j=0; j<no_of_neighbours; j++)
                 {
-                    //cout << "In loop, j = " << j << "; Neighbour = " << neighbours[j] << endl;
-                    neighbourFile << neighbours[j] << " ";
+                    neighbour = mylattice.sites[n].bonds[j].siteindex2;
+                    cout << "In loop, j = " << j << "; Neighbour = " << neighbours[j] << endl;
+                    neighbourFile << neighbour << " ";
                 }
                 neighbourFile << endl;
 
@@ -1644,17 +1652,29 @@ void MonteCarlo::mcstepf_metropolis(double beta)
             // Determining the number of neighbours
             if(notperiodic)    nneighbours = mylattice.sites[k].no_of_neighbours_site;
             else               nneighbours = no_of_neighbours;
+
+            //cout << "ypos = " << posvec[1] << "; nneighbours = " << nneighbours << endl;
             if(HUMBUG)    cout << "no_of_neighbours, spin " << k << ": " << nneighbours << endl;
             if(CONTRBUG)  cout << "no_of_neighbours, spin " << k << ": " << nneighbours << endl;
             //cout << nneighbours;
-            for(int j=0; j<nneighbours; j++)
+            vector<double> posvec = mylattice.sitepositions[k];
+            int ypos =  posvec[1];
+            //if(ypos==0 || ypos==(mylattice.L2-1)) cout << "Endpoint, no of neighbours:" << nneighbours << endl;
+            //if(nneighbours==8)    cout << "8 nneighbours. Site = " << k << endl;
+            //cout << "Site: " << k << endl;
+            for(int j=0; j<nneighbours; j++) // nneighbours forskjellig fra E til Y
             {
                 // Picking out the neighbour
                 int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
+                //if(ypos==0 || ypos==(mylattice.L2-1)) cout << "Spin " << k <<", neighbour no " << j << ": " << l << endl;
+                //if(k==1) cout << "Spin " << k <<", neighbour no " << j << ": " << l << endl;
+
+                //if(j>=N)    cout << "Error!" << endl;
 
                 // Picking out the J each time (may vary depending on bond type)
                 double J = mylattice.sites[k].bonds[j].J;
+
                 //cout << "Neighbour no. " << j << "; J = " << J << endl;
                 if(HUMBUG)    cout << "Neighbour no. " << j << "; J = " << J << endl;
                 if(CONTRBUG)
@@ -1675,9 +1695,12 @@ void MonteCarlo::mcstepf_metropolis(double beta)
                     //cout << "J!=0, get a contribution from bond " << j << ": " << J*(sxk*(sx_t-sx)+syk*(sy_t-sy)+szk*(sz_t-sz)) << endl;
                 }
             }
+            //cout << "partnerspinx = " << partnerspinx << "; partnerspiny = " << partnerspiny << "; partnerspinz = " << partnerspinz << endl;
+            //cout << "(sx_t-sx) = " << (sx_t-sx) << "; (sy_t-sy) = " << (sy_t-sy) <<"; (sz_t-sz) = " << (sz_t-sz) << endl;
             if(HUMBUG)    cout << "Out of that blasted loop!" << endl;
             energy_diff += partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz);
             if(CONTRBUG)  cout << "Contr from Heisenberg: " <<  partnerspinx*(sx_t-sx) + partnerspiny*(sy_t-sy) + partnerspinz*(sz_t-sz) << endl;
+            //cout << "energy diff = " << energy_diff << endl;
         }
         if(dm)
         {
@@ -1759,8 +1782,7 @@ void MonteCarlo::mcstepf_metropolis(double beta)
 
                 double nnyspinx, nnyspiny, nnyspinz;
                 double nnzspinx, nnzspiny, nnzspinz;
-                if(notperiodic)    nneighbours = mylattice.sites[k].no_of_nneighbours_site;
-                else               nneighbours = 2;
+                int nneighbours = mylattice.sites[k].no_of_nneighbours_site;
                 for(int i=0; i<nneighbours; i++) // Having contributions in the + and - directions, open BC
                 {
                     int yneigh = mylattice.sites[k].nextnearesty[i].siteindex2;
@@ -2104,8 +2126,10 @@ double MonteCarlo::check_the_energy()
                 if(BEDBUG) cout << "In fcc_extended implementation" << endl;
                 // Open boundary conditions are not implemented for the fcc.
                 // We only work with the forward bonds in order to not overcount. This is simplest.
-                double ypos = mylattice.sitepositions[1];
-                if(ypos!=N-1)
+                int L2 = mylattice.L2;
+                vector<double> posvec = mylattice.sitepositions[i];
+                double ypos = posvec[1];
+                if(ypos!=L2-1)
                 {
                     int lookat;
                     if(ypos!=0)    lookat = 1;

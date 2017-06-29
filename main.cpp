@@ -14,6 +14,7 @@ using namespace std;
 using std::ofstream; using std::string;
 
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void one_run(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
@@ -31,6 +32,7 @@ void extract_qdline(int L, string ylinefilenamePrefix); // fcc only
 void extract_yline_shifted(int L, double xshift, double zshift, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
 void diagline(int L, string latticefilenamePrefix);
 void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix);
+void lattice_coordinates_straightforward(int L1, int L2, int L3, char type_lattice, string latticefilenamePrefix);
 void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);  // Only for fcc
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
 void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix); // Only for fcc
@@ -49,6 +51,7 @@ void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, b
 void test_fcc_extended(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_fcc_extended_diffdims(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void test_dm();
+void test_fcc_extended_yopen();
 void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void testnestnearestneighbour_chain(int L);
 double dm_oneneighbour_fortest(double x1, double y1, double z1, double x2, double y2, double z2, double Dx, double Dy, double Dz);
@@ -69,17 +72,17 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 8; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 4; // The program is going to be slow if we run for many particles on a 3D lattice
 
-    int L1 = 2;
-    int L2 = 2;
-    int L3 = 2;
+    int L1 = 5;
+    int L2 = 5;
+    int L3 = 3;
 
     // bools to determine system type
-    bool isotropic    = false;
-    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool isotropic    = true;
+    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
-    bool dm           = true;
+    bool dm           = false;
     bool nextnearest  = false;
 
     // Bool to determine periodicity
@@ -87,11 +90,11 @@ int main()
                               // Only implemented for the chain so far
 
     // Selecting the lattice type
-    // F: face-centered cubic (fcc); E: fcc with different directions
+    // F: face-centered cubic (fcc); E: fcc with different directions; Y: fcc with open BCs in the y-dir
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'O';
+    char type_lattice = 'Y';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -103,7 +106,7 @@ int main()
     // Heisenberg term
     double J = 1.04;
     // Heisenberg terms with varying strengths (for fcc_initialize_extended E)    
-    double Jx  = 0.67;    double Jy  = 0;    double Jz  = 0;
+    double Jx  = 0.67;    double Jy  = 0;    double Jz  = 0.2;
     //double intheta = 4*M_PI/5;
     //double Jx  = -1.0/(4*cos(intheta));    double Jy  = 0;    double Jz  = 0;
     double Jxy = 1;    double Jxz = 0.1;    double Jyz = 1;
@@ -131,19 +134,20 @@ int main()
     double beta = 7.7;
 
     // Run parameters
-    int eqsteps = 10000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 10000; //100000; // MCsteps per bin.
-    int no_of_bins = 1000;     // The number of bins.
+    int eqsteps = 1000; //Short run for testing //10000; // Number of steps in the equilibration procedure
+    int mcsteps_inbin = 1000; //Short run for testing //10000; //100000; // MCsteps per bin.
+    int no_of_bins = 100; //Short run for testing //1000;     // The number of bins.
 
     // Filenames (choose one to use or change slightly)
-    //string filenamePrefix = "test";
+    string filenamePrefix = "testfcc444";
 
     // Shorter runs, investigating chain interactions, comparing energies
     //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
     //string filenamePrefix = "2ptest";
 
+    /////
     // Shorter runs, low temp., investigating chain interactions.
-    string filenamePrefix = "8pchain_periodic_DMDx1p82_sianDx5_beta7p7_10000eqst_10000mcst_1000bins_seed59_latticeseed23_slowcool";
+    //string filenamePrefix = "8pchain_periodic_DMDx1p82_sianDx5_beta7p7_10000eqst_10000mcst_1000bins_seed59_latticeseed23_slowcool";
     //string filenamePrefix = "8pchain_periodic_DMDx1p82_beta7p7_10000eqst_10000mcst_1000bins_seed59_latticeseed23_slowcool";
 
     // Shorter runs, lower temp., investigating chain interactions.
@@ -186,6 +190,7 @@ int main()
 
     //----------------------------------Running for one beta-----------------------------------------//
     one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     //-------------------------------------Test functions--------------------------------------------//
     //L = 2;
@@ -195,6 +200,7 @@ int main()
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended_diffdims(L1, L2, L3, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
     //test_dm();
+    //test_fcc_extended_yopen();
     //checkneighbours(L, type_lattice, periodic, sitestrengthsin, heisenbergin, dm_in);
     //testnestnearestneighbour_chain(L);
 
@@ -203,7 +209,7 @@ int main()
     type_lattice = 'E';
     double xshift = 2;
     double zshift = 1;
-    string latticefilenamePrefix = "fcc6x6x6";
+    string latticefilenamePrefix = "fcc4x4x4";
     string latticefilenamePrefixd = "L6";
     //string latticefilenamePrefix = "test";
     // Line finding functions
@@ -219,6 +225,7 @@ int main()
     //diagline(L, latticefilenamePrefixd);
     // Lattice coordinates
     //lattice_coordinates_straightforward(L, type_lattice, latticefilenamePrefix);
+    //lattice_coordinates_straightforward(L1, L2, L3, type_lattice, latticefilenamePrefix);
     //reciprocallattice_coordinates(L, type_lattice, latticefilenamePrefix);
     //lattice_coordinates_xyz_lines(L, latticefilenamePrefix);
     //reciprocallattice_coordinates_xyzline(L, type_lattice, latticefilenamePrefix);
@@ -248,6 +255,19 @@ void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta,
 {
     // Initializing Monte Carlo
     MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    mymc.debugmode(true);
+    // Run Metropolis algorithm
+    mymc.runmetropolis(beta);
+    mymc.endsims();
+    mymc.test_couplings_strengths(); // Just to test it. Can remove later
+    cout << "beta = " << beta << endl;
+    //cout << "L = " << L << endl;
+}
+
+void one_run(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+{
+    // Initializing Monte Carlo
+    MonteCarlo mymc(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.debugmode(true);
     // Run Metropolis algorithm
     mymc.runmetropolis(beta);
@@ -663,6 +683,85 @@ void lattice_coordinates_straightforward(int L, char type_lattice, string lattic
     bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
 
     Lattice mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+
+    // Type of Lattice
+    if(type_lattice=='F')           mylattice.fcc_helical_initialize();          // F for fcc
+    else if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended(); // E for extended
+    else if(type_lattice=='C')      mylattice.cubic_helical_initialize();        // C for cubic
+    else if(type_lattice=='Q')      mylattice.quadratic_helical_initialize();    // Q for quadratic
+    else if(type_lattice=='O')      mylattice.chain_periodic_initialize();       // O for one-dimensional
+
+    // Printing information about the q-vectors straight away
+    ofstream xyzFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_xyz.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFile.open(filename);
+    delete filename;
+
+    xyzFile << "xyz-positions are listed units of grid lengths" << endl;
+
+    cout << "File for printing xyz-coord to file is initiated" << endl;
+
+    double x;
+    double y;
+    double z;
+
+    int N  = mylattice.N;
+
+    if(mylattice.dim==1) // Not really neccessary. Not double tested, either
+    {
+        for(int i=0; i<N; i++)    xyzFile << "Running index: " << i << "; Index : i: " << i << "; Position : x = " << i << endl;
+    }
+    if(mylattice.dim==2)
+    {
+
+        cout << "For quadratic, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns = mylattice.sitecoordinates[i];
+            vector<double> pos = mylattice.sitepositions[i];
+            x = ns[0];
+            y = ns[1];
+            xyzFile << "Running index: " << i << "; Index : i = " << x << ";   j = " << y << ";   Position : x = ";
+            x = pos[0];
+            y = pos[1];
+            xyzFile << x << ";   y = " << y << endl;
+        }
+        cout << "Done printing to xyzFile" << endl;
+
+    }
+
+    else if(mylattice.dim==3)
+    {
+        cout << "For cubic or fcc, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns     = mylattice.sitecoordinates[i];
+            vector<double> pos = mylattice.sitepositions[i];
+            //cout << "ns retrieved" << endl;
+            // These must be changed if we change into possibly setting L1, L2, L3 different
+            // Don't really need b1, b2, b3, could just use a1, a2, a3 multiplied by 2*M_PI...
+            // Could be more general, but we don't need to play around with our lattices that much...
+            x = ns[0];
+            y = ns[1];
+            z = ns[2];
+            // Print to file. Site number, qx, qy, qz.
+            xyzFile << "Running index: " << i << ";  Index :   i = " << x << ";   j = " << y <<  ";   k = " << z <<"; Position :   x = ";
+            x = pos[0];
+            y = pos[1];
+            z = pos[2];
+            xyzFile << x << ";   y = " << y << ";   z = " << z << endl;
+        }
+        //cout << "Done printing to qFile" << endl;
+    }
+    xyzFile.close();
+}
+
+void lattice_coordinates_straightforward(int L1, int L2, int L3, char type_lattice, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+
+    Lattice mylattice = Lattice(L1, L2, L3, isotropic, sianisotropy, magfield, dm);
 
     // Type of Lattice
     if(type_lattice=='F')           mylattice.fcc_helical_initialize();          // F for fcc
@@ -1516,6 +1615,83 @@ void findlinethroughmax(int L, int maxindex, string latticefilenamePrefix)
     linethroughmaxFile.close();
 }
 
+void test_fcc_extended_yopen()
+{
+    Lattice mylattice(4, false, false, false, false);
+    mylattice.fcc_helical_initialize_extended_yopen();
+
+    int N = mylattice.N;
+    int no_of_neighbours;
+    int neighbour;
+    vector<int> y_edge_sites;
+    int no_y_edge_sites = 0;
+    for(int n=0; n<N; n++)
+    {
+        no_of_neighbours = mylattice.sites[n].no_of_neighbours_site;
+        if(no_of_neighbours==8)
+        {
+            y_edge_sites.push_back(n);
+            no_y_edge_sites++;
+            cout << "Site " << n << ": No of neighbours = " << no_of_neighbours << endl;
+        }
+        for(int i=0; i<no_of_neighbours; i++)
+        {
+            neighbour = mylattice.sites[n].bonds[i].siteindex2;
+            //int J = mylattice.sites[n].bonds[i].J;
+            string dir = mylattice.sites[n].bonds[i].direction;
+            //cout << "Neighbour " << i << ": " << neighbour << "; " << dir << " = " << J << endl;
+            bool increasing = mylattice.sites[n].bonds[i].increasing;
+            if(no_of_neighbours==8)
+            {
+                if(increasing) cout << "Neighbour no. " << i << ", index " << neighbour << "; dir = " << dir << " increasing?: yes" << endl;
+                else           cout << "Neighbour no. " << i << ", index " << neighbour << "; dir = " << dir << " increasing?: no" << endl;
+            }
+
+        }
+        if(no_of_neighbours==8)    cout << endl;
+    }
+
+    int yesite;
+    double yesx, yesy, yesz;
+    vector<double> posvec;
+    cout << "Sites at the edge of the y-range:" << endl;
+    for(int i=0; i<no_y_edge_sites; i++)
+    {
+        yesite = y_edge_sites[i];
+        posvec = mylattice.sitepositions[yesite];
+        yesx = posvec[0]; yesy = posvec[1]; yesz = posvec[2];
+        cout << "Site index: " << yesite << " Coordinates: [ " << yesx << " , " << yesy << " , " << yesz << " ]" << endl;
+    }
+
+    /*
+    cout << "For site 16:" << endl;
+    posvec = mylattice.sitepositions[16];
+    yesx = posvec[0]; yesy = posvec[1]; yesz = posvec[2];
+    cout << "Site index: " << 16 << " Coordinates: [ " << yesx << " , " << yesy << " , " << yesz << " ]" << endl;
+
+
+    //vector<int> endpointswegotfromtest;
+    int no_eptest;
+    int ypos;
+    cout << "Endpoints we got from the if-test:" << endl;
+    for(int i=0; i<N; i++)
+    {
+        posvec = mylattice.sitepositions[i];
+        ypos = posvec[1];
+        if(ypos==0 || ypos==(mylattice.L2-1))
+        {
+            //endpointswegotfromtest.push_back(i);
+            no_eptest++;
+            cout << i << endl;
+        }
+    }
+    //vector<double> posvec = mylattice.sitepositions[k];
+    //int ypos =  posvec[1];
+    //if(ypos==0 || ypos==(mylattice.L2-1)) cout << "Endpoint, no of neighbours:" << nneighbours << endl;
+    */
+
+}
+
 void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     Lattice mylattice = Lattice(L, false, false, false, false); // We only look at the neighbours
@@ -1525,6 +1701,7 @@ void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sit
     if(periodic)
     {
         if(type_lattice=='E')         mylattice.fcc_helical_initialize_extended();
+        else if(type_lattice=='Y')    mylattice.fcc_helical_initialize_extended_yopen();
         else if(type_lattice=='D')    mylattice.cubic_helical_initialize_extended();
         else if(type_lattice=='R')    mylattice.quadratic_helical_initialize_extended();
         else if(type_lattice=='F')    mylattice.fcc_helical_initialize();
@@ -1538,6 +1715,9 @@ void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sit
         else                     cout << "Error! For open BCs, only the chain is implemented!!!" << endl;
     }
 
+    if(type_lattice=='Y')         periodic = false;
+
+    //cout << "mylattice.dim = " << mylattice.dim << endl;
 
     int neighbour;
     int no_of_neighbours;
@@ -1548,10 +1728,12 @@ void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sit
     if(inspectall)
     {
         //N = 52;
+        cout << "In inspectall" << endl;
         for(int n=0; n<N; n++)
         {
             cout << "The neighbours of spin " << n << endl;
             if(!periodic)    no_of_neighbours = mylattice.sites[n].no_of_neighbours_site;
+            cout << "No of neighbours = " << no_of_neighbours << endl;
             for(int i=0; i<no_of_neighbours; i++)
             {
                 nbond = mylattice.sites[n].bonds[i];
@@ -1571,6 +1753,7 @@ void checkneighbours(int L, char type_lattice, bool periodic, vector<double> sit
             cout << "Neighbour " << i << ": " << neighbour << endl;
         }
     }
+
 }
 
 void testnestnearestneighbour_chain(int L)

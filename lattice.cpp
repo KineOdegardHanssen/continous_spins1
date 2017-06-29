@@ -1042,6 +1042,7 @@ void Lattice::fcc_helical_initialize_extended_yopen()
     bool DEBUG = false;
     dim = 3;
     N = L1*L2*L3;
+    double ymax = 0.5*(L1+L2)-1;
     cout << "N: " << N << endl;
     no_of_neighbours = 12;
     extended = true;
@@ -1092,34 +1093,6 @@ void Lattice::fcc_helical_initialize_extended_yopen()
     string xz = "xz";
     string yz = "yz";
 
-    // Giving the position of the fcc (when saved in row-major order)
-    // Could change it back, probably. Ordering not important, I guess. The same as rotating
-    // Should probably just choose something and stick with it.
-    int n1, n2, n3;
-
-    n1 = (int)n/(L2*L3);
-    n2 = (int)n/L3 - (int)n/(L3*L2)*L2;
-    n3 = (int)n%L3;
-
-    //cout << "Site " << n << "; [i,j,k] = [" << n1 << "," << n2 << "," << n3 << "]" << endl;
-
-    double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
-    double ypos = 0.5*(n1+n2);
-    double zpos = 0.5*(n2+n3);
-
-    //cout << "n : " << n <<  " Position: [" << xpos << "," << ypos << "," << zpos << "]" << endl;
-
-    position_n[0] = xpos;
-    position_n[1] = ypos;
-    position_n[2] = zpos;
-
-    coord_n[0] = n1;     // Have these here in case I want to check
-    coord_n[1] = n2;
-    coord_n[2] = n3;
-
-    sitepositions.push_back(position_n);
-    sitecoordinates.push_back(coord_n);
-
     // Could have these inside the loop and add randomness.
     bool randomspins = false;
     if(DEBUG)    cout << "Now entering the loop" << endl;
@@ -1141,9 +1114,36 @@ void Lattice::fcc_helical_initialize_extended_yopen()
             spinz = cos(theta);
         }
 
+        // Giving the position of the fcc (when saved in row-major order)
+        // Done here to serve information on the y-position
+        int n1, n2, n3;
+
+        n1 = (int)n/(L2*L3);
+        n2 = (int)n/L3 - (int)n/(L3*L2)*L2;
+        n3 = (int)n%L3;
+
+        //cout << "Site " << n << "; [i,j,k] = [" << n1 << "," << n2 << "," << n3 << "]" << endl;
+
+        double xpos = 0.5*(n1+n3);  // Could possibly include the grid length a
+        double ypos = 0.5*(n1+n2);
+        double zpos = 0.5*(n2+n3);
+
+        //cout << "n : " << n <<  " Position: [" << xpos << "," << ypos << "," << zpos << "]" << endl;
+
+        position_n[0] = xpos;
+        position_n[1] = ypos;
+        position_n[2] = zpos;
+
+        coord_n[0] = n1;     // Have these here in case I want to check
+        coord_n[1] = n2;
+        coord_n[2] = n3;
+
+        sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
+
         // Finding the neighbours to n
         int no_of_neighbours_site = 12;
-        if(ypos==(L2-1)) no_of_neighbours_site = 8; // If we are at the end
+        if(ypos==ymax) no_of_neighbours_site = 8; // If we are at the end
         else if(ypos==0) no_of_neighbours_site = 8; // If we are at the start
 
         int np1, nm1, npL, npL2, npLm1, npL2m1, npL2mL, nmL, nmL2, nmLm1, nmL2m1, nmL2mL;
@@ -1163,7 +1163,7 @@ void Lattice::fcc_helical_initialize_extended_yopen()
         neighbours_n.push_back(np1);
         neighbours_n.push_back(nm1);
         // Bonds in the y-direction
-        if(ypos==(L2-1))
+        if(ypos==ymax)
         {   // At the end of the lattice in the y-dir
             // We have open BCs in that direction
             neighbours_n.push_back(nmL);
@@ -1231,55 +1231,45 @@ void Lattice::fcc_helical_initialize_extended_yopen()
         std::vector<Bond> nextnearestz;
 
         if(ypos!=0)         nextnearesty.push_back(Bond(n, nnym, Jy, false));
-        if(ypos!=(L2-1))    nextnearesty.push_back(Bond(n, nnyp, Jy, true));
+        if(ypos!=ymax)      nextnearesty.push_back(Bond(n, nnyp, Jy, true));
         nextnearestz.push_back(Bond(n, nnzm, Jz, false));
         nextnearestz.push_back(Bond(n, nnzp, Jz, true));
 
         int no_of_nneighbours_site = 2;
-        if(ypos==0 || ypos==(L2-1))    no_of_nneighbours_site = 1;
+        if(ypos==0 || ypos==ymax)    no_of_nneighbours_site = 1;
 
         if(DEBUG)    cout << "Setting the bonds" << endl;
 
         //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
 
-        // Making a lot of bond classes to be added to bonds.
-        // Should I send in J separately (to easier allow for difference in strength in different directions)
+        // The order is different from the other fcc functions
         bonds.push_back(Bond(n, np1, Jxz,  true, xz));  // Do I really need to send in n?
-        if(DEBUG)    cout << "Bond 1 done" << endl;
         bonds.push_back(Bond(n, nm1, Jxz, false, xz));
-        if(DEBUG)    cout << "Bond 2 done" << endl;
-        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npL, Jyz, true, yz));
-        //cout << "Jyz bond set" << endl;
-        if(DEBUG)    cout << "Bond 3 done" << endl;
-        if(ypos!=0)     bonds.push_back(Bond(n, nmL, Jyz, false, yz));
-        //cout << "Jyz bond set" << endl;
-        if(DEBUG)    cout << "Bond 4 done" << endl;
-        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npL2, Jxy, true, xy));
-        if(DEBUG)    cout << "Bond 5 done" << endl;
-        if(ypos!=0)     bonds.push_back(Bond(n, nmL2, Jxy, false, xy));
-        if(DEBUG)    cout << "Bond 6 done" << endl;
-        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npLm1, Jxy, true, xy));
-        if(DEBUG)    cout << "Bond 7 done" << endl;
-        if(ypos!=0)     bonds.push_back(Bond(n, nmLm1, Jxy, false, xy));
-        if(DEBUG)    cout << "Bond 8 done" << endl;
-        if(ypos!=(L2-1)) bonds.push_back(Bond(n, npL2m1, Jyz, true, yz));
-        //cout << "Jyz bond set" << endl;
-        if(DEBUG)    cout << "Bond 9 done" << endl;
-        if(ypos!=0)     bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz));
-        //cout << "Jyz bond set" << endl;
-        if(DEBUG)    cout << "Bond 10 done" << endl;
+        if(ypos!=ymax)
+        {
+            bonds.push_back(Bond(n, npL, Jyz, true, yz));
+            bonds.push_back(Bond(n, npL2, Jxy, true, xy));
+            bonds.push_back(Bond(n, npLm1, Jxy, true, xy));
+            bonds.push_back(Bond(n, npL2m1, Jyz, true, yz));
+        }
+        if(ypos!=0)
+        {
+            bonds.push_back(Bond(n, nmL, Jyz, false, yz));
+            bonds.push_back(Bond(n, nmL2, Jxy, false, xy));
+            bonds.push_back(Bond(n, nmLm1, Jxy, false, xy));
+            bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz));
+        }
         bonds.push_back(Bond(n, npL2mL, Jxz, true, xz));
-        if(DEBUG)    cout << "Bond 11 done" << endl;
         bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz));
-        if(DEBUG)    cout << "Bond 12 done" << endl;
 
         if(DEBUG)    cout << "Done setting the bonds. Setting the sites" << endl;
-        sites.push_back(Site(n, no_of_neighbours_site, no_of_nneighbours_site, spinx, spiny, spinz, bonds, nextnearestbonds));
+        sites.push_back(Site(n, no_of_neighbours_site, no_of_nneighbours_site, spinx, spiny, spinz, bonds, nextnearesty, nextnearestz));
 
+        //cout << "y = " << ypos << "; no_of_neighbours_site = " << no_of_neighbours_site << endl;
 
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
     }
-    cout << "Done with fcc_helical_initialize" << endl;
+    cout << "Done with fcc_helical_initialize_extended_yopen" << endl;
 }
 
 void Lattice::fcc_helical_initialize()
