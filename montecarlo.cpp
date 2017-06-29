@@ -1659,18 +1659,13 @@ void MonteCarlo::mcstepf_metropolis(double beta)
             //cout << nneighbours;
             vector<double> posvec = mylattice.sitepositions[k];
             int ypos =  posvec[1];
-            //if(ypos==0 || ypos==(mylattice.L2-1)) cout << "Endpoint, no of neighbours:" << nneighbours << endl;
-            //if(nneighbours==8)    cout << "8 nneighbours. Site = " << k << endl;
+            //if(nneighbours==8)    cout << "8 nneighbours. y = " << ypos << endl;
             //cout << "Site: " << k << endl;
             for(int j=0; j<nneighbours; j++) // nneighbours forskjellig fra E til Y
             {
                 // Picking out the neighbour
                 int l = mylattice.sites[k].bonds[j].siteindex2;
                 if(HUMBUG)    cout << "Spin no. " << l << " chosen." << endl;
-                //if(ypos==0 || ypos==(mylattice.L2-1)) cout << "Spin " << k <<", neighbour no " << j << ": " << l << endl;
-                //if(k==1) cout << "Spin " << k <<", neighbour no " << j << ": " << l << endl;
-
-                //if(j>=N)    cout << "Error!" << endl;
 
                 // Picking out the J each time (may vary depending on bond type)
                 double J = mylattice.sites[k].bonds[j].J;
@@ -1685,7 +1680,7 @@ void MonteCarlo::mcstepf_metropolis(double beta)
                 }
                 if(J!=0)
                 {
-                    double sxk = mylattice.sites[l].spinx;  // The neighbours does not change
+                    double sxk = mylattice.sites[l].spinx;  // The neighbours do not change
                     double syk = mylattice.sites[l].spiny;
                     double szk = mylattice.sites[l].spinz;
                     partnerspinx += J*sxk;
