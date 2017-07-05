@@ -81,6 +81,7 @@ public:
     void debugmode(bool on);
     void majordebugtrue();
     void debug1d2p();
+    void testyopenfcc();
     void testFFTW();
     void compareFFTW_withmanual(double beta);
     void compareFFTW_withmanual_av(double beta);

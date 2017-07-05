@@ -19,7 +19,7 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
-    seed = 23;
+    seed = 21;
     cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -39,7 +39,7 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
-    seed = 23;
+    seed = 21;
     cout << "In L1, L2, L3 Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
@@ -1087,11 +1087,23 @@ void Lattice::fcc_helical_initialize_extended_yopen()
 
     std::vector<double> position_n = std::vector<double>(3);
     std::vector<int> coord_n       = std::vector<int>(3);
-    std::vector<int> neighbours_n;
 
     string xy = "xy";
     string xz = "xz";
     string yz = "yz";
+
+    // We totally need the y-position of every particle beforehand... Awks...
+    vector<double> yposvec = vector<double>(N);
+    for(int n=0; n<N; n++)
+    {
+        int n1, n2;
+
+        n1 = (int)n/(L2*L3);
+        n2 = (int)n/L3 - (int)n/(L3*L2)*L2;
+        double ypos = 0.5*(n1+n2);
+
+        yposvec[n] = ypos;
+    }
 
     // Could have these inside the loop and add randomness.
     bool randomspins = false;
@@ -1142,7 +1154,7 @@ void Lattice::fcc_helical_initialize_extended_yopen()
         sitecoordinates.push_back(coord_n);
 
         // Finding the neighbours to n
-        int no_of_neighbours_site = 12;
+        int no_of_neighbours_site = 12;           // This might be updated for some of the middle sites
         if(ypos==ymax) no_of_neighbours_site = 8; // If we are at the end
         else if(ypos==0) no_of_neighbours_site = 8; // If we are at the start
 
@@ -1160,8 +1172,15 @@ void Lattice::fcc_helical_initialize_extended_yopen()
         npL2mL = findneighbour(n,1,-1,0); // Jxz
         nmL2mL = findneighbour(n,-1,1,0); // Jxz
 
+        std::vector<int> neighbours_n;
+
+        // These are shared by all:
         neighbours_n.push_back(np1);
         neighbours_n.push_back(nm1);
+        neighbours_n.push_back(npL2mL);
+        neighbours_n.push_back(nmL2mL);
+
+        // Bonds not shared by all:
         // Bonds in the y-direction
         if(ypos==ymax)
         {   // At the end of the lattice in the y-dir
@@ -1179,21 +1198,49 @@ void Lattice::fcc_helical_initialize_extended_yopen()
             neighbours_n.push_back(npLm1);
             neighbours_n.push_back(npL2m1);
         }
-        else
-        {   // In the middle of the lattice,
-            // as y-coords are concerned.
-            // Here we have all bonds.
-            neighbours_n.push_back(npL);
-            neighbours_n.push_back(nmL);
-            neighbours_n.push_back(npL2);
-            neighbours_n.push_back(nmL2);
-            neighbours_n.push_back(npLm1);
-            neighbours_n.push_back(nmLm1);
-            neighbours_n.push_back(npL2m1);
-            neighbours_n.push_back(nmL2m1);
+        else if(ypos!=0 && ypos!=ymax)
+        {   // In the middle of the lattice, as y-coords are concerned.
+            // Must check the end point of the bonds to see if it can be included
+            if(yposvec[npL]!=0)
+            {
+                neighbours_n.push_back(npL);
+                if(n==13)    cout << "Setting nb npL: yposvec[npL]!=0, n = " << n << "; yposvec[npL] = " << yposvec[npL] << "; npL = " << npL << endl;
+            }
+            else
+            {
+                if(n==13)    cout << "NOT setting nb npL: yposvec[npL]==0, n = " << n << "; yposvec[npL] = " << yposvec[npL] << "; npL = " << npL << endl;
+                no_of_neighbours_site--;
+            }
+            if(yposvec[npL2]!=0)      neighbours_n.push_back(npL2);
+            else                      no_of_neighbours_site--;
+            if(yposvec[npLm1]!=0)     neighbours_n.push_back(npLm1);
+            else                      no_of_neighbours_site--;
+            if(yposvec[npL2m1]!=0)    neighbours_n.push_back(npL2m1);
+            else                      no_of_neighbours_site--;
+
+            if(yposvec[nmL]!=ymax)       neighbours_n.push_back(nmL);
+            else                         no_of_neighbours_site--;
+            if(yposvec[nmL2]!=ymax)      neighbours_n.push_back(nmL2);
+            else                         no_of_neighbours_site--;
+            if(yposvec[nmLm1]!=ymax)     neighbours_n.push_back(nmLm1);
+            else                         no_of_neighbours_site--;
+            if(yposvec[nmL2m1]!=ymax)    neighbours_n.push_back(nmL2m1);
+            else                         no_of_neighbours_site--;
+
+            if(n==13)
+            {
+                cout << "npL = " << npL << "; yposvec[npL] =" << yposvec[npL] << endl;
+                cout << "npL2 = " << npL2 << "; yposvec[npL2] =" << yposvec[npL2] << endl;
+                cout << "npLm1 = " << npLm1 << "; yposvec[npLm1] =" << yposvec[npLm1] << endl;
+                cout << "npL2m1 = " << npL2m1 << "; yposvec[npL2m1] =" << yposvec[npL2m1] << endl;
+
+                cout << "nmL = " << nmL << "; yposvec[nmL] =" << yposvec[nmL] << endl;
+                cout << "nmL2 = " << nmL2 << "; yposvec[nmL2] =" << yposvec[nmL2] << endl;
+                cout << "nmLm1 = " << nmLm1 << "; yposvec[nmLm1] =" << yposvec[nmLm1] << endl;
+                cout << "nmL2m1 = " << nmL2m1 << "; yposvec[nmL2m1] =" << yposvec[nmL2m1] << endl;
+
+            }
         }
-        neighbours_n.push_back(npL2mL);
-        neighbours_n.push_back(nmL2mL);
 
         siteneighbours.push_back(neighbours_n);
 
@@ -1243,24 +1290,38 @@ void Lattice::fcc_helical_initialize_extended_yopen()
         //Bond(siteindex1, siteindex2, J, increasing, direction, bondints);
 
         // The order is different from the other fcc functions
-        bonds.push_back(Bond(n, np1, Jxz,  true, xz));  // Do I really need to send in n?
+        bonds.push_back(Bond(n, np1, Jxz,  true, xz));
         bonds.push_back(Bond(n, nm1, Jxz, false, xz));
-        if(ypos!=ymax)
+        bonds.push_back(Bond(n, npL2mL, Jxz, true, xz));
+        bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz));
+
+        if(ypos==0)
         {
             bonds.push_back(Bond(n, npL, Jyz, true, yz));
             bonds.push_back(Bond(n, npL2, Jxy, true, xy));
             bonds.push_back(Bond(n, npLm1, Jxy, true, xy));
             bonds.push_back(Bond(n, npL2m1, Jyz, true, yz));
         }
-        if(ypos!=0)
+        else if(ypos==ymax)
         {
             bonds.push_back(Bond(n, nmL, Jyz, false, yz));
             bonds.push_back(Bond(n, nmL2, Jxy, false, xy));
             bonds.push_back(Bond(n, nmLm1, Jxy, false, xy));
             bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz));
         }
-        bonds.push_back(Bond(n, npL2mL, Jxz, true, xz));
-        bonds.push_back(Bond(n, nmL2mL, Jxz, false, xz));
+        else if(ypos!=0 && ypos!=ymax)
+        {   // In the middle of the lattice, as y-coords are concerned.
+            // Must check the end point of the bonds to see if it can be included
+            if(yposvec[npL]!=0)       bonds.push_back(Bond(n, npL, Jyz, true, yz));
+            if(yposvec[npL2]!=0)      bonds.push_back(Bond(n, npL2, Jxy, true, xy));
+            if(yposvec[npLm1]!=0)     bonds.push_back(Bond(n, npLm1, Jxy, true, xy));
+            if(yposvec[npL2m1]!=0)    bonds.push_back(Bond(n, npL2m1, Jyz, true, yz));
+
+            if(yposvec[nmL]!=ymax)       bonds.push_back(Bond(n, nmL, Jyz, false, yz));
+            if(yposvec[nmL2]!=ymax)      bonds.push_back(Bond(n, nmL2, Jxy, false, xy));
+            if(yposvec[nmLm1]!=ymax)     bonds.push_back(Bond(n, nmLm1, Jxy, false, xy));
+            if(yposvec[nmL2m1]!=ymax)    bonds.push_back(Bond(n, nmL2m1, Jyz, false, yz));
+        }
 
         if(DEBUG)    cout << "Done setting the bonds. Setting the sites" << endl;
         sites.push_back(Site(n, no_of_neighbours_site, no_of_nneighbours_site, spinx, spiny, spinz, bonds, nextnearesty, nextnearestz));
@@ -1270,6 +1331,8 @@ void Lattice::fcc_helical_initialize_extended_yopen()
         if(DEBUG)    cout << "Giving the position of the site in the fcc" << endl;
     }
     cout << "Done with fcc_helical_initialize_extended_yopen" << endl;
+    //cout << "yposvec:" << endl;
+    //for(int i=0; i<N; i++)    cout << "yposvec[" << i << "] = " << yposvec[i] << endl;
 }
 
 void Lattice::fcc_helical_initialize()
