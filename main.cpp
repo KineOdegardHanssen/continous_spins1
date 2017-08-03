@@ -23,6 +23,7 @@ void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcstep
 // Lattice functions
 // fcc or flexible
 void extract_yline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
+void extract_yline(int L1, int L2, int L3, string ylinefilenamePrefix);
 void extract_xline(int L, string ylinefilenamePrefix); // fcc only
 void extract_zline(int L, string ylinefilenamePrefix); // fcc only
 void extract_qyline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
@@ -34,6 +35,7 @@ void diagline(int L, string latticefilenamePrefix);
 void lattice_coordinates_straightforward(int L, char type_lattice, string latticefilenamePrefix);
 void lattice_coordinates_straightforward(int L1, int L2, int L3, char type_lattice, string latticefilenamePrefix);
 void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);  // Only for fcc
+void lattice_coordinates_xyz_lines(int L1, int L2, int L3, string latticefilenamePrefix);
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
 void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix); // Only for fcc
 // cubic
@@ -75,15 +77,15 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 6; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 8; // The program is going to be slow if we run for many particles on a 3D lattice
 
-    int L1 = 5;
-    int L2 = 5;
-    int L3 = 3;
+    int L1 = 8;
+    int L2 = 8;
+    int L3 = 8;
 
     // bools to determine system type
     bool isotropic    = true;
-    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
     bool nextnearest  = true;
@@ -97,7 +99,7 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'E';
+    char type_lattice = 'Y';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -105,7 +107,7 @@ int main()
     // Magnetic field terms
     double hx = 1;    double hy = 2;    double hz = 7;
     // Single-ion anisotropy terms
-    double Dix = 5;    double Diy = 0;    double Diz = 0;
+    double Dix = 0.34;    double Diy = 1.82;    double Diz = 0;
     // DM terms
     double Dx = 1.82;     double Dy = 0;    double Dz = 0;
 
@@ -115,12 +117,13 @@ int main()
 
     // These are the nearest neighbour couplings for: D, R
     // These are the next-nearest neighbour couplings for: O, F, Y
-    double Jx  = 0;    double Jy  = 0.67;    double Jz  = 0;
+    double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.05;
     //double intheta = 4*M_PI/5;
     //double Jx  = -1.0/(4*cos(intheta));    double Jy  = 0;    double Jz  = 0;
 
     // These are the nearest neighbour couplings for F, Y
-    double Jxy = 0;    double Jxz = 0;    double Jyz = 1.04;
+    double Jxy = 0.30;    double Jxz = -0.11;    double Jyz = 1.04;
+    //double Jxy = 1;    double Jxz = 0;    double Jyz = 1;
 
     vector<double> sitestrengthsin = vector<double>(6);
     sitestrengthsin[0] = hx;    sitestrengthsin[1] = hy;    sitestrengthsin[2] = hz;
@@ -145,11 +148,11 @@ int main()
     int no_of_bins = 100; //Short run for testing 2;//To test// //1000;     // The number of bins.
 
     // A beta value for one run
-    double beta = 0.1;
+    //double beta = 1.5;
 
     // Could also convert from T to beta // That is probably easier
-    //double T = 20.8;
-    //beta = 11.6045221/T;
+    double T = 16.5;
+    double beta = 11.6045221/T;
 
     // Filenames (choose one to use or change slightly)
     //string filenamePrefix = "test";
@@ -173,7 +176,12 @@ int main()
 
     //string filenamePrefix = "test";
     // Jnn1, Jnnn0p5: For the chain, we expect theta=2*pi/3
-    string filenamePrefix = "fcc6x6x6_nnJyz1p04_nnnJy0p67_beta0p1_eq10000_mc10000_bins100_seed79_latticeseed21_slowcool";
+    string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p33_nnnJy0p67_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    // Teste yopen vs periodic for fcc
+    //string filenamePrefix = "fcc6x6x6yopen_nnJyz1_nnJxy1_T15K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    //string filenamePrefix = "fcc6x6x6yopen_nnJyz1_nnJxy1_beta0p1_eq10000_mc10000_bins100_seed79_latticeseed21";
+
 
     //string filenamePrefix = "chain6_Js1_beta5_eq10000_mc1000_bins100";
     //string filenamePrefix = "quadr6x6_Js1_beta0p0001_eq10000_mc1000_bins100_II";
@@ -224,12 +232,13 @@ int main()
     type_lattice = 'E';
     double xshift = 2;
     double zshift = 1;
-    string latticefilenamePrefix = "fcc6x6x6";
+    string latticefilenamePrefix = "fcc8x8x8";
     string latticefilenamePrefixd = "L6";
     //string latticefilenamePrefix = "test";
     // Line finding functions
     // fcc only:
     //extract_yline(L, latticefilenamePrefix);
+    //extract_yline(L1, L2, L3, latticefilenamePrefix);
     //extract_xline(L, latticefilenamePrefix);
     //extract_zline(L, latticefilenamePrefix);
     //extract_qyline(L, latticefilenamePrefix);
@@ -245,6 +254,7 @@ int main()
     //lattice_coordinates_straightforward(L1, L2, L3, type_lattice, latticefilenamePrefix);
     //reciprocallattice_coordinates(L, type_lattice, latticefilenamePrefix);
     //lattice_coordinates_xyz_lines(L, latticefilenamePrefix);
+    //lattice_coordinates_xyz_lines(L1, L2, L3, latticefilenamePrefix);
     //reciprocallattice_coordinates_xyzline(L, type_lattice, latticefilenamePrefix);
     //isitonplane(filenamePrefix);
     //isitonline(filenamePrefix);
@@ -370,6 +380,27 @@ void extract_yline(int L, string ylinefilenamePrefix)
 {
     // Getting the Lattice sites along (0,L,0)
     Lattice mylattice = Lattice(L, false, false, false, false); // We are only interested in the sites
+    vector<int> ysites = mylattice.fccyline();
+
+    ofstream ylineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_yline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    ylineFile.open(filename);
+    delete filename;
+
+    int N = ysites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        ylineFile << ysites[i]  << endl;
+    }
+    ylineFile.close();
+}
+
+void extract_yline(int L1, int L2, int L3, string ylinefilenamePrefix)
+{
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L1, L2, L3, false, false, false, false); // We are only interested in the sites
     vector<int> ysites = mylattice.fccyline();
 
     ofstream ylineFile;
@@ -857,6 +888,68 @@ void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix)
 {
     bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
     Lattice mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+    mylattice.fcc_helical_initialize_extended();
+
+    ofstream xyzFilex;
+    char *filenamex = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamex, "%s_xyzxline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFilex.open(filenamex);
+    delete filenamex;
+
+    ofstream xyzFiley;
+    char *filenamey = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamey, "%s_xyzyline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFiley.open(filenamey);
+    delete filenamey;
+
+    ofstream xyzFilez;
+    char *filenamez = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenamez, "%s_xyzzline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    xyzFilez.open(filenamez);
+    delete filenamez;
+
+    xyzFilex << "xyz-positions are listed units of grid lengths" << endl;
+    xyzFiley << "xyz-positions are listed units of grid lengths" << endl;
+    xyzFilez << "xyz-positions are listed units of grid lengths" << endl;
+
+    cout << "File for printing xyz-coord a la x-, y- and z-line to file is initiated" << endl;
+
+    int N  = mylattice.N;
+
+    int i,j,k;
+    for(int n=0; n<N; n++)
+    {
+        vector<int> ns = mylattice.sitecoordinates[n];
+        i = ns[0];
+        j = ns[1];
+        k = ns[2];
+
+        vector<double> posx = mylattice.giveposition_fcc_lines(i,j,k,'x');
+        vector<double> posy = mylattice.giveposition_fcc_lines(i,j,k,'y');
+        vector<double> posz = mylattice.giveposition_fcc_lines(i,j,k,'z');
+
+        // Print to file. Site number, qx, qy, qz.
+        double xlx = posx[0];    double ylx = posy[0];    double zlx = posz[0];
+        double xly = posx[1];    double yly = posy[1];    double zly = posz[1];
+        double xlz = posx[2];    double ylz = posy[2];    double zlz = posz[2];
+
+        xyzFilex << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        xyzFilex << "; Position: x = " << xlx << "; y = " << xly << "; z = " << xlz << endl;
+        xyzFiley << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        xyzFiley << "; Position: x = " << ylx << "; y = " << yly << "; z = " << ylz << endl;
+        xyzFilez << "Running index: " << n << "; Indices: i = " << i << "; j = " << j << "; k = " << k;
+        xyzFilez << "; Position: x = " << zlx << "; y = " << zly << "; z = " << zlz << endl;
+    }
+    xyzFilex.close();
+    xyzFiley.close();
+    xyzFilez.close();
+    cout << "Done!" << endl;
+}
+
+void lattice_coordinates_xyz_lines(int L1, int L2, int L3, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+    Lattice mylattice = Lattice(L1, L2, L3, isotropic, sianisotropy, magfield, dm);
     mylattice.fcc_helical_initialize_extended();
 
     ofstream xyzFilex;

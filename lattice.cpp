@@ -843,7 +843,7 @@ void Lattice::fcc_helical_initialize_extended()
     string yz = "yz";
 
     // Could have these inside the loop and add randomness.
-    bool randomspins = false;
+    bool randomspins = true;
     if(DEBUG)    cout << "Now entering the loop" << endl;
     for(int n=0; n<N; n++)
     {
@@ -1106,7 +1106,7 @@ void Lattice::fcc_helical_initialize_extended_yopen()
     }
 
     // Could have these inside the loop and add randomness.
-    bool randomspins = false;
+    bool randomspins = true;
     if(DEBUG)    cout << "Now entering the loop" << endl;
     for(int n=0; n<N; n++)
     {
