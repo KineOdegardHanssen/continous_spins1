@@ -1625,6 +1625,7 @@ std::vector<double> Lattice::giveqvector_fcc(int i, int j, int k)
 {
     // So we don't need to call fcc_initalize(_extended)
     // Reciprocal lattice vectors
+    // Could have just given the sign of the b^alpha_i and multiplied with 2*M_PI afterwards
     b1 = vector<double>(3); // Should they be double?
     b2 = vector<double>(3);
     b3 = vector<double>(3);

@@ -780,6 +780,8 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mxsquad            = std::vector<double>(no_of_bins);
     std::vector<double> mysquad            = std::vector<double>(no_of_bins);
     std::vector<double> mzsquad            = std::vector<double>(no_of_bins);
+    std::vector<double> mvecssq            = std::vector<double>(no_of_bins);
+    std::vector<double> mvecsquad          = std::vector<double>(no_of_bins);
     // For the correlation function
     // The spins
     std::vector<double> spins_in_x = std::vector<double>(N);
@@ -850,6 +852,8 @@ void MonteCarlo::runmetropolis(double beta)
     double mxquad_av    = 0;
     double myquad_av    = 0;
     double mzquad_av    = 0;
+    double mvecsq_av    = 0;
+    double mvecquad_av  = 0;
     for(int i=0; i<no_of_bins; i++)  // Loop over the bins
     {   // For every bin
         if(SCBUG)    cout << "Starting bin " << i << endl;
@@ -869,6 +873,8 @@ void MonteCarlo::runmetropolis(double beta)
         mxsquad[i]     = 0;
         mysquad[i]     = 0;
         mzsquad[i]     = 0;
+        mvecssq[i]     = 0; // For the Binder cumulants
+        mvecsquad[i]   = 0;
         // Resetting the correlation function bin average for every bin
         for(int k=0; k<N; k++)    correlation_functionx_av_bin[k]     = 0;
         for(int k=0; k<N; k++)    correlation_functiony_av_bin[k]     = 0;
@@ -922,18 +928,20 @@ void MonteCarlo::runmetropolis(double beta)
             //energy_sq_av   += energy_old*energy_old;
             //cout << "Current energy: " << energy_old << "; Average energy so far: " << energies[i]/(j+1) << endl;
             // Magnetization
-            double mx     = 0;
-            double my     = 0;
-            double mz     = 0;
-            double mx_abs = 0;
-            double my_abs = 0;
-            double mz_abs = 0;
-            double mxsq   = 0;
-            double mysq   = 0;
-            double mzsq   = 0;
-            double mxquad = 0;
-            double myquad = 0;
-            double mzquad = 0;
+            double mx        = 0;
+            double my        = 0;
+            double mz        = 0;
+            double mx_abs    = 0;
+            double my_abs    = 0;
+            double mz_abs    = 0;
+            double mxsq      = 0;
+            double mysq      = 0;
+            double mzsq      = 0;
+            double mxquad    = 0;
+            double myquad    = 0;
+            double mzquad    = 0;
+            double mvecsq    = 0;
+            double mvecquad  = 0;
             if(SCBUG)    cout << "Retrieving spins to feed to FFTW" << endl;
             for(int k=0; k<N; k++)
             {
@@ -948,7 +956,24 @@ void MonteCarlo::runmetropolis(double beta)
                     spins_in_z[k] = mylattice.sites[k].spinz;
                 }
             }
+            // For the Binder cumulant
+            for(int k=0; k<N; k++)
+            {
+                for(int l=0; l<N; l++)
+                {
+                    double sx_k = mylattice.sites[k].spinx;
+                    double sy_k = mylattice.sites[k].spiny;
+                    double sz_k = mylattice.sites[k].spinx;
+
+                    double sx_l = mylattice.sites[l].spinx;
+                    double sy_l = mylattice.sites[l].spiny;
+                    double sz_l = mylattice.sites[l].spinx;
+
+                    mvecsq += sx_k*sx_l + sy_k*sy_l + sz_k*sz_l;
+                }
+            }
             if(SCBUG)    cout << "Done with that, ascribing magnetizations and such" << endl;
+            // Gathering
             mx = mx/N;
             my = my/N;
             mz = mz/N;
@@ -961,7 +986,11 @@ void MonteCarlo::runmetropolis(double beta)
             mxquad = mxsq*mxsq;
             myquad = mysq*mysq;
             mzquad = mzsq*mzsq;
+            // For the Binder cumulant
+            mvecsq /= (N*N);
+            mvecquad = mvecsq*mvecsq;
 
+            // Average
             mx_av += mx;
             my_av += my;
             mz_av += mz;
@@ -974,7 +1003,11 @@ void MonteCarlo::runmetropolis(double beta)
             mxquad_av += mxquad;
             myquad_av += myquad;
             mzquad_av += mzquad;
+            // Binder
+            mvecsq_av += mvecsq;
+            mvecquad_av += mvecquad;
 
+            // This bin
             mxs[i] += mx;
             mys[i] += my;
             mzs[i] += mz;
@@ -987,6 +1020,9 @@ void MonteCarlo::runmetropolis(double beta)
             mxsquad[i] += mxquad;
             mysquad[i] += myquad;
             mzsquad[i] += mzquad;
+            // Binder
+            mvecssq[i]   += mvecsq;
+            mvecsquad[i] += mvecquad;
 
             // FFT steps
             // Should I do this here? The manual said that we can reuse the plan.
@@ -1142,6 +1178,8 @@ void MonteCarlo::runmetropolis(double beta)
         mxsquad[i]     = mxsquad[i]/mcsteps_inbin;
         mysquad[i]     = mysquad[i]/mcsteps_inbin;
         mzsquad[i]     = mzsquad[i]/mcsteps_inbin;
+        mvecssq[i]     = mvecssq[i]/mcsteps_inbin;
+        mvecsquad[i]   = mvecsquad[i]/mcsteps_inbin;
         energies[i]    = energies[i]/mcsteps_inbin;
         energies_sq[i] = energies_sq[i]/mcsteps_inbin;
         double cv_bin  = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
@@ -1251,18 +1289,20 @@ void MonteCarlo::runmetropolis(double beta)
 
     //-----------------------//Magnetization//----------------------//
     //cout << "Magnetization" << endl;
-    mx_av     = mx_av/(mcsteps_inbin*no_of_bins);
-    my_av     = my_av/(mcsteps_inbin*no_of_bins);
-    mz_av     = mz_av/(mcsteps_inbin*no_of_bins);
-    mx_abs_av = mx_abs_av/(mcsteps_inbin*no_of_bins);
-    my_abs_av = my_abs_av/(mcsteps_inbin*no_of_bins);
-    mz_abs_av = mz_abs_av/(mcsteps_inbin*no_of_bins);
-    mxsq_av   = mxsq_av/(mcsteps_inbin*no_of_bins);
-    mysq_av   = mysq_av/(mcsteps_inbin*no_of_bins);
-    mzsq_av   = mzsq_av/(mcsteps_inbin*no_of_bins);
-    mxquad_av = mxquad_av/(mcsteps_inbin*no_of_bins);
-    myquad_av = myquad_av/(mcsteps_inbin*no_of_bins);
-    mzquad_av = mzquad_av/(mcsteps_inbin*no_of_bins);
+    mx_av       = mx_av/(mcsteps_inbin*no_of_bins);
+    my_av       = my_av/(mcsteps_inbin*no_of_bins);
+    mz_av       = mz_av/(mcsteps_inbin*no_of_bins);
+    mx_abs_av   = mx_abs_av/(mcsteps_inbin*no_of_bins);
+    my_abs_av   = my_abs_av/(mcsteps_inbin*no_of_bins);
+    mz_abs_av   = mz_abs_av/(mcsteps_inbin*no_of_bins);
+    mxsq_av     = mxsq_av/(mcsteps_inbin*no_of_bins);
+    mysq_av     = mysq_av/(mcsteps_inbin*no_of_bins);
+    mzsq_av     = mzsq_av/(mcsteps_inbin*no_of_bins);
+    mxquad_av   = mxquad_av/(mcsteps_inbin*no_of_bins);
+    myquad_av   = myquad_av/(mcsteps_inbin*no_of_bins);
+    mzquad_av   = mzquad_av/(mcsteps_inbin*no_of_bins);
+    mvecsq_av   = mvecsq_av/(mcsteps_inbin*no_of_bins);
+    mvecquad_av = mvecquad_av/(mcsteps_inbin*no_of_bins);
 
     // Error in the magnetization //
     //cout << "Magnetization std" << endl;
@@ -1317,6 +1357,16 @@ void MonteCarlo::runmetropolis(double beta)
     double mzquad_stdv = 0;
     for(int l=0; l<no_of_bins; l++)    mzquad_stdv += (mzsquad[l]-mzquad_av)*(mzsquad[l]-mzquad_av);
     mzquad_stdv = sqrt(mzquad_stdv/(no_of_bins*(no_of_bins-1)));
+
+    // Binder, squared (<mvec^2>)
+    double mvecsq_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    mvecsq_stdv += (mvecssq[l]-mvecsq_av)*(mvecssq[l]-mvecsq_av);
+    mvecsq_stdv = sqrt(mvecsq_stdv/(no_of_bins*(no_of_bins-1)));
+
+    // Binder, quadrupled (<mvec^4>)
+    double mvecquad_stdv = 0;
+    for(int l=0; l<no_of_bins; l++)    mvecquad_stdv += (mvecsquad[l]-mvecquad_av)*(mvecsquad[l]-mvecquad_av);
+    mvecquad_stdv = sqrt(mvecquad_stdv/(no_of_bins*(no_of_bins-1)));
 
 
     //----------------The correlation function-------------------//
@@ -1409,7 +1459,8 @@ void MonteCarlo::runmetropolis(double beta)
     allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
     allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
     allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv;
-    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv << endl;
+    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv;
+    allFile << " " << mvecsq_av << " " << mvecsq_stdv << " " << mvecquad_av << " " << mvecquad_stdv << endl;
 
     endtime = clock();
     total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -2335,9 +2386,9 @@ void MonteCarlo::testFFTW()
     double spinthing = 0;
     for(int i=0;i<N;i++)
     {
-        spinthing += 0.1;
-        spins_in_z[i] = spinthing;
-        //spins_in_z[i] = 1.0; // or 1.0
+        //spinthing += 0.1;
+        //spins_in_z[i] = spinthing;
+        spins_in_z[i] = 1.0; // or 1.0
         //spins_in_z[i] = pow(-1.0,i); // or 1.0
     }
 
@@ -2433,6 +2484,16 @@ void MonteCarlo::testFFTW()
         }
     }
 
+    /*
+    double thingone = sin(2*M_PI/5)-sin(4*M_PI/5)+sin(6*M_PI/5)-sin(8*M_PI/5);
+    double thingtwo = sin(4*M_PI/5)-sin(8*M_PI/5)+sin(12*M_PI/5)-sin(16*M_PI/5);
+    cout << "thingone = " << thingone << "; thingtwo = " << thingtwo << endl;
+    cout << "output-analytic: " << correlation_function[0]-1/25. << endl;
+
+    cout << "output-analytic: " << correlation_function[1]-(1/25.*(1+thingone*thingone)) << endl;
+
+    cout << "output-analytic: " << correlation_function[2]-(1/25.*(1+thingtwo*thingtwo)) << endl;
+    */
 
     //cout << "Time spent on FFT: " << time_realtocomplex << " s" << endl;
 

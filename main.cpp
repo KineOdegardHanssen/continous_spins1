@@ -27,6 +27,7 @@ void extract_yline(int L1, int L2, int L3, string ylinefilenamePrefix);
 void extract_xline(int L, string ylinefilenamePrefix); // fcc only
 void extract_zline(int L, string ylinefilenamePrefix); // fcc only
 void extract_qyline(int L, string ylinefilenamePrefix); // Extracting the lattice sites along (0,y,0) in the fcc
+void extract_qyline(int L1, int L2, int L3, string latticefilenamePrefix); // Extension
 void extract_qxline(int L, string ylinefilenamePrefix); // fcc only
 void extract_qzline(int L, string ylinefilenamePrefix); // fcc only
 void extract_qdline(int L, string ylinefilenamePrefix); // fcc only
@@ -37,6 +38,7 @@ void lattice_coordinates_straightforward(int L1, int L2, int L3, char type_latti
 void lattice_coordinates_xyz_lines(int L, string latticefilenamePrefix);  // Only for fcc
 void lattice_coordinates_xyz_lines(int L1, int L2, int L3, string latticefilenamePrefix);
 void reciprocallattice_coordinates(int L, char type_lattice, string latticefilenamePrefix);
+void reciprocallattice_coordinates(int L1, int L2, int L3, char type_lattice, string latticefilenamePrefix);
 void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix); // Only for fcc
 // cubic
 void cubic_extract_xyzlines(int L, string latticefilenamePrefix);
@@ -79,19 +81,19 @@ int main()
     // Input parameters
     int L = 8; // The program is going to be slow if we run for many particles on a 3D lattice
 
-    int L1 = 8;
+    int L1 = 6;
     int L2 = 8;
-    int L3 = 8;
+    int L3 = 6;
 
     // bools to determine system type
     bool isotropic    = true;
-    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
-    bool nextnearest  = true;
+    bool nextnearest  = false;
 
     // Bool to determine periodicity
-    bool periodic     = true; // To determine whether we have periodic boundary conditions or not
+    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
                               // Only implemented for the chain so far
 
     // Selecting the lattice type
@@ -99,7 +101,7 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'Y';
+    char type_lattice = 'O';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -113,7 +115,8 @@ int main()
 
     // Heisenberg terms
     // The nearest neighbour coupling for O, E, C, Q
-    double J = 1.04;
+    //double J = 1.04;
+    double J = 1;
 
     // These are the nearest neighbour couplings for: D, R
     // These are the next-nearest neighbour couplings for: O, F, Y
@@ -144,7 +147,7 @@ int main()
 
     // Run parameters
     int eqsteps = 10000; //Short run for testing //2;//To test//10000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 10000; //Short run for testing //2;//To test//10000; //100000; // MCsteps per bin.
+    int mcsteps_inbin = 1000; //Short run for testing //2;//To test//10000; //100000; // MCsteps per bin.
     int no_of_bins = 100; //Short run for testing 2;//To test// //1000;     // The number of bins.
 
     // A beta value for one run
@@ -159,6 +162,8 @@ int main()
 
     // Shorter runs, investigating chain interactions, comparing energies
     //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
+    string filenamePrefix = "8pchain_open_Jnn1_severalbetas0to4beta_10000eqst_1000mcst_100bins_MCseed79_Lseed21";
+
 
     /////
     // Shorter runs, low temp., investigating chain interactions.
@@ -176,7 +181,7 @@ int main()
 
     //string filenamePrefix = "test";
     // Jnn1, Jnnn0p5: For the chain, we expect theta=2*pi/3
-    string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    ////string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p33_nnnJy0p67_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     // Teste yopen vs periodic for fcc
     //string filenamePrefix = "fcc6x6x6yopen_nnJyz1_nnJxy1_T15K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
@@ -194,28 +199,28 @@ int main()
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
-    int beta_n = 5;
+    int beta_n = 40;
     double betamin = 1e-6;
-    double betamax = 100;
+    double betamax = 4;
     int betanset = 5;
     vector<double> betas = vector<double>(betanset);
     betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
-    //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //one_run(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     //-------------------------------------Test functions--------------------------------------------//
-    //L = 2;
-    //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
+    L = 2;
+    test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
     //test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fftw_againstsims_av(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
@@ -228,11 +233,14 @@ int main()
     //testnestnearestneighbour_chain(L);
 
     // We only need to find the line (0,y,0) once for each fcc L1xL2xL3 Lattice
-    //L = 6;
+    //L = 12;
+    L1 = 8;
+    L2 = 8;
+    L3 = 4;
     type_lattice = 'E';
     double xshift = 2;
     double zshift = 1;
-    string latticefilenamePrefix = "fcc8x8x8";
+    string latticefilenamePrefix = "fcc8x8x4";
     string latticefilenamePrefixd = "L6";
     //string latticefilenamePrefix = "test";
     // Line finding functions
@@ -242,6 +250,7 @@ int main()
     //extract_xline(L, latticefilenamePrefix);
     //extract_zline(L, latticefilenamePrefix);
     //extract_qyline(L, latticefilenamePrefix);
+    //extract_qyline(L1, L2, L3, latticefilenamePrefix);
     //extract_qxline(L, latticefilenamePrefix);
     //extract_qzline(L, latticefilenamePrefix);
     //extract_qdline(L, latticefilenamePrefix);
@@ -253,6 +262,7 @@ int main()
     //lattice_coordinates_straightforward(L, type_lattice, latticefilenamePrefix);
     //lattice_coordinates_straightforward(L1, L2, L3, type_lattice, latticefilenamePrefix);
     //reciprocallattice_coordinates(L, type_lattice, latticefilenamePrefix);
+    //reciprocallattice_coordinates(L1, L2, L3, type_lattice, latticefilenamePrefix);
     //lattice_coordinates_xyz_lines(L, latticefilenamePrefix);
     //lattice_coordinates_xyz_lines(L1, L2, L3, latticefilenamePrefix);
     //reciprocallattice_coordinates_xyzline(L, type_lattice, latticefilenamePrefix);
@@ -493,6 +503,29 @@ void extract_qyline(int L, string ylinefilenamePrefix)
     ofstream ylineFile;
     char *filename = new char[1000];                                // File name can have max 1000 characters
     sprintf(filename, "%s_qyline.txt", ylinefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    ylineFile.open(filename);
+    delete filename;
+
+    int N = ysites.size();
+
+    for(int i=0; i<N; i++)
+    {
+        ylineFile << ysites[i]  << endl;
+    }
+    ylineFile.close();
+}
+
+void extract_qyline(int L1, int L2, int L3, string latticefilenamePrefix)
+{
+    cout << "In extract_qyline" << endl;
+    // Getting the Lattice sites along (0,L,0)
+    Lattice mylattice = Lattice(L1, L2, L3, false, false, false, false); // We are only interested in the sites
+    mylattice.fcc_helical_initialize_extended();
+    vector<int> ysites = mylattice.fccqyline();
+
+    ofstream ylineFile;
+    char *filename = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filename, "%s_qyline.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
     ylineFile.open(filename);
     delete filename;
 
@@ -1078,6 +1111,74 @@ void reciprocallattice_coordinates(int L, char type_lattice, string latticefilen
     qFile.close();
 }
 
+void reciprocallattice_coordinates(int L1, int L2, int L3, char type_lattice, string latticefilenamePrefix)
+{
+    bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
+
+    Lattice mylattice = Lattice(L1, L2, L3, isotropic, sianisotropy, magfield, dm);
+
+    if(type_lattice=='F')           mylattice.fcc_helical_initialize();                // F for fcc
+    else if(type_lattice=='E')      mylattice.fcc_helical_initialize_extended();       // E for extended
+    else if(type_lattice=='Y')      mylattice.fcc_helical_initialize_extended_yopen(); // Y for open in y-dir
+    else if(type_lattice=='C')      mylattice.cubic_helical_initialize();              // C for cubic
+    else if(type_lattice=='D')      mylattice.cubic_helical_initialize_extended();     // D for cubic extended
+    else if(type_lattice=='Q')      mylattice.quadratic_helical_initialize();          // Q for quadratic
+    else if(type_lattice=='Q')      mylattice.quadratic_helical_initialize_extended(); // R for quadr extended
+    else if(type_lattice=='O')      mylattice.chain_periodic_initialize();             // O for one-dim
+
+    // Printing information about the q-vectors straight away
+    ofstream qFile;
+    char *filenameq = new char[1000];                                // File name can have max 1000 characters
+    sprintf(filenameq, "%s_qs.txt", latticefilenamePrefix.c_str() );   // Create filename with prefix and ending
+    qFile.open(filenameq);
+    delete filenameq;
+
+    cout << "File for printing q-vector to file is initiated" << endl;
+
+    double qx;
+    double qy;
+    double qz;
+
+    // L1, L2 and L3 are already given
+    int N  = mylattice.N;
+
+    if(mylattice.dim==1) // Not really neccessary. Not double tested, either
+    {
+        for(int i=0; i<N; i++)    qFile << "Running index = " << i << ";  qx = " << 2*M_PI/L1*i << endl;
+    }
+    if(mylattice.dim==2)
+    {
+
+        cout << "For quadratic, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns = mylattice.sitecoordinates[i];
+            //cout << "ns retrieved" << endl;
+            qx = ns[0]*mylattice.b1[0]/L1; // Not so sure about this, just need it to compile
+            qy = ns[1]*mylattice.b2[1]/L2; // Double check
+            //cout << "qvec set" << endl;
+            qFile << "Running index = " << i << "; Indices: i = " << ns[0] << "; j =  " << ns[1] << "; Positions in q-space:  qx = " << qx << ";  qy =  " << qy << " " << endl;
+        }
+        cout << "Done printing to qFile" << endl;
+    }
+    else if(mylattice.dim==3)
+    {
+        cout << "For cubic or fcc, in if-test" << endl;
+        for(int i=0; i<N; i++) // Possibly only up to N/2.
+        {
+            vector<int> ns = mylattice.sitecoordinates[i];
+
+            qx = ns[0]*mylattice.b1[0]/L1 + ns[1]*mylattice.b2[0]/L2 + ns[2]*mylattice.b3[0]/L3;
+            qy = ns[0]*mylattice.b1[1]/L1 + ns[1]*mylattice.b2[1]/L2 + ns[2]*mylattice.b3[1]/L3;
+            qz = ns[0]*mylattice.b1[2]/L1 + ns[1]*mylattice.b2[2]/L2 + ns[2]*mylattice.b3[2]/L3;
+            // Print to file. Site number, qx, qy, qz.
+            qFile << "Running index = " << i << "; Indices: i = " << ns[0] << ";  j = " << ns[1] << "; k = " << ns[2] << "; Positions in q-space:   qx = " << qx << ";   qy  = " << qy << ";    qz = " << qz << endl;
+        }
+        //cout << "Done printing to qFile" << endl;
+    }
+    qFile.close();
+}
+
 void reciprocallattice_coordinates_xyzline(int L, char type_lattice, string latticefilenamePrefix)
 {
     bool isotropic = false; bool sianisotropy = false; bool magfield = false; bool dm = false;
@@ -1155,7 +1256,7 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
     bool calculatespincorrelationfunction = false;
 
     // Set these
-    char type_lattice = 'C';
+    char type_lattice = 'O';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
