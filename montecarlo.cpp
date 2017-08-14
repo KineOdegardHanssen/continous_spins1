@@ -956,22 +956,6 @@ void MonteCarlo::runmetropolis(double beta)
                     spins_in_z[k] = mylattice.sites[k].spinz;
                 }
             }
-            // For the Binder cumulant
-            for(int k=0; k<N; k++)
-            {
-                for(int l=0; l<N; l++)
-                {
-                    double sx_k = mylattice.sites[k].spinx;
-                    double sy_k = mylattice.sites[k].spiny;
-                    double sz_k = mylattice.sites[k].spinx;
-
-                    double sx_l = mylattice.sites[l].spinx;
-                    double sy_l = mylattice.sites[l].spiny;
-                    double sz_l = mylattice.sites[l].spinx;
-
-                    mvecsq += sx_k*sx_l + sy_k*sy_l + sz_k*sz_l;
-                }
-            }
             if(SCBUG)    cout << "Done with that, ascribing magnetizations and such" << endl;
             // Gathering
             mx = mx/N;
@@ -987,7 +971,7 @@ void MonteCarlo::runmetropolis(double beta)
             myquad = mysq*mysq;
             mzquad = mzsq*mzsq;
             // For the Binder cumulant
-            mvecsq /= (N*N);
+            mvecsq = mxsq + mysq + mzsq;
             mvecquad = mvecsq*mvecsq;
 
             // Average
