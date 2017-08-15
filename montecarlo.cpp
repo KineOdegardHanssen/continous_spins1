@@ -751,8 +751,8 @@ void MonteCarlo::runmetropolis(double beta)
         }
         //cout << "Have set eqbeta" << endl;
         mcstepf_metropolis(eqbeta); //, generator_u, generator_v, generator_n, generator_prob, distribution_prob, distribution_u, distribution_v, distribution_n);
-        if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
-        if(i<11)      cout << "Hardcoded energy, step " << i << ": " << check_the_energy() << endl;
+        //if(i<11)      cout << "i = " << i << ", energy: " << energy_old << endl;
+        //if(i<11)      cout << "Hardcoded energy, step " << i << ": " << check_the_energy() << endl;
     }
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -1439,12 +1439,12 @@ void MonteCarlo::runmetropolis(double beta)
     //cout << "Now going to print to allFile" << endl;
 
     //-----------------------Printing----------------------------//
-    allFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ;
-    allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv;
-    allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;
-    allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv;
-    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv;
-    allFile << " " << mvecsq_av << " " << mvecsq_stdv << " " << mvecquad_av << " " << mvecquad_stdv << endl;
+    allFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " " << energy_av << " " << E_stdv << " " << energy_sq_av << " " << Esq_stdv << " " << cv << " " << cv_stdv << " " <<  mx_av ; // Index 0-7
+    allFile << " " << mx_stdv << " " << my_av << " " << my_stdv << " " << mz_av << " " << mz_stdv << " " << ar_av << " " << ar_stdv; // Index 8-14
+    allFile << " " << mxsq_av << " " << mxsq_stdv << " " << mysq_av << " " << mysq_stdv << " " << mzsq_av << " " << mzsq_stdv;  // Index 15-20
+    allFile << " " << mxquad_av << " " << mxquad_stdv << " " << myquad_av << " " << myquad_stdv << " " << mzquad_av << " " << mzquad_stdv; // Index 21-26
+    allFile << " " << mx_abs_av << " " << mx_abs_stdv << " " << my_abs_av << " " << my_abs_stdv << " " << mz_abs_av << " " << mz_abs_stdv; // Index 27-32
+    allFile << " " << mvecsq_av << " " << mvecsq_stdv << " " << mvecquad_av << " " << mvecquad_stdv << endl; // Index 33-36
 
     endtime = clock();
     total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -1462,7 +1462,7 @@ void MonteCarlo::runmetropolis(double beta)
     if(printenergytoterminal)    cout << "Energy for beta = " << beta << ": " << energy_av;
     if(printenergytoterminal)    cout << ";  Standard deviation: " << E_stdv << endl;
 
-    bool CONFWR    = true;
+    bool CONFWR    = false;
     bool sameprint = true;
     if(CONFWR)
     {

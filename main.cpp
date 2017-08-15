@@ -79,7 +79,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 8; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 12; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 6;
     int L2 = 8;
@@ -87,13 +87,13 @@ int main()
 
     // bools to determine system type
     bool isotropic    = true;
-    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
     bool dm           = false;
-    bool nextnearest  = false;
+    bool nextnearest  = true;
 
     // Bool to determine periodicity
-    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
+    bool periodic     = true; // To determine whether we have periodic boundary conditions or not
                               // Only implemented for the chain so far
 
     // Selecting the lattice type
@@ -101,7 +101,7 @@ int main()
     // C: cubic; D: cubic with different directions
     // Q:quadratic; R: quadratic with different directions
     // O: chain;
-    char type_lattice = 'O';
+    char type_lattice = 'Y';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -114,19 +114,20 @@ int main()
     double Dx = 1.82;     double Dy = 0;    double Dz = 0;
 
     // Heisenberg terms
-    // The nearest neighbour coupling for O, E, C, Q
+    // The nearest neighbour coupling for O, F, C, Q
     //double J = 1.04;
     double J = 1;
 
     // These are the nearest neighbour couplings for: D, R
     // These are the next-nearest neighbour couplings for: O, F, Y
-    double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.05;
+    //double Jx  = 0;    double Jy  = 0.67;    double Jz  = 0;
+    double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.05; // Jensen's parameters
     //double intheta = 4*M_PI/5;
     //double Jx  = -1.0/(4*cos(intheta));    double Jy  = 0;    double Jz  = 0;
 
-    // These are the nearest neighbour couplings for F, Y
-    double Jxy = 0.30;    double Jxz = -0.11;    double Jyz = 1.04;
-    //double Jxy = 1;    double Jxz = 0;    double Jyz = 1;
+    // These are the nearest neighbour couplings for E, Y
+    double Jxy = 0.30;    double Jxz = -0.11;    double Jyz = 1.04; // Jensen's parameters
+    //double Jxy = 0;    double Jxz = 0;    double Jyz = 1.04;
 
     vector<double> sitestrengthsin = vector<double>(6);
     sitestrengthsin[0] = hx;    sitestrengthsin[1] = hy;    sitestrengthsin[2] = hz;
@@ -143,7 +144,7 @@ int main()
 
     // Bools to determine printing
     bool printeveryMCstep = false;
-    bool calculatespincorrelationfunction = true;
+    bool calculatespincorrelationfunction = true; // This is set to false if we run for several betas
 
     // Run parameters
     int eqsteps = 10000; //Short run for testing //2;//To test//10000; // Number of steps in the equilibration procedure
@@ -154,7 +155,7 @@ int main()
     //double beta = 1.5;
 
     // Could also convert from T to beta // That is probably easier
-    double T = 16.5;
+    double T = 30;
     double beta = 11.6045221/T;
 
     // Filenames (choose one to use or change slightly)
@@ -162,7 +163,7 @@ int main()
 
     // Shorter runs, investigating chain interactions, comparing energies
     //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
-    string filenamePrefix = "8pchain_open_Jnn1_severalbetas0to4beta_10000eqst_1000mcst_100bins_MCseed79_Lseed21";
+    //string filenamePrefix = "8pchain_open_Jnn1_severalbetas0to4beta_10000eqst_1000mcst_100bins_MCseed79_Lseed21";
 
 
     /////
@@ -181,8 +182,12 @@ int main()
 
     //string filenamePrefix = "test";
     // Jnn1, Jnnn0p5: For the chain, we expect theta=2*pi/3
-    ////string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    string filenamePrefix = "fcc12x12x12yopen_beta0p1to5_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc1000_bins100_seed79_latticeseed21_slowcool";
+
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p33_nnnJy0p67_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
+    //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnnJy0p67_sianDx0p34_Dy1p82_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     // Teste yopen vs periodic for fcc
     //string filenamePrefix = "fcc6x6x6yopen_nnJyz1_nnJxy1_T15K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc6x6x6yopen_nnJyz1_nnJxy1_beta0p1_eq10000_mc10000_bins100_seed79_latticeseed21";
@@ -199,16 +204,16 @@ int main()
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
-    int beta_n = 40;
-    double betamin = 1e-6;
-    double betamax = 4;
+    int beta_n = 50;
+    double betamin = 1e-1;
+    double betamax = 5;
     int betanset = 5;
     vector<double> betas = vector<double>(betanset);
     betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
-    //run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
@@ -220,7 +225,7 @@ int main()
 
     //-------------------------------------Test functions--------------------------------------------//
     L = 2;
-    test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
+    //test_fftw(L, sitestrengthsin, heisenbergin, dm_in);
     //test_fftw_againstsims(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fftw_againstsims_av(L, eqsteps, beta, isotropic, sianisotropy, magfield, dm, periodic, type_lattice, sitestrengthsin, heisenbergin, dm_in);
     //test_fcc_extended(L, isotropic, sianisotropy, magfield, dm, periodic, sitestrengthsin, heisenbergin, dm_in);
@@ -293,11 +298,14 @@ void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta,
     // Initializing Monte Carlo
     MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.debugmode(true);
-    // Run Metropolis algorithm
+    // Run Metropolis algorithmbeta
     mymc.runmetropolis(beta);
     mymc.endsims();
     mymc.test_couplings_strengths(); // Just to test it. Can remove later
     cout << "beta = " << beta << endl;
+
+    double T = 11.6045221/beta;
+    cout << "T = " << T << endl;
     //cout << "L = " << L << endl;
 }
 
