@@ -1676,14 +1676,14 @@ void MonteCarlo::runmetropolis(double beta)
             mxyz_qycenter_File << mxc_av << " " << mxc_stdv << " " << myc_av << " " << myc_stdv << " " << mzc_av << " " << mzc_stdv; // Index 1-6
             mxyz_qycenter_File << " " << mxsqc_av << " " << mxsqc_stdv << " " << mysqc_av << " " << mysqc_stdv << " " << mzsqc_av << " " << mzsqc_stdv;  // Index 7-12
             mxyz_qycenter_File << " " << mxquadc_av << " " << mxquadc_stdv << " " << myquadc_av << " " << myquadc_stdv << " " << mzquadc_av << " " << mzquadc_stdv; // Index 13-18
-            mxyz_qycenter_File << " " << mxc_abs_av << " " << mxc_abs_stdv << " " << myc_abs_av << " " << myc_abs_stdv << " " << mzc_abs_av << " " << mzc_abs_stdv; // Index 19-24
+            mxyz_qycenter_File << " " << mxc_abs_av << " " << mxc_abs_stdv << " " << myc_abs_av << " " << myc_abs_stdv << " " << mzc_abs_av << " " << mzc_abs_stdv << endl; // Index 19-24
 
         }
         else
         {   // But this is much more efficient
             mxyz_qycenter_File << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " "; // Index 0
             mxyz_qycenter_File << " " << mxsqc_av << " " << mxsqc_stdv << " " << mysqc_av << " " << mysqc_stdv << " " << mzsqc_av << " " << mzsqc_stdv;  // Index 1-6
-            mxyz_qycenter_File << " " << mxquadc_av << " " << mxquadc_stdv << " " << myquadc_av << " " << myquadc_stdv << " " << mzquadc_av << " " << mzquadc_stdv; // Index 7-12
+            mxyz_qycenter_File << " " << mxquadc_av << " " << mxquadc_stdv << " " << myquadc_av << " " << myquadc_stdv << " " << mzquadc_av << " " << mzquadc_stdv << endl; // Index 7-12
         }
 
     }
