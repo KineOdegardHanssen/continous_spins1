@@ -79,7 +79,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 12; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 5;//12; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 6;
     int L2 = 8;
@@ -159,7 +159,7 @@ int main()
     double beta = 11.6045221/T;
 
     // Filenames (choose one to use or change slightly)
-    //string filenamePrefix = "test";
+    string filenamePrefix = "test";
 
     // Shorter runs, investigating chain interactions, comparing energies
     //string filenamePrefix = "2pchain_periodic_Jnn1_Jnnn0p2_sianDz1_severalbetas_10000eqst_10000mcst_100bins_seed59";
@@ -184,7 +184,7 @@ int main()
     // Jnn1, Jnnn0p5: For the chain, we expect theta=2*pi/3
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
-    string filenamePrefix = "fcc12x12x12yopen_beta0p1to5_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc1000_bins100_seed79_latticeseed21_slowcool";
+    ////string filenamePrefix = "fcc12x12x12yopen_beta0p1to5_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc1000_bins100_seed79_latticeseed21_slowcool";
 
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p33_nnnJy0p67_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnnJy0p67_sianDx0p34_Dy1p82_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";

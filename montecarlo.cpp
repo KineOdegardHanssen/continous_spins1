@@ -135,6 +135,18 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
         cout << "File set" << endl;
     }
+
+    if(!calculatespincorrelationfunction && (type_lattice=='E' || type_lattice=='Y'))   center_m_calc = true;
+    else                                                                                center_m_calc = false;
+
+    if(center_m_calc)
+    {
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_mxyzq2pi010.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        mxyz_qycenter_File.open(filename);
+        delete filename;
+    }
+
     if(randomtest)
     {
         char *filename = new char[1000];                                     // File name can have max 1000 characters
@@ -273,6 +285,17 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
         cout << "File set" << endl;  
 
+    }
+
+    if(!calculatespincorrelationfunction && (type_lattice=='E' || type_lattice=='Y'))   center_m_calc = true;
+    else                                                                                center_m_calc = false;
+
+    if(center_m_calc)
+    {
+        char *filename = new char[1000];                                // File name can have max 1000 characters
+        sprintf(filename, "%s_mxyzq2pi010.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        mxyz_qycenter_File.open(filename);
+        delete filename;
     }
     if(randomtest)
     {
@@ -782,6 +805,23 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mzsquad            = std::vector<double>(no_of_bins);
     std::vector<double> mvecssq            = std::vector<double>(no_of_bins);
     std::vector<double> mvecsquad          = std::vector<double>(no_of_bins);
+    //
+    std::vector<double> mxsc               = std::vector<double>(no_of_bins);
+    std::vector<double> mysc               = std::vector<double>(no_of_bins);
+    std::vector<double> mzsc               = std::vector<double>(no_of_bins);
+    std::vector<double> mxsc_abs           = std::vector<double>(no_of_bins);
+    std::vector<double> mysc_abs           = std::vector<double>(no_of_bins);
+    std::vector<double> mzsc_abs           = std::vector<double>(no_of_bins);
+    std::vector<double> mxssqc             = std::vector<double>(no_of_bins);
+    std::vector<double> myssqc             = std::vector<double>(no_of_bins);
+    std::vector<double> mzssqc             = std::vector<double>(no_of_bins);
+    std::vector<double> mxsquadc           = std::vector<double>(no_of_bins);
+    std::vector<double> mysquadc           = std::vector<double>(no_of_bins);
+    std::vector<double> mzsquadc           = std::vector<double>(no_of_bins);
+    std::vector<double> mvecssqc           = std::vector<double>(no_of_bins);
+    std::vector<double> mvecsquadc         = std::vector<double>(no_of_bins);
+
+
     // For the correlation function
     // The spins
     std::vector<double> spins_in_x = std::vector<double>(N);
@@ -854,6 +894,20 @@ void MonteCarlo::runmetropolis(double beta)
     double mzquad_av    = 0;
     double mvecsq_av    = 0;
     double mvecquad_av  = 0;
+    // Finding the critical temperature
+    double mxc_av       = 0;
+    double myc_av       = 0;
+    double mzc_av       = 0;
+    double mxc_abs_av   = 0;
+    double myc_abs_av   = 0;
+    double mzc_abs_av   = 0;
+    double mxsqc_av     = 0;
+    double mysqc_av     = 0;
+    double mzsqc_av     = 0;
+    double mxquadc_av   = 0;
+    double myquadc_av   = 0;
+    double mzquadc_av   = 0;
+
     for(int i=0; i<no_of_bins; i++)  // Loop over the bins
     {   // For every bin
         if(SCBUG)    cout << "Starting bin " << i << endl;
@@ -875,6 +929,19 @@ void MonteCarlo::runmetropolis(double beta)
         mzsquad[i]     = 0;
         mvecssq[i]     = 0; // For the Binder cumulants
         mvecsquad[i]   = 0;
+        mxsc[i]         = 0;
+        mysc[i]         = 0;
+        mzsc[i]         = 0;
+        mxsc_abs[i]     = 0;
+        mysc_abs[i]     = 0;
+        mzsc_abs[i]     = 0;
+        mxssqc[i]       = 0;
+        myssqc[i]       = 0;
+        mzssqc[i]       = 0;
+        mxsquadc[i]     = 0;
+        mysquadc[i]     = 0;
+        mzsquadc[i]     = 0;
+
         // Resetting the correlation function bin average for every bin
         for(int k=0; k<N; k++)    correlation_functionx_av_bin[k]     = 0;
         for(int k=0; k<N; k++)    correlation_functiony_av_bin[k]     = 0;
@@ -970,7 +1037,6 @@ void MonteCarlo::runmetropolis(double beta)
             mxquad = mxsq*mxsq;
             myquad = mysq*mysq;
             mzquad = mzsq*mzsq;
-            // For the Binder cumulant
             mvecsq = mxsq + mysq + mzsq;
             mvecquad = mvecsq*mvecsq;
 
@@ -987,7 +1053,6 @@ void MonteCarlo::runmetropolis(double beta)
             mxquad_av += mxquad;
             myquad_av += myquad;
             mzquad_av += mzquad;
-            // Binder
             mvecsq_av += mvecsq;
             mvecquad_av += mvecquad;
 
@@ -1004,9 +1069,68 @@ void MonteCarlo::runmetropolis(double beta)
             mxsquad[i] += mxquad;
             mysquad[i] += myquad;
             mzsquad[i] += mzquad;
-            // Binder
             mvecssq[i]   += mvecsq;
             mvecsquad[i] += mvecquad;
+
+            // For the plot of the critical temperature
+            if(center_m_calc)
+            {
+                double mxc        = 0;
+                double myc        = 0;
+                double mzc        = 0;
+                double mxc_abs    = 0;
+                double myc_abs    = 0;
+                double mzc_abs    = 0;
+                double mxsqc      = 0;
+                double mysqc      = 0;
+                double mzsqc      = 0;
+                double mxquadc    = 0;
+                double myquadc    = 0;
+                double mzquadc    = 0;
+
+                vector<double> mcentered = m_orderparameter_center(beta);
+                mxc = mcentered[0];
+                myc = mcentered[1];
+                mzc = mcentered[2];
+
+                mxc_abs = abs(mxc);
+                myc_abs = abs(myc);
+                mzc_abs = abs(mzc);
+                mxsqc = mxc*mxc;
+                mysqc = myc*myc;
+                mzsqc = mzc*mzc;
+                mxquadc = mxsqc*mxsqc;
+                myquadc = mysqc*mysqc;
+                mzquadc = mzsqc*mzsqc;
+
+                // Average
+                mxc_av += mxc;
+                myc_av += myc;
+                mzc_av += mzc;
+                mxc_abs_av += mxc_abs;
+                myc_abs_av += myc_abs;
+                mzc_abs_av += mzc_abs;
+                mxsqc_av += mxsqc;
+                mysqc_av += mysqc;
+                mzsqc_av += mzsqc;
+                mxquadc_av += mxquadc;
+                myquadc_av += myquadc;
+                mzquadc_av += mzquadc;
+
+                // This bin
+                mxsc[i] += mxc;
+                mysc[i] += myc;
+                mzsc[i] += mzc;
+                mxsc_abs[i] += mxc_abs;
+                mysc_abs[i] += myc_abs;
+                mzsc_abs[i] += mzc_abs;
+                mxssqc[i] += mxsqc;
+                myssqc[i] += mysqc;
+                mzssqc[i] += mzsqc;
+                mxsquadc[i] += mxquadc;
+                mysquadc[i] += myquadc;
+                mzsquadc[i] += mzquadc;
+            }
 
             // FFT steps
             // Should I do this here? The manual said that we can reuse the plan.
@@ -1169,7 +1293,21 @@ void MonteCarlo::runmetropolis(double beta)
         double cv_bin  = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
         cvs[i]         = cv_bin;
         cv_average    += cv_bin;
-
+        if(center_m_calc)
+        {
+            mxsc[i]         = mxsc[i]/mcsteps_inbin;
+            mysc[i]         = mysc[i]/mcsteps_inbin;
+            mzsc[i]         = mzsc[i]/mcsteps_inbin;
+            mxsc_abs[i]     = mxsc_abs[i]/mcsteps_inbin;
+            mysc_abs[i]     = mysc_abs[i]/mcsteps_inbin;
+            mzsc_abs[i]     = mzsc_abs[i]/mcsteps_inbin;
+            mxssqc[i]       = mxssqc[i]/mcsteps_inbin;
+            myssqc[i]       = myssqc[i]/mcsteps_inbin;
+            mzssqc[i]       = mzssqc[i]/mcsteps_inbin;
+            mxsquadc[i]     = mxsquadc[i]/mcsteps_inbin;
+            mysquadc[i]     = mysquadc[i]/mcsteps_inbin;
+            mzsquadc[i]     = mzsquadc[i]/mcsteps_inbin;
+        }
 
         //cout << "Average energy, bin " << i << ": " << energies[i] << endl;
         if(SCBUG)    cout << "Have calculated all bin quantities, now doing the spin correlation function" << endl;
@@ -1461,6 +1599,94 @@ void MonteCarlo::runmetropolis(double beta)
     bool printenergytoterminal = false;
     if(printenergytoterminal)    cout << "Energy for beta = " << beta << ": " << energy_av;
     if(printenergytoterminal)    cout << ";  Standard deviation: " << E_stdv << endl;
+
+    // To find the critical temperature
+    if(center_m_calc)
+    {
+        mxc_av       = mxc_av/(mcsteps_inbin*no_of_bins);
+        myc_av       = myc_av/(mcsteps_inbin*no_of_bins);
+        mzc_av       = mzc_av/(mcsteps_inbin*no_of_bins);
+        mxc_abs_av   = mxc_abs_av/(mcsteps_inbin*no_of_bins);
+        myc_abs_av   = myc_abs_av/(mcsteps_inbin*no_of_bins);
+        mzc_abs_av   = mzc_abs_av/(mcsteps_inbin*no_of_bins);
+        mxsqc_av     = mxsqc_av/(mcsteps_inbin*no_of_bins);
+        mysqc_av     = mysqc_av/(mcsteps_inbin*no_of_bins);
+        mzsqc_av     = mzsqc_av/(mcsteps_inbin*no_of_bins);
+        mxquadc_av   = mxquadc_av/(mcsteps_inbin*no_of_bins);
+        myquadc_av   = myquadc_av/(mcsteps_inbin*no_of_bins);
+        mzquadc_av   = mzquadc_av/(mcsteps_inbin*no_of_bins);
+
+        double mxc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mxc_stdv += (mxsc[l]-mxc_av)*(mxsc[l]-mxc_av);
+        mxc_stdv = sqrt(mxc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double myc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    myc_stdv += (mysc[l]-myc_av)*(mysc[l]-myc_av);
+        myc_stdv = sqrt(myc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double mzc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mzc_stdv += (mzsc[l]-mzc_av)*(mzsc[l]-mzc_av);
+        mzc_stdv = sqrt(mzc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        // Absoulte value
+        double mxc_abs_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mxc_abs_stdv += (mxsc_abs[l]-mxc_abs_av)*(mxsc_abs[l]-mxc_abs_av);
+        mxc_abs_stdv = sqrt(mxc_abs_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double myc_abs_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    myc_abs_stdv += (mysc_abs[l]-myc_abs_av)*(mysc_abs[l]-myc_abs_av);
+        myc_abs_stdv = sqrt(myc_abs_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double mzc_abs_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mzc_abs_stdv += (mzsc_abs[l]-mzc_abs_av)*(mzsc_abs[l]-mzc_abs_av);
+        mzc_abs_stdv = sqrt(mzc_abs_stdv/(no_of_bins*(no_of_bins-1)));
+
+        // Squared
+        double mxsqc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mxsqc_stdv += (mxssqc[l]-mxsqc_av)*(mxssqc[l]-mxsqc_av);
+        mxsqc_stdv = sqrt(mxsqc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double mysqc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mysqc_stdv += (myssqc[l]-mysqc_av)*(myssqc[l]-mysqc_av);
+        mysqc_stdv = sqrt(mysqc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double mzsqc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mzsqc_stdv += (mzssqc[l]-mzsqc_av)*(mzssqc[l]-mzsqc_av);
+        mzsqc_stdv = sqrt(mzsqc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        // Quadrupled
+        double mxquadc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mxquadc_stdv += (mxsquadc[l]-mxquadc_av)*(mxsquadc[l]-mxquadc_av);
+        mxquadc_stdv = sqrt(mxquadc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double myquadc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    myquadc_stdv += (mysquadc[l]-myquadc_av)*(mysquadc[l]-myquadc_av);
+        myquadc_stdv = sqrt(myquadc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        double mzquadc_stdv = 0;
+        for(int l=0; l<no_of_bins; l++)    mzquadc_stdv += (mzsquadc[l]-mzquadc_av)*(mzsquadc[l]-mzquadc_av);
+        mzquadc_stdv = sqrt(mzquadc_stdv/(no_of_bins*(no_of_bins-1)));
+
+        // Should I just print <ma^2> and <ma^4> with std.dev.s?
+
+        bool generous = false;
+        if(generous)
+        {   // We have the option of looking at everything if we want to
+            mxyz_qycenter_File << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " "; // Index 0
+            mxyz_qycenter_File << mxc_av << " " << mxc_stdv << " " << myc_av << " " << myc_stdv << " " << mzc_av << " " << mzc_stdv; // Index 1-6
+            mxyz_qycenter_File << " " << mxsqc_av << " " << mxsqc_stdv << " " << mysqc_av << " " << mysqc_stdv << " " << mzsqc_av << " " << mzsqc_stdv;  // Index 7-12
+            mxyz_qycenter_File << " " << mxquadc_av << " " << mxquadc_stdv << " " << myquadc_av << " " << myquadc_stdv << " " << mzquadc_av << " " << mzquadc_stdv; // Index 13-18
+            mxyz_qycenter_File << " " << mxc_abs_av << " " << mxc_abs_stdv << " " << myc_abs_av << " " << myc_abs_stdv << " " << mzc_abs_av << " " << mzc_abs_stdv; // Index 19-24
+
+        }
+        else
+        {   // But this is much more efficient
+            mxyz_qycenter_File << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta << " "; // Index 0
+            mxyz_qycenter_File << " " << mxsqc_av << " " << mxsqc_stdv << " " << mysqc_av << " " << mysqc_stdv << " " << mzsqc_av << " " << mzsqc_stdv;  // Index 1-6
+            mxyz_qycenter_File << " " << mxquadc_av << " " << mxquadc_stdv << " " << myquadc_av << " " << myquadc_stdv << " " << mzquadc_av << " " << mzquadc_stdv; // Index 7-12
+        }
+
+    }
 
     bool CONFWR    = false;
     bool sameprint = true;
@@ -2019,6 +2245,48 @@ void MonteCarlo::mcstepf_metropolis(double beta)
     acceptancerate = changes/N; // Write the percentage of hits to file.
 }
 
+
+vector<double> MonteCarlo::m_orderparameter_center(double beta)
+{   // Should give it a more specific name and make it possible to do this for some other qvec
+    // Do I even need a function for this?
+    double mx, my, mz;
+    double sx, sy, sz;
+    double factor;
+
+    mx = 0;
+    my = 0;
+    mz = 0;
+
+    for(int i=0; i<N; i++)
+    {
+        sx = mylattice.sites[i].spinx;
+        sy = mylattice.sites[i].spiny;
+        sz = mylattice.sites[i].spinz;
+
+        if(mylattice.yhalfsite_vec[i]==true)    factor = -1;
+        else                                    factor =  1;
+
+        mx += factor*sx;
+        my += factor*sy;
+        mz += factor*sz;
+    }
+
+    mx /= N;
+    my /= N;
+    mz /= N;
+
+    //mxyz_qycenter_File << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+    //mxyz_qycenter_File << beta << " " << mx << " " << my << " " << mz << endl;
+    // But what about the standard deviations?
+
+    vector<double> mqyc = vector<double>(3);
+    mqyc[0] = mx;
+    mqyc[1] = my;
+    mqyc[2] = mz;
+
+    return mqyc;
+}
+
 void MonteCarlo::endsims()
 {
     //print.closeAllFiles();
@@ -2032,6 +2300,7 @@ void MonteCarlo::endsims()
         if(spcorFiletot.is_open())    spcorFiletot.close();
         if(ftspcorFile.is_open())     ftspcorFile.close();
     }
+    else    if(mxyz_qycenter_File.is_open())  mxyz_qycenter_File.close();
 }
 
 

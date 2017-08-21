@@ -45,6 +45,8 @@ public:
     std::vector<std::vector<int> >    sitecoordinates;
     std::vector<std::vector<int> >    siteneighbours;
 
+    std::vector<bool>   yhalfsite_vec;
+
     // Initialization
     Lattice();
     Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);

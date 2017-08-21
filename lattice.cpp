@@ -1028,7 +1028,9 @@ void Lattice::fcc_helical_initialize_extended()
 
         sitepositions.push_back(position_n);
         sitecoordinates.push_back(coord_n);
-        // */
+
+        if((n1+n2)%2==1)    yhalfsite_vec.push_back(true);
+        else                yhalfsite_vec.push_back(false);
 
     }
     cout << "Done with fcc_helical_initialize" << endl;
@@ -1152,6 +1154,9 @@ void Lattice::fcc_helical_initialize_extended_yopen()
 
         sitepositions.push_back(position_n);
         sitecoordinates.push_back(coord_n);
+
+        if((n1+n2)%2==1)    yhalfsite_vec.push_back(true);    // Checking if we have y = 0.5, 1.5, etc.
+        else                yhalfsite_vec.push_back(false);
 
         // Finding the neighbours to n
         int no_of_neighbours_site = 12;           // This might be updated for some of the middle sites

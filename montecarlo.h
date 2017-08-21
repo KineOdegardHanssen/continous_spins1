@@ -35,6 +35,7 @@ public:
     ofstream    spcorFilez;
     ofstream    spcorFiletot;
     ofstream    ftspcorFile;
+    ofstream    mxyz_qycenter_File;
     ofstream    randomtestFile;
     ofstream    qxFile;
     ofstream    qFile;
@@ -47,6 +48,7 @@ public:
     bool nextnearest;
     bool notperiodic;
     bool printeveryMCstep, calculatespincorrelationfunction, randomtest;
+    bool center_m_calc;
     bool DEBUG, MAJORDEBUG;
 
     char type_lattice;
@@ -100,10 +102,13 @@ public:
     void givezplanforFFT(vector<double> &r, vector<complex<double> > &q);
     void giveplanforFFT_inverse(vector<double>& rout, vector<complex<double> >& q);
 
-
     // Standard Metropolis functions
     void runmetropolis(double beta);
     void mcstepf_metropolis(double beta);
+
+    // Finding m(q=2pi[0,1,0])
+    vector<double> m_orderparameter_center(double beta); // Should be called by some bool in runmetropolis
+                                                  // if calculatespincorrelationfunction is false?
 
     // Printing functions
     void writeallqstofile();
