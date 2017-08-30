@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {   // Should probably just send this in to the other initializer as MonteCarlo(int L, int L, int L, ...)
     randomtest = false;
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
@@ -29,6 +29,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
     this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
     this->printeveryMCstep = printeveryMCstep;
     this->calculatespincorrelationfunction = calculatespincorrelationfunction;
+    this->dobootstrap = dobootstrap;
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
@@ -154,11 +155,19 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
         randomtestFile.open(filename);
         delete filename;
     }
+
+    if(dobootstrap)
+    {
+        char *filename = new char[1000];                                     // File name can have max 1000 characters
+        sprintf(filename, "%s_binavgs.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        bootstrapFile.open(filename);
+        delete filename;
+    }
 }
 
 
 
-MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     randomtest = false;
 
@@ -178,6 +187,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
     this->filenamePrefix = filenamePrefix; // Do I need filenamePrefix any other places than here?
     this->printeveryMCstep = printeveryMCstep;
     this->calculatespincorrelationfunction = calculatespincorrelationfunction;
+    this->dobootstrap = dobootstrap;
 
     if(periodic)    notperiodic = false;
     else            notperiodic = true;
@@ -304,6 +314,14 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
         randomtestFile.open(filename);
         delete filename;
     }
+
+    if(dobootstrap)
+    {
+        char *filename = new char[1000];                                     // File name can have max 1000 characters
+        sprintf(filename, "%s_binavgs.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
+        bootstrapFile.open(filename);
+        delete filename;
+    }
 }
 
 void MonteCarlo::writeallqstofile()
@@ -394,7 +412,6 @@ void MonteCarlo::majordebugtrue()
     sprintf(filename, "%s_comparetheory_results.txt", filenamePrefix.c_str() );   // Create filename with prefix and ending
     compareFile.open(filename);
     delete filename;
-
 }
 
 void MonteCarlo::initialize_energy()
@@ -1073,7 +1090,7 @@ void MonteCarlo::runmetropolis(double beta)
             mvecsquad[i] += mvecquad;
 
             // For the plot of the critical temperature
-            if(center_m_calc)
+            if(center_m_calc || dobootstrap)
             {
                 double mxc        = 0;
                 double myc        = 0;
@@ -1293,7 +1310,7 @@ void MonteCarlo::runmetropolis(double beta)
         double cv_bin  = beta*beta*(energies_sq[i]-energies[i]*energies[i]);
         cvs[i]         = cv_bin;
         cv_average    += cv_bin;
-        if(center_m_calc)
+        if(center_m_calc || dobootstrap)
         {
             mxsc[i]         = mxsc[i]/mcsteps_inbin;
             mysc[i]         = mysc[i]/mcsteps_inbin;
@@ -1686,6 +1703,40 @@ void MonteCarlo::runmetropolis(double beta)
             mxyz_qycenter_File << " " << mxquadc_av << " " << mxquadc_stdv << " " << myquadc_av << " " << myquadc_stdv << " " << mzquadc_av << " " << mzquadc_stdv << endl; // Index 7-12
         }
 
+    }
+
+    if(dobootstrap)
+    {
+        for(int l=0; l<no_of_bins; l++)
+        {
+            // Temperature                              // Index 0
+            bootstrapFile << std::setprecision(std::numeric_limits<double>::digits10 + 1) << beta;
+            // Energies and heat capacity               // Index 1-3
+            bootstrapFile << " " << energies[l] << " " << energies_sq[l] << " " << cvs[l];
+            // <m_x^n(q)>, n = 1, abs, 2, 4             // Index 4-7
+            bootstrapFile << " " << mxsc[l] << " " << mxsc_abs[l] << " " << mxssqc[l] << " " << mxsquadc[l];
+            // <m_y^n(q)>, n = 1, abs, 2, 4             // Index 8-11
+            bootstrapFile << " " << mysc[l] << " " << mysc_abs[l] << " " << myssqc[l] << " " << mysquadc[l];
+            // <m_z^n(q)>, n = 1, abs, 2, 4             // Index 12-15
+            bootstrapFile << " " << mzsc[l] << " " << mzsc_abs[l] << " " << mzssqc[l] << " " << mzsquadc[l];
+
+            // Is there any point in including these?:
+            // <m_x^n>, n = 1, abs, 2, 4                // Index 16-19
+            bootstrapFile << " " << mxs[l] << " " << mxs_abs[l] << " " << mxssq[l] << " " << mxsquad[l];
+            // <m_y^n>, n = 1, abs, 2, 4                // Index 20-23
+            bootstrapFile << " " << mys[l] << " " << mys_abs[l] << " " << myssq[l] << " " << mysquad[l];
+            // <m_z^n>, n = 1, abs, 2, 4                // Index 24-27
+            bootstrapFile << " " << mzs[l] << " " << mzs_abs[l] << " " << mzssq[l] << " " << mzsquad[l];
+
+            // And these?:
+            //bootstrapFile << " " << mvecssq[l] << " " << mvecsquad[l];
+
+            // Ending the line after each bin:
+            bootstrapFile << endl;
+        }
+        /* // Include these as well?
+        mvecssq[i]    mvecsquad[i]
+        */
     }
 
     bool CONFWR    = false;

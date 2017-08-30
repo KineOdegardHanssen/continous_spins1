@@ -36,6 +36,7 @@ public:
     ofstream    spcorFiletot;
     ofstream    ftspcorFile;
     ofstream    mxyz_qycenter_File;
+    ofstream    bootstrapFile;
     ofstream    randomtestFile;
     ofstream    qxFile;
     ofstream    qFile;
@@ -49,6 +50,7 @@ public:
     bool notperiodic;
     bool printeveryMCstep, calculatespincorrelationfunction, randomtest;
     bool center_m_calc;
+    bool dobootstrap;
     bool DEBUG, MAJORDEBUG;
 
     char type_lattice;
@@ -75,8 +77,8 @@ public:
     //Printing print;
 
     MonteCarlo();
-    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  bool dobootstrap,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 
     // Debugging/testing functions

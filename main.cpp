@@ -15,10 +15,10 @@ using std::ofstream; using std::string;
 
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 void one_run(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep,  bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep,  bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 // Lattice functions
 // fcc or flexible
@@ -79,7 +79,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 14;//12; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 6; //12; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 6;
     int L2 = 8;
@@ -109,9 +109,12 @@ int main()
     // Magnetic field terms
     double hx = 1;    double hy = 2;    double hz = 7;
     // Single-ion anisotropy terms
-    double Dix = 0.34;    double Diy = 1.82;    double Diz = 0;
+    double Dix = 0.34;    double Diy = 1.82;    double Diz = 0; // Jensen's parameters
+    //double Dix = 0.34;    double Diy = 1.92;    double Diz = 0; // Li's parameters
+    //double Dix = 0.413;    double Diy = 1.42;    double Diz = 0; // Toft-Pettersen's LiNiPO4 parameters
     // DM terms
-    double Dx = 1.82;     double Dy = 0;    double Dz = 0;
+    //double Dx = 1.82;     double Dy = 0;    double Dz = 0;
+    double Dx = 0.0;     double Dy = 0.32;    double Dz = 0;       // Toft-Pettersen's LiNiPO4 parameters
 
     // Heisenberg terms
     // The nearest neighbour coupling for O, F, C, Q
@@ -122,11 +125,15 @@ int main()
     // These are the next-nearest neighbour couplings for: O, F, Y
     //double Jx  = 0;    double Jy  = 0.67;    double Jz  = 0;
     double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.05; // Jensen's parameters
+    //double Jx  = 0;    double Jy  = 0.59;    double Jz  = -0.11; // Li's parameters
+    //double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.06; // Toft-Pettersen's LiNiPO4 parameters
     //double intheta = 4*M_PI/5;
     //double Jx  = -1.0/(4*cos(intheta));    double Jy  = 0;    double Jz  = 0;
 
     // These are the nearest neighbour couplings for E, Y
     double Jxy = 0.30;    double Jxz = -0.11;    double Jyz = 1.04; // Jensen's parameters
+    //double Jxy = 0.26;    double Jxz = -0.16;    double Jyz = 0.94; // Li's parameters
+    //double Jxy = 0.32;    double Jxz = -0.11;    double Jyz = 1.00; // Toft-Pettersen's LiNiPO4 parameters
     //double Jxy = 0;    double Jxz = 0;    double Jyz = 1.04;
 
     vector<double> sitestrengthsin = vector<double>(6);
@@ -145,10 +152,11 @@ int main()
     // Bools to determine printing
     bool printeveryMCstep = false;
     bool calculatespincorrelationfunction = true; // This is set to false if we run for several betas
+    bool dobootstrap = true; // Often set in the function
 
     // Run parameters
     int eqsteps = 10000; //Short run for testing //2;//To test//10000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 1000; //Short run for testing //2;//To test//10000; //100000; // MCsteps per bin.
+    int mcsteps_inbin = 10000;  //100000; // MCsteps per bin.
     int no_of_bins = 100; //Short run for testing 2;//To test// //1000;     // The number of bins.
 
     // A beta value for one run
@@ -180,11 +188,11 @@ int main()
     // Longer runs, extra low temp., investigating chain interactions
     //string filenamePrefix = "6pchain_periodic_Jnnm1_Jnnn0p5_beta100000_10000eqst_100000mcst_1000bins_seed59";
 
-    //string filenamePrefix = "test";
+    string filenamePrefix = "test";
     // Jnn1, Jnnn0p5: For the chain, we expect theta=2*pi/3
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
-    string filenamePrefix = "fcc14x14x14yopen_beta0p1to2_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc1000_bins100_seed79_latticeseed21_slowcool";
+    ////string filenamePrefix = "fcc6x6x6yopen_beta0p76to0p82_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed79_latticeseed21_slowcool";
 
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p33_nnnJy0p67_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnnJy0p67_sianDx0p34_Dy1p82_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
@@ -205,19 +213,19 @@ int main()
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
     int beta_n = 50;
-    double betamin = 1e-1;
-    double betamax = 2;
+    double betamin = 0.76;
+    double betamax = 0.82;
     int betanset = 5;
     vector<double> betas = vector<double>(betanset);
     betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
 
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep,  dobootstrap, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
-    //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
-    //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven2(L, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep, bool dobootstrap, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
+    //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep,  dobootstrap, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
     //one_run(L, eqsteps, mcsteps_inbin, no_of_bins, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
@@ -295,8 +303,9 @@ int main()
 
 void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
+     bool dobootstrap = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.debugmode(true);
     // Run Metropolis algorithmbeta
     mymc.runmetropolis(beta);
@@ -311,8 +320,9 @@ void one_run(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta,
 
 void one_run(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, double beta, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
+     bool dobootstrap = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.debugmode(true);
     // Run Metropolis algorithm
     mymc.runmetropolis(beta);
@@ -322,11 +332,11 @@ void one_run(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_b
     //cout << "L = " << L << endl;
 }
 
-void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, double betamin, double betamax, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     bool calculatespincorrelationfunction = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //mymc.debugmode(true);
     //mymc.majordebugtrue();
 
@@ -338,16 +348,17 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
         betas[i] = betamin + deltabeta*i;
         mymc.runmetropolis(betas[i]);
         mymc.reset_energy();
+        cout << "Bin " << i << " done" << endl;
     }
     mymc.endsims();
     mymc.test_couplings_strengths(); // Just to test it. Can remove later
 }
 
-void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     bool calculatespincorrelationfunction = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //mymc.debugmode(true);
     //mymc.majordebugtrue();
 
@@ -361,11 +372,11 @@ void run_for_betasgiven(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, i
     mymc.test_couplings_strengths(); // Just to test it. Can remove later
 }
 
-void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     bool calculatespincorrelationfunction = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //mymc.debugmode(true);
     //mymc.majordebugtrue();
 
@@ -378,11 +389,11 @@ void run_for_betasgiven2(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, 
     mymc.test_couplings_strengths(); // Just to test it. Can remove later
 }
 
-void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+void run_for_betasgiven_diffdirs(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, int beta_n, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> betas, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     bool calculatespincorrelationfunction = false;
     // Initializing Monte Carlo
-    MonteCarlo mymc(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //mymc.debugmode(true);
     //mymc.majordebugtrue();
 
@@ -1262,13 +1273,14 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
     // These we want to turn off
     bool printeveryMCstep = false;
     bool calculatespincorrelationfunction = false;
+    bool dobootstrap = false;
 
     // Set these
     char type_lattice = 'O';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.testFFTW(); // Test FFTW
     mymc.endsims();  // Close the file
 }
@@ -1282,12 +1294,13 @@ void test_fftw_againstsims(int L, int eqsteps, double beta, bool isotropic, bool
     // These we want to turn off
     bool printeveryMCstep = false;
     bool calculatespincorrelationfunction = false; // We don't need this for the testing function
+    bool dobootstrap = false;
 
     // So it's easy to throw it away afterwards
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.compareFFTW_withmanual(beta); // Test FFTW
     mymc.endsims();  // Close the file
 }
@@ -1301,12 +1314,13 @@ void test_fftw_againstsims_av(int L, int eqsteps, double beta, bool isotropic, b
     // These we want to turn off
     bool printeveryMCstep = false;
     bool calculatespincorrelationfunction = false; // We don't need this for the testing function
+    bool dobootstrap = false;
 
     // So it's easy to throw it away afterwards
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     mymc.compareFFTW_withmanual_av(beta); // Test FFTW
     mymc.endsims();  // Close the file
 }
@@ -1929,9 +1943,10 @@ void test_fcc_extended_yopen_throughMC(int L, vector<double> sitestrengthsin, ve
     bool isotropic = true; // This is the one we are testing now
     bool sianisotropy = false; bool magfield = false; bool dm = false; bool nextnearest = false;
     bool periodic = true; bool printeveryMCstep = false; bool calculatespincorrelationfunction = false;
+    bool doboolstrap = false;
     char type_lattice = 'Y';
     string filenamePrefix = "tezter";
-    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+    MonteCarlo mymc(L, L, L, eqsteps, mcsteps_inbin, no_of_bins, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, doboolstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     mymc.testyopenfcc();
 }
