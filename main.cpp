@@ -79,7 +79,7 @@ int main()
     if(DEBUG)    cout << "In main" << endl;
 
     // Input parameters
-    int L = 6; //12; // The program is going to be slow if we run for many particles on a 3D lattice
+    int L = 8; //12; // The program is going to be slow if we run for many particles on a 3D lattice
 
     int L1 = 6;
     int L2 = 8;
@@ -188,11 +188,11 @@ int main()
     // Longer runs, extra low temp., investigating chain interactions
     //string filenamePrefix = "6pchain_periodic_Jnnm1_Jnnn0p5_beta100000_10000eqst_100000mcst_1000bins_seed59";
 
-    string filenamePrefix = "test";
+    //string filenamePrefix = "test";
     // Jnn1, Jnnn0p5: For the chain, we expect theta=2*pi/3
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_T16p5K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
-    ////string filenamePrefix = "fcc6x6x6yopen_beta0p76to0p82_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed79_latticeseed21_slowcool";
+    string filenamePrefix = "fcc8x8x8yopen_beta0p775to0p779_Nbeta50_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed79_latticeseed21_slowcool";
 
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p33_nnnJy0p67_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
     //string filenamePrefix = "fcc8x8x8yopen_nnJyz1p04_nnnJy0p67_sianDx0p34_Dy1p82_T30K_eq10000_mc10000_bins100_seed79_latticeseed21_II_slowcool";
@@ -213,8 +213,8 @@ int main()
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
     int beta_n = 50;
-    double betamin = 0.76;
-    double betamax = 0.82;
+    double betamin = 0.775;
+    double betamax = 0.799;
     int betanset = 5;
     vector<double> betas = vector<double>(betanset);
     betas[0] = 0.5; betas[1] = 1.0; betas[2] = 2.0; betas[3] = 10.0; betas[4] = 50.0;
