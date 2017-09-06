@@ -16,7 +16,7 @@ def get_Bootstrapresults(filename, L):
     # Sorting arrays
     betasA                 = []          # List of beta values
     binofbeta_firstindexA  = []          # I guess nested lists are a bit of a hassle
-    binofbeta_lastindexA   = []          # Could also just feed the number of bins in. But, the less such input, the better, probably
+    binofbeta_lastindexA   = []          # Could also just feed the number of bins in. But, the less such input, the better, probably    
     # Is the above unsafe? Should I just find the no of bins and add instead, a la, i*nbins+something?
     
     # Other quantities
@@ -109,10 +109,12 @@ def get_Bootstrapresults(filename, L):
     # Remember to close the file
     infile.close()
     
+    nbins = zeros(len(betasA))
+    for i in range(0,len(betasA)):
+        nbins[i] = binofbeta_lastindexA[i]-binofbeta_firstindexA[i]+1
     no_of_bins_each_betaA = binofbeta_lastindexA[0]+1 # Due to the indexing in Python + we don't allow
     no_of_betasA          = len(betasA)               # The number of different temperatures ### Should I convert to T now?
     no_of_Bootstrapruns   = no_of_bins_each_betaA     # Probably OK this way... Good to be flexible...
-    nbins                 = no_of_bins_each_betaA
     
     betasA = array(betasA) # Not sure if this is neccessary, but maybe...
     # Magnetic susceptibility per spin:
@@ -136,7 +138,7 @@ def get_Bootstrapresults(filename, L):
             ### Reset all quantities I want to find by bootstrap        
             mx = 0; mxabs = 0; mx2 = 0; mx4 = 0; my = 0; myabs = 0; my2 = 0; my4 = 0; mz = 0; mzabs = 0; mz2 = 0; mz4 = 0;
             eav = 0; esqav = 0; hcav = 0;
-            for j in range(0, nbins): # For finding the averages
+            for j in range(0, int(nbinsA[i])): # For finding the averages
                 ###Draw a random integer in [binofbeta_firstindexA[i], binofbeta_lastindexA[i]].
                 n = randint(binofbeta_firstindexA[i], binofbeta_lastindexA[i])  # Draw a random number n times
                 ###Extract O(n), add to average function
