@@ -5,7 +5,7 @@ Lattice::Lattice()
 
 }
 
-Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm)
+Lattice::Lattice(int L, long int seed, bool isotropic, bool sianisotropy, bool magfield, bool dm)
 {
     this->L = L;
     this->L1 = L;
@@ -19,12 +19,12 @@ Lattice::Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool d
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
-    seed = 21;
+    this->seed=seed;
     cout << "In L Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 
 
-Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm)
+Lattice::Lattice(int L1, int L2, int L3, long int seed, bool isotropic, bool sianisotropy, bool magfield, bool dm)
 {
     //this->L = L;
     this->L1 = L1;
@@ -39,7 +39,7 @@ Lattice::Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool
     notperiodic = false; // Default value. Changes if we choose a lattice with closed boundary conditions
     systemstrengthsgiven = false;
     extended = false;
-    seed = 21;
+    this->seed =seed;
     cout << "In L1, L2, L3 Lattice constructor. L1 = " << L1 << ", L2 = " << L2 << ", L3 = " << L3 << endl;
 }
 

@@ -77,8 +77,8 @@ public:
     //Printing print;
 
     MonteCarlo();
-    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  bool dobootstrap,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
-    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int eqsteps, int mcsteps_inbin, int no_of_bins, long int latticeseed, long int seed1, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  bool dobootstrap,  char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
+    MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, long int latticeseed, long int seed1, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction,  bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in);
 
 
     // Debugging/testing functions

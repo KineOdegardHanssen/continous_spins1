@@ -49,8 +49,8 @@ public:
 
     // Initialization
     Lattice();
-    Lattice(int L, bool isotropic, bool sianisotropy, bool magfield, bool dm);
-    Lattice(int L1, int L2, int L3, bool isotropic, bool sianisotropy, bool magfield, bool dm);
+    Lattice(int L, long int seed, bool isotropic, bool sianisotropy, bool magfield, bool dm);
+    Lattice(int L1, int L2, int L3, long int seed, bool isotropic, bool sianisotropy, bool magfield, bool dm);
 
     // Debugging
     //void setmajordebug();

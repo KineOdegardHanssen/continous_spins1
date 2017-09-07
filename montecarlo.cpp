@@ -4,7 +4,7 @@ MonteCarlo::MonteCarlo()
 {
 }
 
-MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, long int latticeseed, long int seed1, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {   // Should probably just send this in to the other initializer as MonteCarlo(int L, int L, int L, ...)
     randomtest = false;
     // Handling runningints (wouldn't want to vary this in one class instance, I guess.)
@@ -39,7 +39,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     // Making the Lattice
     double starttime = clock();
-    mylattice = Lattice(L,isotropic, sianisotropy, magfield, dm);
+    mylattice = Lattice(L, latticeseed, isotropic, sianisotropy, magfield, dm);
     mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
     cout << "Instance of class Lattice initialized" << endl;
 
@@ -81,7 +81,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed1 = 79;  // Seed to start random number generator
+    this->seed1 = seed1;  // Seed to start random number generator
     seed2 = 61;
     testseed = 29;
     DEBUG = false;
@@ -167,7 +167,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, bo
 
 
 
-MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
+MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, int no_of_bins, long int latticeseed, long int seed1, bool isotropic, bool sianisotropy, bool magfield, bool dm, bool nextnearest, bool periodic, bool printeveryMCstep, bool calculatespincorrelationfunction, bool dobootstrap, char type_lattice, string filenamePrefix, vector<double> sitestrengthsin, vector<double> heisenbergin, vector<double> dm_in)
 {
     randomtest = false;
 
@@ -197,7 +197,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
     // Making the Lattice
     double starttime = clock();
-    mylattice = Lattice(L1, L2, L3, isotropic, sianisotropy, magfield, dm);
+    mylattice = Lattice(L1, L2, L3, latticeseed, isotropic, sianisotropy, magfield, dm);
     mylattice.setstrengths(sitestrengthsin, heisenbergin, dm_in);
     cout << "Instance of class Lattice initialized" << endl;
 
@@ -241,7 +241,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
 
     // Initializing some other quantities
     acceptancerate = 0;
-    seed1 = 79;  // Seed to start random number generator
+    this->seed1 = seed1;  // Seed to start random number generator
     seed2 = 63;
     DEBUG = false;
     MAJORDEBUG = false;
