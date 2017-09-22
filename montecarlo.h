@@ -48,6 +48,7 @@ public:
     bool isotropic, sianisotropy, magfield, dm;
     bool nextnearest;
     bool notperiodic;
+    bool dmdiffdirs;
     bool printeveryMCstep, calculatespincorrelationfunction, randomtest;
     bool center_m_calc;
     bool dobootstrap;

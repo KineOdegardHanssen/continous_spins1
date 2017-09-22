@@ -86,6 +86,7 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, lo
     testseed = 29;
     DEBUG = false;
     MAJORDEBUG = false;
+    dmdiffdirs = true;
 
     // Setting up files to print to. Might want to allow more flexibility here
     char *filename = new char[1000];                                // File name can have max 1000 characters
@@ -245,6 +246,7 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
     seed2 = 63;
     DEBUG = false;
     MAJORDEBUG = false;
+    dmdiffdirs = true;
 
     // Setting up files to print to. Might want to allow more flexibility here
     char *filename = new char[1000];                                // File name can have max 1000 characters
@@ -512,6 +514,14 @@ void MonteCarlo::initialize_energy()
                     double sxk = mylattice.sites[k].spinx;
                     double syk = mylattice.sites[k].spiny;
                     double szk = mylattice.sites[k].spinz;
+
+                    if(dmdiffdirs)
+                    {
+                        if(mylattice.sites[i].bonds[j].direction!="yz")
+                        {
+                            Dx = 0; Dy = 0; Dz = 0;
+                        }
+                    }
 
                     energy_contribution_bonds += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
                 }
@@ -2041,6 +2051,14 @@ void MonteCarlo::mcstepf_metropolis(double beta)
                 double Dx = mylattice.Dx;
                 double Dy = mylattice.Dy;
                 double Dz = mylattice.Dz;
+
+                if(dmdiffdirs)
+                {
+                    if(mylattice.sites[k].bonds[j].direction!="yz")
+                    {
+                        Dx = 0; Dy = 0; Dz = 0;
+                    }
+                }
                 if(HUMBUG)    cout << "Bonds accessed" << endl;
 
                 double sxk = mylattice.sites[l].spinx;
@@ -2445,6 +2463,15 @@ double MonteCarlo::check_the_energy()
                     double Dx = mylattice.Dx; // Could have these as class variables.
                     double Dy = mylattice.Dy;
                     double Dz = mylattice.Dz;
+
+
+                    if(dmdiffdirs)
+                    {
+                        if(mylattice.sites[i].bonds[j].direction!="yz")
+                        {
+                            Dx = 0; Dy = 0; Dz = 0;
+                        }
+                    }
 
                     double sxk = mylattice.sites[k].spinx;
                     double syk = mylattice.sites[k].spiny;
@@ -3567,6 +3594,7 @@ void MonteCarlo::test_couplings_strengths()
         double Dy = mylattice.Dy; // Changed to storing it in Lattice from storing it in Bonds
         double Dz = mylattice.Dz;
         cout << "Dx = " << Dx << "; Dy = " << Dy << "; Dz = " << Dz << endl;
+        cout << "DM terms also subject to the BCs and possibly type of bonds. This is our input." << endl;
     }
     if(nextnearest)
     {
