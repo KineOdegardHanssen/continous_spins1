@@ -521,6 +521,12 @@ void MonteCarlo::initialize_energy()
                         {
                             Dx = 0; Dy = 0; Dz = 0;
                         }
+                        else
+                        {
+                            Dx = mylattice.Dx;
+                            Dy = mylattice.Dy;
+                            Dz = mylattice.Dz;
+                        }
                     }
 
                     energy_contribution_bonds += Dx*(sy*szk-syk*sz)+Dy*(sz*sxk-szk*sx)+Dz*(sx*syk-sy*sxk);
