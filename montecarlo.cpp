@@ -496,9 +496,6 @@ void MonteCarlo::initialize_energy()
         {
             if(BEDBUG)    cout << "In dm" << endl;
             // Double loops and stuff. Could maybe make this more efficient
-            double Dx = mylattice.Dx;
-            double Dy = mylattice.Dy;
-            double Dz = mylattice.Dz;
 
             int nneighbours;
             // Determining the number of neighbours of the site
@@ -515,17 +512,15 @@ void MonteCarlo::initialize_energy()
                     double syk = mylattice.sites[k].spiny;
                     double szk = mylattice.sites[k].spinz;
 
+                    double Dx = mylattice.Dx;
+                    double Dy = mylattice.Dy;
+                    double Dz = mylattice.Dz;
+
                     if(dmdiffdirs)
                     {
                         if(mylattice.sites[i].bonds[j].direction!="yz")
                         {
                             Dx = 0; Dy = 0; Dz = 0;
-                        }
-                        else
-                        {
-                            Dx = mylattice.Dx;
-                            Dy = mylattice.Dy;
-                            Dz = mylattice.Dz;
                         }
                     }
 
@@ -792,7 +787,7 @@ void MonteCarlo::runmetropolis(double beta)
     // Should implement something like that, just need to think a bit about it first. Maybe.
     double eqbeta = beta;
     bool slowcool = true;
-    if(beta<0.01)    slowcool = false; // Should not increase the temperature
+    if(beta<0.01)    slowcool = false; // Should not increase the inverse temperature
     double deltabeta = (beta-0.01)/(int(eqsteps/2)-1);
     if(slowcool)    cout << "In equilibration steps: SLOW COOLING ON" << endl;
     else            cout << "Slow cooling off" << endl;
@@ -851,8 +846,9 @@ void MonteCarlo::runmetropolis(double beta)
     std::vector<double> mxsquadc           = std::vector<double>(no_of_bins);
     std::vector<double> mysquadc           = std::vector<double>(no_of_bins);
     std::vector<double> mzsquadc           = std::vector<double>(no_of_bins);
-    std::vector<double> mvecssqc           = std::vector<double>(no_of_bins);
-    std::vector<double> mvecsquadc         = std::vector<double>(no_of_bins);
+    // I don't use these anymore:
+    //std::vector<double> mvecssqc           = std::vector<double>(no_of_bins);
+    //std::vector<double> mvecsquadc         = std::vector<double>(no_of_bins);
 
 
     // For the correlation function
@@ -1017,7 +1013,7 @@ void MonteCarlo::runmetropolis(double beta)
             }
             if(ENGYBUG)
             {
-                cout << "In ENGYBUG! i: " << i << "; j: " << j << endl;
+                //cout << "i: " << i << "; j: " << j << endl;
                 double energy_hardcoded = check_the_energy();
                 double endiff = energy_hardcoded-energy_old;
                 // Choose when I would like to be notified
@@ -2063,9 +2059,7 @@ void MonteCarlo::mcstepf_metropolis(double beta)
                     if(mylattice.sites[k].bonds[j].direction!="yz")
                     {
                         Dx = 0; Dy = 0; Dz = 0;
-                        //cout << "Bond NOT yz! All DM-terms=0! Direction: " << mylattice.sites[k].bonds[j].direction << "; Dx = " << Dx<< "; Dy = " << Dy << "; Dz = " << Dz  << endl;
                     }
-                    //if(mylattice.sites[k].bonds[j].direction=="yz")    cout << "Bond =yz! DM-term included! Direction: " << mylattice.sites[k].bonds[j].direction << "; Dx = " << Dx<< "; Dy = " << Dy << "; Dz = " << Dz  << endl;
                 }
                 if(HUMBUG)    cout << "Bonds accessed" << endl;
 
@@ -2722,12 +2716,13 @@ void MonteCarlo::testyopenfcc()
 void MonteCarlo::testFFTW()
 {
     vector<double> spins_in_z = vector<double>(N);
-    double spinthing = 0;
+    double spinthing = 0.0; // Usually 1, 0 for 0.1 0.2// 0.3 04
     for(int i=0;i<N;i++)
     {
-        //spinthing += 0.1;
-        //spins_in_z[i] = spinthing;
-        spins_in_z[i] = 1.0; // or 1.0
+        spinthing += 0.1;
+        spins_in_z[i] = spinthing;
+        //spinthing *= (-1);
+        //spins_in_z[i] = 1.0; // or 1.0
         //spins_in_z[i] = pow(-1.0,i); // or 1.0
     }
 
@@ -2779,6 +2774,8 @@ void MonteCarlo::testFFTW()
 
     // Patching it:
     vector<double> correlation_function = vector<double>(N);
+    vector<double> ftspin_real = vector<double>(N);
+    vector<double> ftspin_imag = vector<double>(N);
     if(mylattice.dim==1) // Chain
     {
         int L = mylattice.L;
@@ -2789,6 +2786,39 @@ void MonteCarlo::testFFTW()
             if(n<=(int)N/2)    index = n;
             else               index = N-n;
             correlation_function[n] = (qconf[index]*conj(qconf[index])).real()/(N*N);
+            ftspin_real[n] = qconf[index].real();
+            ftspin_imag[n] = qconf[index].imag();
+            cout << "By FFTW: n = " << n << "; correlation function = " << correlation_function[n] << endl;
+        }
+    }
+    if(mylattice.dim==2)
+    {
+        int L1 = mylattice.L1;
+        int L2 = mylattice.L2;
+        int elinar = 0; // For retrieving the elements residing in the output array
+        for(int n=0; n<N; n++)
+        {
+            vector<int> cord = mylattice.sitecoordinates[n];
+            int n1 = cord[0];
+            int n2 = cord[1];
+            int index;
+            if(n2<=(int)L2/2)
+            {   // If our element is stored in the output array, we retrieve it
+                index = elinar;
+                elinar++;        // We move one index forward in the output array
+                //cout << "I have met ms elinar" << endl;
+            }
+            else
+            {   // If our element is not stored in the output array, we retrieve its
+                // complex conjugate. We needn't do anything with it as the result is a
+                // complex number times its complex conjugate
+                index = ((int)L2/2+1)*((L1-n1)%L1)+(L2-n2)%L2;
+                //cout << "Retrieving the index of the cc" << endl;
+            } // End if-tests
+            correlation_function[n] = (qconf[index]*conj(qconf[index])).real()/(N*N);
+            ftspin_real[n] = qconf[index].real();
+            ftspin_imag[n] = qconf[index].imag();
+            cout << "n1= " << n1 << "; n2 = " << n2 << endl;
             cout << "By FFTW: n = " << n << "; correlation function = " << correlation_function[n] << endl;
         }
     }
@@ -2819,9 +2849,76 @@ void MonteCarlo::testFFTW()
                 //cout << "Retrieving the index of the cc" << endl;
             } // End if-tests
             correlation_function[n] = (qconf[index]*conj(qconf[index])).real()/(N*N);
+            ftspin_real[n] = qconf[index].real();
+            ftspin_imag[n] = qconf[index].imag();
+            cout << "n1 = " << n1 << "; n2 = " << n2 << "n3 = " << n3 << endl;
             cout << "By FFTW: n = " << n << "; correlation function = " << correlation_function[n] << endl;
         }
     }
+    /*
+    vector<double> analyticholder;
+    vector<double> imaginaryholder;
+    double anh, imh;
+
+    for(int i=0;i<3;i++)
+    {
+        anh = 0;
+        imh = 0;
+        for(int j=0; j<N; j++)
+        {
+            anh += spins_in_z[j]*cos(-2*M_PI*i*j/N);
+            imh -= spins_in_z[j]*sin(2*M_PI*i*j/N);
+        }
+        analyticholder.push_back(anh/N);
+        imaginaryholder.push_back(imh/N);
+    }
+    */
+    /*
+    double sq5 = sqrt(5);
+    double ftsp_alt5pch_1im = 0.5*(sqrt(10+2*sq5)-sqrt(10-2*sq5));
+    double ftsp_alt5pch_2im = 0.5*(sqrt(10+2*sq5)+sqrt(10-2*sq5));
+    double spc_alt5pch_1 = (1 + (ftsp_alt5pch_1im*ftsp_alt5pch_1im))/25.;
+    double spc_alt5pch_2 = (1 + (ftsp_alt5pch_2im*ftsp_alt5pch_2im))/25.;
+
+    cout << "Comparison, output-analytic, spin correlation function:" << endl;
+    cout << "output-analytic: " << correlation_function[0]-1./25. << endl;
+
+    cout << "output-analytic: " << correlation_function[1]-spc_alt5pch_1 << endl;
+
+    cout << "output-analytic: " << correlation_function[2]-spc_alt5pch_2 << endl;
+
+    cout << "Comparison, output-analytic, ft spin function:" << endl;
+    cout << "Real. output-analytic: " << ftspin_real[0]-1 << endl; // sometimes want N\t{S}, sometimes not
+    cout << "Imag. output-analytic: " << ftspin_imag[0]-0 << endl;
+
+    cout << "Real. output-analytic: " << ftspin_real[1]-1 << endl;
+    cout << "Imag. output-analytic: " << ftspin_imag[1]-ftsp_alt5pch_1im << endl;
+
+    cout << "Real. output-analytic: " << ftspin_real[2]-1 << endl;
+    cout << "Imag. output-analytic: " << ftspin_imag[2]-ftsp_alt5pch_2im << endl;
+    */
+
+    /*
+    cout << "Comparison, output-analytic, spin correlation function:" << endl;
+    cout << "output-analytic: " << correlation_function[0]-0 << endl;
+
+    cout << "output-analytic: " << correlation_function[1]-1 << endl;
+
+    cout << "output-analytic: " << correlation_function[2]-1 << endl;
+    */
+
+    cout << "Comparison, output-analytic, ft spin function:" << endl;
+    cout << "Real. output-analytic: " << ftspin_real[0]-1 << endl; // sometimes want N\t{S}, sometimes not
+    cout << "Imag. output-analytic: " << ftspin_imag[0]-0 << endl;
+
+    cout << "Real. output-analytic: " << ftspin_real[1]+0.2 << endl;
+    cout << "Imag. output-analytic: " << ftspin_imag[1]-0 << endl;
+
+    cout << "Real. output-analytic: " << ftspin_real[2]+0.4 << endl;
+    cout << "Imag. output-analytic: " << ftspin_imag[2]-0 << endl;
+
+    cout << "Real. output-analytic: " << ftspin_real[3]-0 << endl;
+    cout << "Imag. output-analytic: " << ftspin_imag[3]-0 << endl;
 
     /*
     double thingone = sin(2*M_PI/5)-sin(4*M_PI/5)+sin(6*M_PI/5)-sin(8*M_PI/5);
