@@ -1017,7 +1017,7 @@ void MonteCarlo::runmetropolis(double beta)
             }
             if(ENGYBUG)
             {
-                //cout << "i: " << i << "; j: " << j << endl;
+                cout << "In ENGYBUG! i: " << i << "; j: " << j << endl;
                 double energy_hardcoded = check_the_energy();
                 double endiff = energy_hardcoded-energy_old;
                 // Choose when I would like to be notified
@@ -2063,7 +2063,9 @@ void MonteCarlo::mcstepf_metropolis(double beta)
                     if(mylattice.sites[k].bonds[j].direction!="yz")
                     {
                         Dx = 0; Dy = 0; Dz = 0;
+                        //cout << "Bond NOT yz! All DM-terms=0! Direction: " << mylattice.sites[k].bonds[j].direction << "; Dx = " << Dx<< "; Dy = " << Dy << "; Dz = " << Dz  << endl;
                     }
+                    //if(mylattice.sites[k].bonds[j].direction=="yz")    cout << "Bond =yz! DM-term included! Direction: " << mylattice.sites[k].bonds[j].direction << "; Dx = " << Dx<< "; Dy = " << Dy << "; Dz = " << Dz  << endl;
                 }
                 if(HUMBUG)    cout << "Bonds accessed" << endl;
 
