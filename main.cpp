@@ -87,21 +87,22 @@ int main()
 
     // bools to determine system type
     bool isotropic    = true;
-    bool sianisotropy = true;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
+    bool sianisotropy = false;  // This one does not change its energy unless Dix, Diy and Diz are not all equal.
     bool magfield     = false;
-    bool dm           = true;
+    bool dm           = false;
     bool nextnearest  = true;
 
     // Bool to determine periodicity
-    bool periodic     = true; // To determine whether we have periodic boundary conditions or not
+    bool periodic     = false; // To determine whether we have periodic boundary conditions or not
                               // Only implemented for the chain so far
 
+    // NB! Bool dmdiffdirs turned on by default. Check!
     // Selecting the lattice type
     // F: face-centered cubic (fcc); E: fcc with different directions; Y: fcc with open BCs in the y-dir
     // C: cubic; D: cubic with different directions
-    // Q:quadratic; R: quadratic with different directions
+    // Q:quadratic; R: quadratic with different directions S: quadr with diff dirs and open bcs
     // O: chain;
-    char type_lattice = 'Y';
+    char type_lattice = 'S';
     // If periodic is false, that means we get a grid with open boundary conditions. Currently,
     // that is only implemented for the chain.
 
@@ -123,16 +124,18 @@ int main()
 
     // These are the nearest neighbour couplings for: D, R
     // These are the next-nearest neighbour couplings for: O, F, Y
-    //double Jx  = 0;    double Jy  = 0.67;    double Jz  = 0;
-    double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.05; // Jensen's parameters
-    //double Jx  = 0;    double Jy  = 0.68;    double Jz  = -0.05; // CLOSE TO Jensen's parameters
+    double Jx  = 1;    double Jy  = 0;    double Jz  = 0; // For S, testing
+    //double Jx  = 0;    double Jy  = 0.67;    double Jz  = 0; // Mimicking Jensen
+    //double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.05; // Jensen's parameters
     //double Jx  = 0;    double Jy  = 0.59;    double Jz  = -0.11; // Li's parameters
     //double Jx  = 0;    double Jy  = 0.67;    double Jz  = -0.06; // Toft-Pettersen's LiNiPO4 parameters
     //double intheta = 4*M_PI/5;
     //double Jx  = -1.0/(4*cos(intheta));    double Jy  = 0;    double Jz  = 0;
 
     // These are the nearest neighbour couplings for E, Y
-    double Jxy = 0.30;    double Jxz = -0.11;    double Jyz = 1.04; // Jensen's parameters
+    // These are the next-nearest neighbour couplings for: S
+    double Jxy = 0.50;    double Jxz = 0;    double Jyz = 0; // For S, testing
+    //double Jxy = 0.30;    double Jxz = -0.11;    double Jyz = 1.04; // Jensen's parameters
     //double Jxy = 0.26;    double Jxz = -0.16;    double Jyz = 0.94; // Li's parameters
     //double Jxy = 0.32;    double Jxz = -0.11;    double Jyz = 1.00; // Toft-Pettersen's LiNiPO4 parameters
     //double Jxy = 0;    double Jxz = 0;    double Jyz = 1.04;
@@ -152,12 +155,12 @@ int main()
 
     // Bools to determine printing
     bool printeveryMCstep = false;
-    bool calculatespincorrelationfunction = true; // This is set to false if we run for several betas
+    bool calculatespincorrelationfunction = false; // This is set to false if we run for several betas
     bool dobootstrap = true; // Often set in the function
 
     // Run parameters
     int eqsteps = 10000; //Short run for testing //2;//To test//10000; // Number of steps in the equilibration procedure
-    int mcsteps_inbin = 100000;//10000;  //100000; // MCsteps per bin.
+    int mcsteps_inbin = 10000;  //100000; // MCsteps per bin.
     int no_of_bins = 100; //Short run for testing 2;//To test// //1000;     // The number of bins.
 
     // A beta value for one run
@@ -213,8 +216,8 @@ int main()
     //string filenamePrefix = "0aa0_fcc6x6x6_Jxym1_Jxz0_Jyz1_beta5_eqsteps10000_mcsteps_inbin_10000_no_of_bins100";
     //test_betagenerator(10, 0, 4);
     // Input parameters specifically for run_for_several_betas
-    int beta_n = 25;
-    double betamin = 0.78;
+    int beta_n = 10;
+    double betamin = 0.79;
     double betamax = 0.8;
     int betanset = 5;
     vector<double> betas = vector<double>(betanset);
@@ -223,296 +226,95 @@ int main()
     // By default, the run_for_several_betas-functions do not calculate the correlation function
     //--------------------------------Running for several betas--------------------------------------//
 
+    // Declarations // Seriously, do not comment out these ones!!!
     long int latticeseed, MCseed;
     string filenamePrefix;
+
+
     /*
-    // Int choice 1
-    long int latticeseed = 23; long int MCseed = 17;
+    // Seed choice 1
+    latticeseed = 23; MCseed = 17;
+    L = 14;
     // Jensen
-    //filenamePrefix = "fcc16x16x16yopen_beta0p779to0p790_Nbeta25_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed17_latticeseed23_slowcool";
+    filenamePrefix = "fcc14x14x14yopen_beta0p772to0p779_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed17_latticeseed23_slowcool";
 
     // Li
-    string filenamePrefix = "fcc14x14x14yopen_beta0p779to0p790_Nbeta25_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed17_latticeseed23_slowcool";
+    //string filenamePrefix = "fcc14x14x14yopen_beta0p772to0p779_Nbeta10_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed17_latticeseed23_slowcool";
 
     run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
     latticeseed = 19; MCseed = 57;
     // Jensen
-    //filenamePrefix = "fcc16x16x16yopen_beta0p779to0p790_Nbeta25_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed57_latticeseed19_slowcool";
+    filenamePrefix = "fcc14x14x14yopen_beta0p772to0p779_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed57_latticeseed19_slowcool";
 
     // Li
-    filenamePrefix = "fcc14x14x14yopen_beta0p779to0p790_Nbeta25_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed57_latticeseed19_slowcool";
+    //filenamePrefix = "fcc14x14x14yopen_beta0p765to0p78_Nbeta20_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed57_latticeseed19_slowcool";
 
     run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    */
 
     // In case we want more seeds
 
-    /*
-
-    L = 6;
-    beta_n = 4;
-    betamin = 0.79;
-    betamax = 0.83;
-
     latticeseed = 71; MCseed = 31;
     // Jensen
-    filenamePrefix = "fcc6x6x6yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
+    filenamePrefix = "fcc14x14x14yopen_beta0p772to0p779_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed31_latticeseed71_slowcool";
 
     // Li
-    //filenamePrefix = "fcc6x6x6yopen_beta0p765to0p775_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
+    //filenamePrefix = "fcc14x14x14yopen_beta0p765to0p78_Nbeta20_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed31_latticeseed71_slowcool";
 
     run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    filenamePrefix = "fcc6x6x6yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc6x6x6yopen_beta0p765to0p775_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc6x6x6yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-    ///*
-    // Li
-    //filenamePrefix = "fcc6x6x6yopen_beta0p765to0p775_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-    // L = 8
-    L = 8;
-    //beta_n = 16;
-    //betamin = 0.765;
-    //betamax = 0.780;
-    latticeseed = 71; MCseed = 31;
-    // Jensen
-    filenamePrefix = "fcc8x8x8yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc8x8x8yopen_beta0p765to0p780_Nbeta16_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    filenamePrefix = "fcc8x8x8yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc8x8x8yopen_beta0p765to0p780_Nbeta16_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc8x8x8yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc8x8x8yopen_beta0p765to0p780_Nbeta16_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     */
-
     /*
-    // L=10
-    L = 10;
-    beta_n = 4;
-    betamin = 0.79;
-    betamax = 0.83;
-    latticeseed = 71; MCseed = 31;
-    // Jensen
-    filenamePrefix = "fcc10x10x10yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc10x10x10yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    //filenamePrefix = "fcc10x10x10yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc10x10x10yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc10x10x10yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc10x10x10yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
     // L = 12
-    L = 12;
-    beta_n = 4;
-    betamin = 0.79;
-    betamax = 0.83;
-
-    latticeseed = 71; MCseed = 31;
-    // Jensen
-    filenamePrefix = "fcc12x12x12yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Close to Jensen
-    //filenamePrefix = "fcc12x12x12yopen_beta0p77to0p79_Nbeta21_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p68_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc12x12x12yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    filenamePrefix = "fcc12x12x12yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Close to Jensen
-    //filenamePrefix = "fcc12x12x12yopen_beta0p77to0p79_Nbeta21_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p68_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc12x12x12yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc12x12x12yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Close to Jensen
-    //filenamePrefix = "fcc12x12x12yopen_beta0p77to0p79_Nbeta21_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p68_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc12x12x12yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    // L=14
-    L = 14;
-    beta_n = 4;
-    betamin = 0.79;
-    betamax = 0.83;
-    latticeseed = 71; MCseed = 31;
-    // Jensen
-    filenamePrefix = "fcc14x14x14yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Close to Jensen
-    //filenamePrefix = "fcc14x14x14yopen_beta0p77to0p79_Nbeta21_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p68_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc14x14x14yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    filenamePrefix = "fcc14x14x14yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Close to Jensen
-    //filenamePrefix = "fcc14x14x14yopen_beta0p77to0p79_Nbeta21_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p68_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc14x14x14yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc14x14x14yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Close to Jensen
-    //filenamePrefix = "fcc14x14x14yopen_beta0p77to0p79_Nbeta21_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p68_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc14x14x14yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    */
-    /*
-
-    // L = 16    
     L = 16;
-    beta_n = 4;
-    betamin = 0.79;
-    betamax = 0.83;
+    latticeseed = 23; MCseed = 17;
+    // Jensen
+    filenamePrefix = "fcc16x16x16yopen_beta0p79to0p8_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed17_latticeseed23_slowcool";
+
+    // Li
+    //filenamePrefix = "fcc16x16x16yopen_beta0p765to0p78_Nbeta20_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed17_latticeseed23_slowcool";
+
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+
+    latticeseed = 19; MCseed = 57;
+    // Jensen
+    filenamePrefix = "fcc16x16x16yopen_beta0p79to0p8_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed57_latticeseed19_slowcool";
+
+    // Li
+    //filenamePrefix = "fcc16x16x16yopen_beta0p765to0p78_Nbeta20_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed57_latticeseed19_slowcool";
+
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+
+    // In case we want more seeds
+
     latticeseed = 71; MCseed = 31;
     // Jensen
-    filenamePrefix = "fcc16x16x16yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
+    filenamePrefix = "fcc16x16x16yopen_beta0p79to0p8_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed31_latticeseed71_slowcool";
 
     // Li
-    //filenamePrefix = "fcc16x16x16yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    filenamePrefix = "fcc16x16x16yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc16x16x16yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc16x16x16yopen_beta0p79to0p83_Nbeta4_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc16x16x16yopen_beta0p770to0p780_Nbeta11_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-    */
-    /*
-    // L = 18
-    L = 18;
-    latticeseed = 71; MCseed = 31;
-    // Jensen
-    filenamePrefix = "fcc18x18x18yopen_beta0p782to0p792_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc16x16x16yopen_beta0p779to0p790_Nbeta25_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed31_latticeseed71_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 47; MCseed = 83;
-    // Jensen
-    filenamePrefix = "fcc18x18x18yopen_beta0p782to0p792_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    // Li
-    //filenamePrefix = "fcc16x16x16yopen_beta0p78to0p8_Nbeta25_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed83_latticeseed47_slowcool";
-
-    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
-
-
-    latticeseed = 23; MCseed = 59;
-    // Jensen
-    filenamePrefix = "fcc18x18x18yopen_beta0p782to0p792_Nbeta10_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
-
-    // Li
-    //string filenamePrefix = "fcc10x10x10yopen_beta0p7to0p82_Nbeta50_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc100000_bins100_seed59_latticeseed23_slowcool";
+    //filenamePrefix = "fcc16x16x16yopen_beta0p765to0p78_Nbeta20_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed31_latticeseed71_slowcool";
 
     run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     */
 
     /*
+    latticeseed = 47; MCseed = 83;
+    // Jensen
+    filenamePrefix = "fcc6x6x6yopen_beta0p779to0p790_Nbeta25_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed83_latticeseed47_slowcool";
+
+    // Li
+    //string filenamePrefix = "fcc10x10x10yopen_beta0p7to0p82_Nbeta50_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed83_latticeseed47_slowcool";
+
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
+
+    latticeseed = 23; MCseed = 59;
+    // Jensen
+    filenamePrefix = "fcc6x6x6yopen_beta0p779to0p790_Nbeta25_nnJyz1p04_nnJxy0p3_nnJxzm0p11_nnnJy0p67_nnnJzm0p05_sianDx0p34_Dy1p82_eq10000_mc10000_bins100_seed59_latticeseed23_slowcool";
+
+    // Li
+    //string filenamePrefix = "fcc10x10x10yopen_beta0p7to0p82_Nbeta50_nnJyz0p94_nnJxy0p26_nnJxzm0p16_nnnJy0p59_nnnJzm0p11_sianDx0p34_Dy1p92_eq10000_mc10000_bins100_seed59_latticeseed23_slowcool";
+
+    run_for_several_betas(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, betamin, betamax, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, dobootstrap, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     */
     //run_for_betasgiven(L, eqsteps, mcsteps_inbin, no_of_bins, beta_n, latticeseed, MCseed, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep,  dobootstrap, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
@@ -520,7 +322,19 @@ int main()
     //run_for_betasgiven_diffdirs(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, betanset, latticeseed, MCseed, isotropic, sianisotropy, magfield, dm, periodic, printeveryMCstep,  dobootstrap, type_lattice, filenamePrefix, betas, sitestrengthsin, heisenbergin, dm_in);
 
     //----------------------------------Running for one beta-----------------------------------------//
-    filenamePrefix = "test";
+    // Testing input
+    filenamePrefix = "quadratic8x8_open_extended_Jx1_Jxy0p5_beta50_eqst10000_mc1000000_bins100_latticeseed31_MCseed71_slowcool_date091017";
+    L = 8;
+    beta = 50; // Small, but not too small beta
+    eqsteps = 10000;//10;
+    mcsteps_inbin = 1000000;//12;
+    no_of_bins = 100;//10;
+    latticeseed = 31;
+    MCseed = 71;
+
+    //filenamePrefix = "quadratic8x8_open_extended_neighbours";
+
+
     one_run(L, eqsteps, mcsteps_inbin, no_of_bins, latticeseed, MCseed, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
     //one_run(L1, L2, L3, eqsteps, mcsteps_inbin, no_of_bins, latticeseed, MCseed, beta, isotropic, sianisotropy, magfield, dm, nextnearest, periodic, printeveryMCstep, calculatespincorrelationfunction, type_lattice, filenamePrefix, sitestrengthsin, heisenbergin, dm_in);
 
@@ -641,7 +455,7 @@ void run_for_several_betas(int L, int eqsteps, int mcsteps_inbin, int no_of_bins
         betas[i] = betamin + deltabeta*i;
         mymc.runmetropolis(betas[i]);
         mymc.reset_energy();
-        cout << "Temp " << i << " done" << endl;
+        cout << "Bin " << i << " done" << endl;
     }
     mymc.endsims();
     mymc.test_couplings_strengths(); // Just to test it. Can remove later
@@ -1585,9 +1399,11 @@ void test_fftw(int L, vector<double> sitestrengthsin, vector<double> heisenbergi
     bool calculatespincorrelationfunction = false;
     bool dobootstrap = false;
 
+    // Possibly reset
+    L = 2;
 
     // Set these
-    char type_lattice = 'O';
+    char type_lattice = 'Q';
     string filenamePrefix = "discard"; // Want to know that this file is unimportant
 
     // Initializing Monte Carlo

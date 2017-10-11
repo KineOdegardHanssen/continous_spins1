@@ -55,6 +55,11 @@ public:
     // Debugging
     //void setmajordebug();
 
+    //Finding indices
+    int i2D(int n);
+    int j2D(int n);
+
+    // Finding neighbours
     int findneighbour(int n, int toi, int toj, int tok);
     int findneighbour2D(int n, int toi, int toj);
 
@@ -64,6 +69,7 @@ public:
     void chain_open_initialize();
     void quadratic_helical_initialize();
     void quadratic_helical_initialize_extended();
+    void quadratic_open_initialize_extended();
     void cubic_helical_initialize();
     void cubic_helical_initialize_extended();
     void fcc_helical_initialize();

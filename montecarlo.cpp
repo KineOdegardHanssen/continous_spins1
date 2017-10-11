@@ -53,12 +53,21 @@ MonteCarlo::MonteCarlo(int L, int eqsteps, int mcsteps_inbin, int no_of_bins, lo
         else if(type_lattice=='D') mylattice.cubic_helical_initialize_extended();     // D for cubic extended
         else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();          // Q for quadratic
         else if(type_lattice=='R') mylattice.quadratic_helical_initialize_extended(); // R for quadr. ext.
+        else if(type_lattice=='S') mylattice.quadratic_open_initialize_extended();    // S for quadr. ext.o.BC
         else if(type_lattice=='O') mylattice.chain_periodic_initialize();             // O for one-dimensional
     }
     else
     {
         if(type_lattice=='O')      mylattice.chain_open_initialize();
+        else if(type_lattice=='R') mylattice.quadratic_open_initialize_extended(); // R for quadr. ext.
+        else if(type_lattice=='S') mylattice.quadratic_open_initialize_extended(); // S for quadr. ext.o.BC
         else                       cout << "WARNING! type_lattice " << type_lattice << " only periodic. You have asked for open BCs! Failure! Failure!" << endl;
+    }
+    if(type_lattice=='S')    notperiodic = true; // Hardcoding in case we forgot
+    if(type_lattice=='R' && notperiodic==false)  // Hardcoding in case we forgot
+    {
+        notperiodic = true;
+        type_lattice = 'S';
     }
     double endtime = clock();
     double total_time = (endtime - starttime)/(double) CLOCKS_PER_SEC;
@@ -212,12 +221,21 @@ MonteCarlo::MonteCarlo(int L1, int L2, int L3, int eqsteps, int mcsteps_inbin, i
         else if(type_lattice=='D') mylattice.cubic_helical_initialize_extended();     // D for cubic extended
         else if(type_lattice=='Q') mylattice.quadratic_helical_initialize();          // Q for quadratic
         else if(type_lattice=='R') mylattice.quadratic_helical_initialize_extended(); // R for quadr. ext.
+        else if(type_lattice=='S') mylattice.quadratic_open_initialize_extended();    // S for quadr. ext.o.BC
         else if(type_lattice=='O') mylattice.chain_periodic_initialize();             // O for one-dimensional
     }
     else
     {
         if(type_lattice=='O')      mylattice.chain_open_initialize();
+        else if(type_lattice=='R') mylattice.quadratic_open_initialize_extended(); // R for quadr. ext.
+        else if(type_lattice=='S') mylattice.quadratic_open_initialize_extended();    // S for quadr. ext.o.BC
         else                       cout << "WARNING! type_lattice " << type_lattice << " only periodic. You have asked for open BCs! Failure! Failure!" << endl;
+    }
+    if(type_lattice=='S')    notperiodic = true; // Hardcoding in case we forgot
+    if(type_lattice=='R' && notperiodic==false)  // Hardcoding in case we forgot
+    {
+        notperiodic = true;
+        type_lattice = 'S';
     }
 
     //else if(type_lattice=='T') mylattice.chain_2p_periodic_initialize(); // T for two particles
@@ -571,8 +589,8 @@ void MonteCarlo::initialize_energy()
                 if(ypos!=L2-1)
                 {
                     int lookat;
-                    if(ypos!=0)    lookat = 1;
-                    else           lookat = 0;
+                    if(ypos!=0)    lookat = 1; // nnym is the first element. Want nnyp
+                    else           lookat = 0; // nnyp, which we want, is the first element.
                     double Jy = mylattice.sites[i].nextnearesty[lookat].J;
                     double ny = mylattice.sites[i].nextnearesty[lookat].siteindex2;
 
@@ -597,6 +615,30 @@ void MonteCarlo::initialize_energy()
                 partnerspiny += Jz*sy_zdir;
                 partnerspinz += Jz*sz_zdir;
 
+                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            }
+            if(type_lattice=='S')
+            {
+                bool increasingj;
+                int nns = mylattice.sites[i].no_of_nneighbours_site;
+                for(int j=0; j<nns; j++)
+                {
+                    increasingj = mylattice.sites[i].nextnearesty[j].increasing;
+                    if(increasingj)
+                    {
+                        double Jxy = mylattice.sites[i].nextnearesty[j].J;
+                        double ny = mylattice.sites[i].nextnearesty[j].siteindex2;
+
+                        double sx_ydir = mylattice.sites[ny].spinx;
+                        double sy_ydir = mylattice.sites[ny].spiny;
+                        double sz_ydir = mylattice.sites[ny].spinz;
+
+                        // We only have one positive direction here, so we can add without worry
+                        partnerspinx += Jxy*sx_ydir;
+                        partnerspiny += Jxy*sy_ydir;
+                        partnerspinz += Jxy*sz_ydir;
+                    }
+                }
                 energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             }
             if(mylattice.dim==1)
@@ -1751,8 +1793,8 @@ void MonteCarlo::runmetropolis(double beta)
         */
     }
 
-    bool CONFWR    = false;
-    bool sameprint = true;
+    bool CONFWR    = true;
+    bool sameprint = false;
     if(CONFWR)
     {
         cout << "Printing to configfile" << endl;
@@ -1801,13 +1843,21 @@ void MonteCarlo::runmetropolis(double beta)
             }
             if(dim==2)
             {
+                //cout << " " <<endl; // I get a weird error if I don't print here...
                 // Printing the config
                 position = mylattice.sitepositions[n];
                 if(!sameprint)    configFile << position[0] << " " << position[1] << " " << sx << " " << sy << " " << sz << endl;
                 else              configFile << position[0] << " " << position[1] << " " << 0 << " " << sx << " " << sy << " " << sz << endl;
                 // Printing the list of neighbours
                 neighbours = mylattice.siteneighbours[n];
-                for(int j; j<no_of_neighbours; j++)    neighbourFile << neighbours[j] << " ";
+                int nnb;
+                if(notperiodic)    nnb = mylattice.sites[n].no_of_neighbours_site;
+                else               nnb = mylattice.no_of_neighbours;
+                for(int j=0; j<nnb; j++)
+                {
+                    //cout << " " << endl;
+                    neighbourFile << neighbours[j] << " ";
+                }
                 neighbourFile << endl;
             }
             if(dim==3)
@@ -2143,6 +2193,26 @@ void MonteCarlo::mcstepf_metropolis(double beta)
                     partnerspinx += Jz*nnzspinx;
                     partnerspiny += Jz*nnzspiny;
                     partnerspinz += Jz*nnzspinz;
+                }
+                energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
+            }
+            if(type_lattice=='S')
+            {
+                double nnyspinx, nnyspiny, nnyspinz;
+                int nneighbours = mylattice.sites[k].no_of_nneighbours_site;
+                for(int i=0; i<nneighbours; i++) // Having contributions in the + and - directions, open BC
+                {
+                    int yneigh = mylattice.sites[k].nextnearesty[i].siteindex2;
+                    double Jxy = mylattice.sites[k].nextnearesty[i].J;
+
+                    // Spin components of next nearest neighbours in the y-direction
+                    nnyspinx = mylattice.sites[yneigh].spinx;
+                    nnyspiny = mylattice.sites[yneigh].spiny;
+                    nnyspinz = mylattice.sites[yneigh].spinz;
+
+                    partnerspinx += Jxy*nnyspinx;
+                    partnerspiny += Jxy*nnyspiny;
+                    partnerspinz += Jxy*nnyspinz;
                 }
                 energy_diff += (sx_t-sx)*partnerspinx + (sy_t-sy)*partnerspiny + (sz_t-sz)*partnerspinz;
             }
@@ -2546,6 +2616,30 @@ double MonteCarlo::check_the_energy()
                 partnerspiny += Jz*sy_zdir;
                 partnerspinz += Jz*sz_zdir;
 
+                energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
+            }
+            if(type_lattice=='S')
+            {
+                bool increasingj;
+                int nns = mylattice.sites[i].no_of_nneighbours_site;
+                for(int j=0; j<nns; j++)
+                {
+                    increasingj = mylattice.sites[i].nextnearesty[j].increasing;
+                    if(increasingj)
+                    {
+                        double Jxy = mylattice.sites[i].nextnearesty[j].J;
+                        double ny = mylattice.sites[i].nextnearesty[j].siteindex2;
+
+                        double sx_ydir = mylattice.sites[ny].spinx;
+                        double sy_ydir = mylattice.sites[ny].spiny;
+                        double sz_ydir = mylattice.sites[ny].spinz;
+
+                        // We only have one positive direction here, so we can add without worry
+                        partnerspinx += Jxy*sx_ydir;
+                        partnerspiny += Jxy*sy_ydir;
+                        partnerspinz += Jxy*sz_ydir;
+                    }
+                }
                 energy_contribution_bonds += partnerspinx*sx + partnerspiny*sy + partnerspinz*sz;
             }
             if(mylattice.dim==1)
@@ -3662,11 +3756,13 @@ void MonteCarlo::test_couplings_strengths()
     int nneighbours;
     if(notperiodic)    nneighbours = mylattice.sites[n].no_of_neighbours_site;
     else               nneighbours = no_of_neighbours;
+    cout << "No of neighbours: " << nneighbours << endl;
     if(isotropic)
     {
         cout << "Heisenberg couplings:" << endl;
         for(int j=0; j<nneighbours; j++)
         {
+            cout << "In loop" << endl;
             double J = mylattice.sites[n].bonds[j].J;
             if(!mylattice.extended)            cout << "Neighbour no.: " << j << ", J = " << J << endl;
             else
@@ -3706,7 +3802,7 @@ void MonteCarlo::test_couplings_strengths()
         cout << "Next nearest neighbour couplings:" << endl;
         double Jy = mylattice.sites[n].nextnearesty[0].J;
         cout << "Jy = " << Jy;
-        if(mylattice.dim>1)
+        if(mylattice.dim>2)
         {
             double Jz = mylattice.sites[n].nextnearestz[0].J;
             cout << "; Jz = " << Jz;

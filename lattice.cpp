@@ -108,6 +108,17 @@ void Lattice::givestrengths_automatic()
     cout << "WARNING!!! System parameters were not given. Parameters set to default value." << endl;
 }
 
+int Lattice::i2D(int n)
+{
+    return (int)n/L2;
+}
+
+int Lattice::j2D(int n)
+{
+    return (int)n%L2;
+}
+
+
 int Lattice::findneighbour2D(int n, int toi, int toj)
 {   // Not tested, should work
     int i = n/L2;
@@ -519,8 +530,20 @@ void Lattice::quadratic_helical_initialize_extended()
         bonds.push_back(Bond(n, npL, Jx, true, x));
         bonds.push_back(Bond(n, nmL, Jx, false, x));
 
+
+        // Next nearest neighbour
+        std::vector<Bond> nextnearesty;
+
+        // Finding the neighbours
+        int nnym, nnyp;
+        nnym = findneighbour2D(n,1,1);
+        nnyp = findneighbour2D(n,-1,-1);
+
+        nextnearesty.push_back(Bond(n, nnym, Jxy, false));
+        nextnearesty.push_back(Bond(n, nnyp, Jxy, true));
+
         // Send in bools
-        sites.push_back(Site(n, spinx, spiny, spinz, bonds));
+        sites.push_back(Site(n, spinx, spiny, spinz, bonds, nextnearesty));
 
         // Positions (row-major order)
         position_n[0] = 1.0*((int)n/L2); // n1
@@ -534,6 +557,180 @@ void Lattice::quadratic_helical_initialize_extended()
 
     } // End of loop over all sites ( = loop over n)
 }
+
+
+void Lattice::quadratic_open_initialize_extended()
+{
+    notperiodic = true;
+    dim = 2;
+    N = L1*L2;
+    no_of_neighbours = 4;
+    extended = true;
+
+    // No of particles in each direction
+    dimlengths = vector<int>(dim);
+    dimlengths[0] = L1;
+    dimlengths[1] = L2;
+
+    // Lattice vectors
+    a1 = vector<double>(2);
+    a2 = vector<double>(2);
+    a1[0] = 1;    a1[1] = 0;
+    a2[0] = 0;    a2[1] = 1;
+
+    // Reciprocal lattice vectors
+    b1 = vector<double>(2);
+    b2 = vector<double>(2);
+    b1[0] = 2*M_PI;    b1[1] = 0;
+    b2[0] = 0;         b2[1] = 2*M_PI;
+
+    double a = 1/sqrt(3);
+    double spinx = a;
+    double spiny = a;
+    double spinz = a;
+
+    if(!systemstrengthsgiven)    givestrengths_automatic();
+
+    std::vector<double> position_n = std::vector<double>(2);
+    std::vector<int> coord_n = std::vector<int>(2);
+
+    // Extended version: Can have different interactions in different directions
+    string x = "x";
+    string y = "y";
+
+    int n1, n2;
+    bool randomspins = true;
+    for(int n=0; n<N; n++)
+    {
+
+        if(randomspins)
+        {
+            double u = ran2(&seed);
+            double v = ran2(&seed);
+
+            double theta = acos(1.0-2.0*u);
+            double phi = 2.0*M_PI*v;
+
+            double sintheta = sin(theta);
+            spinx = sintheta*cos(phi);
+            spiny = sintheta*sin(phi);
+            spinz = cos(theta);
+        }
+        // Positions (row-major order)
+        n1 = 1.0*((int)n/L2); // the i-index
+        n2 = 1.0*((int)n%L2); // the j-index
+        position_n[0] = n1; // n1
+        position_n[1] = n2; // n2. Grid length a set to one, regulate by strength of interactions
+
+        coord_n[0] = ((int)n/L2); // n1
+        coord_n[1] = ((int)n%L2); // n2
+
+        sitepositions.push_back(position_n);
+        sitecoordinates.push_back(coord_n);
+
+        //std::vector<double> sps = sitepositions[n];
+        //cout << "sitepositions[" << n<< "]: elem 0 = " << sps[0] << " elem 1 = " << sps[1] << endl;
+
+        // Finding the neighbours
+        // All of them
+        int np1, nm1, npL, nmL;
+        np1 = findneighbour2D(n,0,1);  // Neighbour in j-dir/y-dir
+        nm1 = findneighbour2D(n,0,-1); // Neighbour in j-dir/y-dir
+        npL = findneighbour2D(n,1,0);  // Neighbour in i-dir/x-dir
+        nmL = findneighbour2D(n,-1,0); // Neighbour in i-dir/x-dir
+        // NB! INCLUDE ALL HERE!
+
+        // Finding indices to test
+        int npLi, npLj, nmLi, np1j, nm1j;
+        npLi = i2D(npL);
+        npLj = j2D(npL);
+        nmLi = i2D(nmL);
+        np1j = j2D(np1);
+        nm1j = j2D(nm1);
+
+        //
+        int no_of_neighbours_site = 0;
+        std::vector<int> neighbours_n;
+        std::vector<Bond> bonds;
+        if(n1<npLi) // The i-index should increase for this neighbour
+        {
+            cout << "Index npL: " << npL << "; npLi: " << npLi  << "; npLj: " << npLj << endl;
+            cout << "Index n: " << n << "; ni: " << n1 << "; nj: " << n2 << endl << endl;
+            neighbours_n.push_back(npL);
+            bonds.push_back(Bond(n, npL, Jx, true, x));
+            no_of_neighbours_site += 1;
+
+        }
+        if(n1>nmLi) // The i-index should decrease for this neighbour
+        {
+            neighbours_n.push_back(nmL);
+            bonds.push_back(Bond(n, nmL, Jx, false, x));
+            no_of_neighbours_site += 1;
+        }
+        if(n2<np1j) // The j-index should increase for this neighbour
+        {
+            neighbours_n.push_back(np1);
+            bonds.push_back(Bond(n, np1, Jy, true, y));
+            no_of_neighbours_site += 1;
+        }
+        if(n2>nm1j) // The j-index should decrease for this neighbour
+        {
+            neighbours_n.push_back(nm1);
+            bonds.push_back(Bond(n, nm1, Jy, false, y));
+            no_of_neighbours_site += 1;
+        }
+        //cout << "No of neighbours: " << no_of_neighbours_site << endl;
+
+        siteneighbours.push_back(neighbours_n);
+
+        // Next nearest neighbour
+        std::vector<Bond> nextnearesty;
+
+        // Finding the next nearest neighbours
+        int nnymm, nnypp, nnypm, nnymp;
+        int nnyppi, nnyppj, nnymmi, nnymmj, nnypmi, nnypmj, nnympi, nnympj;
+        nnypp = findneighbour2D(n,1,1);
+        nnymm = findneighbour2D(n,-1,-1);
+        nnypm = findneighbour2D(n,1,-1);
+        nnymp = findneighbour2D(n,-1,1);
+
+
+        int no_of_nneighbours_site = 0;
+        nnyppi = i2D(nnypp);
+        nnymmi = i2D(nnymm);
+        nnyppj = j2D(nnypp);
+        nnymmj = j2D(nnymm);
+        nnypmi = i2D(nnypm);
+        nnympi = i2D(nnymp);
+        nnypmj = j2D(nnypm);
+        nnympj = j2D(nnymp);
+
+        if(n1<nnyppi && n2<nnyppj)
+        {
+            nextnearesty.push_back(Bond(n, nnypp, Jxy, true));
+            no_of_nneighbours_site += 1;
+        }
+        if(n1>nnymmi && n2>nnymmj)
+        {
+            nextnearesty.push_back(Bond(n, nnymm, Jxy, false));
+            no_of_nneighbours_site += 1;
+        }
+        if(n1<nnypmi && n2>nnypmj)
+        {
+            nextnearesty.push_back(Bond(n, nnypm, Jxy, true));
+            no_of_nneighbours_site += 1;
+        }
+        if(n1>nnympi && n2<nnympj)
+        {
+            nextnearesty.push_back(Bond(n, nnymp, Jxy, false));
+            no_of_nneighbours_site += 1;
+        }
+
+        // Send in bools
+        sites.push_back(Site(n, no_of_neighbours_site, no_of_nneighbours_site, spinx, spiny, spinz, bonds, nextnearesty));
+    } // End of loop over all sites ( = loop over n)
+}
+
 
 void Lattice::cubic_helical_initialize()
 {
@@ -1209,11 +1406,11 @@ void Lattice::fcc_helical_initialize_extended_yopen()
             if(yposvec[npL]!=0)
             {
                 neighbours_n.push_back(npL);
-                if(n==13)    cout << "Setting nb npL: yposvec[npL]!=0, n = " << n << "; yposvec[npL] = " << yposvec[npL] << "; npL = " << npL << endl;
+                //if(n==13)    cout << "Setting nb npL: yposvec[npL]!=0, n = " << n << "; yposvec[npL] = " << yposvec[npL] << "; npL = " << npL << endl;
             }
             else
             {
-                if(n==13)    cout << "NOT setting nb npL: yposvec[npL]==0, n = " << n << "; yposvec[npL] = " << yposvec[npL] << "; npL = " << npL << endl;
+                //if(n==13)    cout << "NOT setting nb npL: yposvec[npL]==0, n = " << n << "; yposvec[npL] = " << yposvec[npL] << "; npL = " << npL << endl;
                 no_of_neighbours_site--;
             }
             if(yposvec[npL2]!=0)      neighbours_n.push_back(npL2);
@@ -1232,6 +1429,7 @@ void Lattice::fcc_helical_initialize_extended_yopen()
             if(yposvec[nmL2m1]!=ymax)    neighbours_n.push_back(nmL2m1);
             else                         no_of_neighbours_site--;
 
+            /*
             if(n==13)
             {
                 cout << "npL = " << npL << "; yposvec[npL] =" << yposvec[npL] << endl;
@@ -1243,8 +1441,8 @@ void Lattice::fcc_helical_initialize_extended_yopen()
                 cout << "nmL2 = " << nmL2 << "; yposvec[nmL2] =" << yposvec[nmL2] << endl;
                 cout << "nmLm1 = " << nmLm1 << "; yposvec[nmLm1] =" << yposvec[nmLm1] << endl;
                 cout << "nmL2m1 = " << nmL2m1 << "; yposvec[nmL2m1] =" << yposvec[nmL2m1] << endl;
-
             }
+            */
         }
 
         siteneighbours.push_back(neighbours_n);
